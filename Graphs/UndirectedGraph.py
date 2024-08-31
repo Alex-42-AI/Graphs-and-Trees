@@ -1,4 +1,4 @@
-from Personal.DiscreteMath.Graphs.General import Node, Link, Dict, SortedKeysDict, SortedList
+from DiscreteMath.Graphs.General import Node, Link, Dict, SortedKeysDict, SortedList
 class UndirectedGraph:
     def __init__(self, *nodes: Node):
         self.__nodes = SortedList()
@@ -572,7 +572,7 @@ class UndirectedGraph:
         return '({' + ', '.join(str(n) for n in self.__nodes) + '}, {' + ', '.join(str(l) for l in self.__links) + '})'
     def __repr__(self):
         return str(self)
-class WeightedUndirectedGraph(UndirectedGraph):
+class WeightedLinksUndirectedGraph(UndirectedGraph):
     def __init__(self, *nodes: Node):
         super().__init__(*nodes)
         self.__weights = Dict()
@@ -625,7 +625,7 @@ class WeightedUndirectedGraph(UndirectedGraph):
             if Link(u, n) in [l for l in self.__weights.keys()]:
                 self.__weights.pop(Link(u, n))
     def copy(self):
-        res = WeightedUndirectedGraph(*self.nodes())
+        res = WeightedLinksUndirectedGraph(*self.nodes())
         for u in self.nodes():
             for v in self.nodes():
                 if Link(u, v) in self.links():
@@ -637,7 +637,7 @@ class WeightedUndirectedGraph(UndirectedGraph):
         if not self.connected():
             res = []
             for comp in self.connection_components():
-                curr = WeightedUndirectedGraph(*comp)
+                curr = WeightedLinksUndirectedGraph(*comp)
                 for u in comp:
                     for v in self.neighboring(u):
                         curr.connect(u, (v, self.weights(u, v)))
@@ -730,7 +730,7 @@ class WeightedUndirectedGraph(UndirectedGraph):
             raise ValueError('Unrecognized nodes!')
         return dfs(u, v)
     def isomorphic(self, other):
-        if type(other) == WeightedUndirectedGraph:
+        if type(other) == WeightedLinksUndirectedGraph:
             if len(self.links()) != len(other.links()) or len(self.nodes()) != len(other.nodes()):
                 return False
             this_degrees, other_degrees, this_weights, other_weights = dict(), dict(), dict(), dict()
@@ -784,7 +784,7 @@ class WeightedUndirectedGraph(UndirectedGraph):
             return False
         return False
     def __add__(self, other):
-        if isinstance(other, WeightedUndirectedGraph):
+        if isinstance(other, WeightedLinksUndirectedGraph):
             res = self.copy()
             for n in other.nodes():
                 if n not in res.nodes():
@@ -806,7 +806,7 @@ class WeightedUndirectedGraph(UndirectedGraph):
             return res
         raise TypeError(f'Can\'t add class WeightedUndirectedGraph to class {type(other)}!')
     def __eq__(self, other):
-        if isinstance(other, WeightedUndirectedGraph):
+        if isinstance(other, WeightedLinksUndirectedGraph):
             return self.nodes() == other.nodes() and self.__weights == other.__weights
         return super().__eq__(other)
     def __str__(self):
