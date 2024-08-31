@@ -1,4 +1,4 @@
-from Graphs.General import Node, Dict, SortedKeysDict, SortedList, BinNode
+from Personal.DiscreteMath.Graphs.General import Node, Dict, SortedKeysDict, SortedList, BinNode
 class BinTree:
     def __init__(self, root=None):
         self.root = root if isinstance(root, BinNode) else BinNode(root)
@@ -23,80 +23,50 @@ class BinTree:
             self.copy(self.root.right, res.root)
             return res
         return BinTree(False)
-    def nodes_on_level(self, level: int, curr_node: BinNode = ''):
-        if curr_node == '':
-            curr_node = self.root
+    def nodes_on_level(self, level: int):
         if level > self.get_height() or level < 0:
             return []
-        if not level:
-            return [curr_node]
-        if curr_node.left is None and curr_node.right is None:
-            return []
-        left, right = [], []
-        if curr_node.left is not None:
-            left = self.nodes_on_level(level - 1, curr_node.left)
-        if curr_node.right is not None:
-            right = self.nodes_on_level(level - 1, curr_node.right)
-        return left + right
-    def width(self):
-        Max = 0
-        for i in range(self.get_height()):
-            Max = max(len(self.nodes_on_level(i)), Max)
-        return Max
-    def get_height_recursive(self):
-        def helper(curr_node=''):
-            if curr_node == '':
-                curr_node = self.root
+        def helper(l, curr_node: BinNode):
+            if not l:
+                return [curr_node]
             if curr_node.left is None and curr_node.right is None:
-                return 0
-            left, right = 0, 0
+                return []
+            left, right = [], []
             if curr_node.left is not None:
-                left = helper(curr_node.left)
+                left = helper(l - 1, curr_node.left)
             if curr_node.right is not None:
-                right = helper(curr_node.right)
-            return 1 + max(left, right)
-        return helper()
+                right = helper(l - 1, curr_node.right)
+            return left + right
+        return helper(level, self.root)
+    def width(self):
+        res = 0
+        for i in range(self.get_height()):
+            res = max(len(self.nodes_on_level(i)), res)
+        return res
     def get_height(self):
-        Last_Node = self.root
-        while Last_Node.right is not None:
-            Last_Node = Last_Node.right
-        node = self.root
-        current, Max, so_far, chain = 0, 0, [None], [node]
-        while True:
-            if node.left not in so_far:
-                node = node.left
-                chain.append(node)
-                current += 1
-            elif node.right not in so_far:
-                node = node.right
-                chain.append(node)
-                current += 1
-            else:
-                Max = max(Max, current)
-                if node == Last_Node:
-                    break
-                current -= 1
-                node = chain[-2]
-                so_far.append(chain.pop())
-        return Max
-    def count_leaves(self, curr_node=''):
-        if curr_node == '':
-            curr_node = self.root
-        if curr_node is None:
-            return 0
-        if curr_node.left is None and curr_node.right is None:
-            return 1
-        return self.count_leaves(curr_node.left) + self.count_leaves(curr_node.right)
-    def count_nodes(self, curr_node=''):
-        if curr_node == '':
-            curr_node = self.root
-        if curr_node is None:
-            return 0
-        return (curr_node.value() is not None) + self.count_nodes(curr_node.left) + self.count_nodes(curr_node.right)
+        def helper(curr_node):
+            if curr_node is None:
+                return -1
+            return 1 + max(helper(curr_node.left), helper(curr_node.right))
+        return helper(self.root)
+    def count_leaves(self):
+        def helper(curr_node):
+            if curr_node is None:
+                return 0
+            if curr_node.left is None and curr_node.right is None:
+                return 1
+            return helper(curr_node.left) + helper(curr_node.right)
+        return helper(self.root)
+    def count_nodes(self):
+        def helper(curr_node):
+            if curr_node is None:
+                return 0
+            if curr_node.left is None and curr_node.right is None:
+                return 1
+            return (curr_node.value() is not None) + helper(curr_node.left) + helper(curr_node.right)
+        return helper(self.root)
     def code_in_morse(self, v):
-        def helper(tree=None):
-            if tree is None:
-                tree = self
+        def helper(tree):
             if tree.root.value() is False:
                 return
             if tree.root.left is not None:
@@ -111,7 +81,7 @@ class BinTree:
             res = helper(tree.right())
             if res:
                 return '- ' + res
-        return helper(v)
+        return helper(self)
     def encode(self, message: str):
         res = ''
         for c in message.upper():
@@ -121,35 +91,34 @@ class BinTree:
                 res += c + '  '
         return res[:-2]
     def invert(self):
-        def helper(node=''):
+        def dfs(node=''):
             if node == '':
                 node = self.root
             if node is None:
                 return
-            helper(node.left)
-            helper(node.right)
+            dfs(node.left), dfs(node.right)
             node.left, node.right = node.right, node.left
-        helper()
+        dfs()
     def __invert__(self):
         self.invert()
     def __contains__(self, item):
         if self.root.value() == item:
             return True
-        if self.root.left is not None:
-            if item in self.left():
-                return True
+        if self.root.left is not None and item in self.left():
+            return True
         if self.root.right is not None:
             return item in self.right()
     def __eq__(self, other):
-        if self.root == other.root:
-            if self.root.left is not None and other.root.left is not None:
-                if self.left() == other.left():
-                    return True
-                return self.root.left == other.root.left
-            if self.root.right is not None and other.root.right is not None:
-                return self.right() == other.right()
-            return self.root.right == other.root.right
-        return False
+        if self.root != other.root:
+            return False
+        if self.root.left is not None and other.root.left is not None:
+            if self.left() == other.left():
+                return True
+            if self.root.left != other.root.left:
+                return False
+        if self.root.right is not None and other.root.right is not None:
+            return self.right() == other.right()
+        return self.root.right == other.root.right
     def __bool__(self):
         return self.root is not None
     def __preorder_print(self, start: BinNode, traversal: [BinNode]):
@@ -307,7 +276,7 @@ class Tree:
         dfs(self.root())
         return len(self.nodes()) - max(dp[self.root()])
     def dominatingSet(self):
-        dp = SortedKeysDict(*[(n, [1, 0] for n in self.__nodes)])
+        dp = SortedKeysDict(*[(n, [1, 0]) for n in self.__nodes])
         def dfs(r):
             if not self.descendants(r):
                 return
@@ -431,7 +400,7 @@ class WeightedNodesTree(Tree):
         dfs(self.root())
         return len(self.nodes()) - max(dp[self.root()])
     def dominatingSet(self):
-        dp = SortedKeysDict(*[(n, [self.__weights[n], 0] for n in self.__nodes)])
+        dp = SortedKeysDict(*[(n, [self.__weights[n], 0]) for n in self.__nodes])
         def dfs(r):
             if not self.descendants(r):
                 return
