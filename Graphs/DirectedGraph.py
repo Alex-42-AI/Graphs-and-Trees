@@ -1,4 +1,4 @@
-from Personal.DiscreteMath.Graphs.General import Node, Dict, SortedKeysDict, SortedList
+from DiscreteMath.Graphs.General import Node, Dict, SortedKeysDict, SortedList
 class DirectedGraph:
     def __init__(self, *nodes: Node):
         self.__nodes = SortedList()
@@ -537,7 +537,7 @@ class DirectedGraph:
         return '({' + ', '.join(str(n) for n in self.__nodes) + '}, {' + ', '.join(str(l[0]) + '->' + str(l[1]) for l in self.__links) + '})'
     def __repr__(self):
         return str(self)
-class WeightedDirectedGraph(DirectedGraph):
+class WeightedLinksDirectedGraph(DirectedGraph):
     def __init__(self, *nodes: Node):
         super().__init__(*nodes)
         self.__weights = Dict()
@@ -610,7 +610,7 @@ class WeightedDirectedGraph(DirectedGraph):
             if (u, n) in [l for l in self.__weights.keys()]:
                 self.__weights.pop((u, n))
     def copy(self):
-        res = WeightedDirectedGraph(*self.nodes())
+        res = WeightedLinksDirectedGraph(*self.nodes())
         for u in self.nodes():
             for v in self.nodes():
                 if (u, v) in self.links():
@@ -738,7 +738,7 @@ class WeightedDirectedGraph(DirectedGraph):
             return False
         return False
     def __add__(self, other):
-        if isinstance(other, WeightedDirectedGraph):
+        if isinstance(other, WeightedLinksDirectedGraph):
             res = self.copy()
             for n in other.nodes():
                 if n not in res.nodes():
@@ -756,7 +756,7 @@ class WeightedDirectedGraph(DirectedGraph):
             return res
         raise TypeError(f'Can\'t add class WeightedDirectedGraph to class {type(other)}!')
     def __eq__(self, other):
-        if isinstance(other, WeightedDirectedGraph):
+        if isinstance(other, WeightedLinksDirectedGraph):
             for n in self.nodes():
                 if n not in other.nodes():
                     return False
