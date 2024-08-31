@@ -1,4 +1,4 @@
-from Personal.DiscreteMath.Graphs.General import Node, Dict, SortedKeysDict, SortedList, BinNode
+from DiscreteMath.Graphs.General import Node, Dict, SortedKeysDict, SortedList, BinNode
 class BinTree:
     def __init__(self, root=None):
         self.root = root if isinstance(root, BinNode) else BinNode(root)
