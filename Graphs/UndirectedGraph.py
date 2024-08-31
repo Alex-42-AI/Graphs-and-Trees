@@ -1,4 +1,4 @@
-from DiscreteMath.Graphs.General import Node, Link, Dict, SortedKeysDict, SortedList
+from Graphs.General import Node, Link, Dict, SortedKeysDict, SortedList
 class UndirectedGraph:
     def __init__(self, *nodes: Node):
         self.__nodes = SortedList()
