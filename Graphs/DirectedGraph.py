@@ -1,4 +1,4 @@
-from DiscreteMath.Graphs.General import Node, Dict, SortedKeysDict, SortedList
+from Graphs.General import Node, Dict, SortedKeysDict, SortedList
 class DirectedGraph:
     def __init__(self, *nodes: Node):
         self.__nodes = SortedList()
