@@ -1,4 +1,4 @@
-from Lists import SortedList
+from Personal.Lists import SortedList
 class Dict:
     def __init__(self, *args: (object, object)):
         self.__items = []
