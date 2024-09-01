@@ -333,93 +333,84 @@ class DirectedGraph:
     def euler_walk_exists(self, u: Node, v: Node):
         if self.euler_tour_exists():
             return u == v
-        temp_degrees = SortedKeysDict(*[(n, [sum([n == l[0] for l in self.__links]), sum([n == l[1] for l in self.__links])]) for n in self.__nodes])
         for n in self.__nodes:
-            if temp_degrees[n][0] % 2 and n != u or temp_degrees[n][1] % 2 and n != v:
+            if self.degrees(n)[0] % 2 and n != u or self.degrees(n)[1] % 2 and n != v:
                 return False
-        return temp_degrees[u][0] % 2 + temp_degrees[v][1] % 2 in [0, 2] and self.connected()
-    def __hamiltonTourExists(self, nodes: [Node] = None, links: [(Node, Node)] = None, can_continue_from: [Node] = None, can_end_in: [Node] = None, end_links: [(Node, Node)] = None):
-        if nodes is None:
-            nodes = self.__nodes
-        if links is None:
-            links = self.__links
-        if can_continue_from is None:
-            can_continue_from = nodes
-        curr_degrees = SortedKeysDict(*[(n, [0, 0]) for n in nodes])
-        for n in nodes:
-            for l in links:
-                curr_degrees[n][0] += n == l[0]
-                curr_degrees[n][1] += n == l[1]
-        if len(links) == len(nodes) ** 2 - len(nodes) or all(sum(curr_degrees[n]) >= len(can_continue_from) for n in can_continue_from):
-            return True
-        if can_end_in is not None:
-            can_continue = False
-            for n in nodes:
-                if n in [l[1] for l in end_links]:
-                    can_continue = True
-                    break
-            if not can_continue:
-                return False
-        for n in can_continue_from:
-            if can_end_in is None:
-                can_end_in = [m for m in nodes if (m, n) in links]
-                if not can_end_in:
-                    continue
-                end_links = [(m, n) for m in can_end_in]
-            if self.__hamiltonTourExists([_n for _n in nodes if _n != n], [l for l in links if n not in l], [_n for _n in nodes if (n, _n) in links], can_end_in, end_links):
-                return True
-        return False
-    def hamiltonTourExists(self):
-        return self.__hamiltonTourExists()
-    def hamiltonWalkExists(self, u: Node, v: Node = None):
-        def dfs(x, nodes: [Node] = None, links: [(Node, Node)] = None, can_continue_from: [Node] = None):
-            if nodes is None:
-                nodes = self.__nodes
-            if links is None:
-                links = self.__links
-            if can_continue_from is None:
-                can_continue_from = [n for n in nodes if (x, n) in links]
-            if not self.__connected(nodes, links):
-                return False
-            if self.__hamiltonTourExists(nodes, links, can_continue_from):
-                return True
-            if v is None:
-                for y in [_n for _n in self.__nodes if _n != x]:
-                    if self.hamiltonWalkExists(x, y):
-                        return True
-                return False
-            if v in nodes:
-                for n in can_continue_from:
-                    if dfs(n, [m for m in nodes if m != x], [l for l in links if x not in l], [m for m in nodes if (n, m) in links and m not in [x, v]]):
-                        return True
-                return False
-            raise ValueError('Unrecognized node(s).')
-        return dfs(u)
-    def eulerTour(self):
+        return self.degrees(u)[0] % 2 + self.degrees(v)[1] % 2 in [0, 2] and self.connected()
+    def euler_tour(self):
         if self.euler_tour_exists():
-            u = self.__nodes[0]
-            for l in self.__links:
-                if u == l[1]:
-                    return self.__eulerWalk(u, l[0], [_l for _l in self.__links if _l != l]) + [l]
+            u, v = self.links()[0]
+            self.disconnect(v, u)
+            res = self.euler_walk(u, v)
+            self.connect_from_to(v, u)
+            return res
         return False
-    def __eulerWalk(self, u: Node, v: Node, links: [(Node, Node)]):
+    def euler_walk(self, u: Node, v: Node):
+        def dfs(x, stack):
+            for y in self.next(x):
+                if (x, y) not in result + stack:
+                    if y == n:
+                        stack.append((x, y))
+                        for j in range(len(stack)):
+                            result.insert(i + j, stack[j])
+                        return
+                    dfs(y, stack + [(x, y)])
         if u in self.__nodes and v in self.__nodes:
-            if links == [(u, v)]:
-                return links
-            for l in links:
-                if u == l[0] and self.__connected(self.__nodes, [_l for _l in links if _l != l]):
-                    return [l] + self.__eulerWalk(l[1], v, [_l for _l in links if _l != l])
-        raise ValueError('Unrecognized nodes!')
-    def eulerWalk(self, u: Node, v: Node):
-        return self.__eulerWalk(u, v, self.__links) if self.euler_walk_exists(u, v) else False
+            if self.euler_walk_exists(u, v):
+                result = self.get_shortest_path(u, v)
+                for i, l in enumerate(result):
+                    n = l[0]
+                    dfs(n, [])
+                return result
+            return False
+    def hamiltonTourExists(self):
+        def dfs(nodes: [Node], links: [(Node, Node)], can_continue_from: [Node] = None, can_end_in: [Node] = None, end_links: [(Node, Node)] = None):
+            if can_continue_from is None:
+                can_continue_from = nodes
+            curr_degrees = SortedKeysDict(*[(n, [0, 0]) for n in nodes])
+            for n in nodes:
+                for l in links:
+                    curr_degrees[n][0] += n == l[0]
+                    curr_degrees[n][1] += n == l[1]
+            if len(links) == len(nodes) ** 2 - len(nodes) or all(sum(curr_degrees[n]) >= len(can_continue_from) for n in can_continue_from):
+                return True
+            if can_end_in is not None:
+                can_continue = False
+                for n in nodes:
+                    if n in [l[1] for l in end_links]:
+                        can_continue = True
+                        break
+                if not can_continue:
+                    return False
+            for n in can_continue_from:
+                if can_end_in is None:
+                    can_end_in = [m for m in nodes if (m, n) in links]
+                    if not can_end_in:
+                        continue
+                    end_links = [(m, n) for m in can_end_in]
+                if dfs([_n for _n in nodes if _n != n], [l for l in links if n not in l], [_n for _n in nodes if (n, _n) in links], can_end_in, end_links):
+                    return True
+            return False
+        return dfs(self.__nodes, self.__links)
+    def hamiltonWalkExists(self, u: Node, v: Node = None):
+        res, ctr = self.nodes()[0].value(), self.nodes()[0].value()
+        if res + ctr == res:
+            ctr = self.nodes()[1].value()
+        while Node(res) in self.nodes():
+            res += ctr
+        new = Node(res)
+        self.add(new, [v], [u])
+        result = self.hamiltonTourExists()
+        self.remove(new)
+        return result
     def hamiltonTour(self):
         if any(not self.__degrees[u][0] or not self.__degrees[u][1] for u in self.__nodes) or not self.__connected(self.__nodes, self.__links):
             return False
-        for u in self.__nodes:
-            for v in [_n for _n in self.__nodes if (_n, u) in self.__links]:
-                result = self.hamiltonWalk(u, v)
-                if result:
-                    return result + [u]
+        u = self.__nodes[0]
+        for v in self.next(u):
+            result = self.hamiltonWalk(u, v)
+            if result:
+                return result + [u]
         return False
     def hamiltonWalk(self, u: Node, v: Node = None):
         def dfs(x: Node, y: Node = None, nodes: [Node] = None, links: [(Node, Node)] = None, can_continue_from: [Node] = None, res_stack: [Node] = None):
