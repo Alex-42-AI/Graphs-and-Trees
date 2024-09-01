@@ -461,16 +461,12 @@ class UndirectedGraph:
             return False
         return dfs(self.__nodes, self.__links)
     def hamiltonWalkExists(self, u: Node, v: Node):
-        res, ctr = self.nodes()[0].value(), self.nodes()[0].value()
-        if res + ctr == res:
-            ctr = self.nodes()[1].value()
-        while Node(res) in self.nodes():
-            res += ctr
-        new = Node(res)
-        self.add(new, u, v)
-        result = self.hamiltonTourExists()
-        self.remove(new)
-        return result
+        if v in self.neighboring(u):
+            return True if all(n in (u, v) for n in self.nodes()) else self.hamiltonTourExists()
+        self.connect(u, v)
+        res = self.hamiltonTourExists()
+        self.disconnect(u, v)
+        return res
     def hamiltonTour(self):
         if any(self.__degrees[n] <= 1 for n in self.__nodes) or not self.connected():
             return False
@@ -872,14 +868,21 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
                 return dfs(u, [], 0, sum(self.link_weights(l) for l in self.links() if self.link_weights(l) < 0))
             return [], 0
         raise ValueError('Unrecognized node(s)!')
+    def hamiltonWalkExists(self, u: Node, v: Node):
+        if v in self.neighboring(u):
+            return True if all(n in (u, v) for n in self.nodes()) else self.hamiltonTourExists()
+        self.connect(u, (v, 0))
+        res = self.hamiltonTourExists()
+        self.disconnect(u, v)
+        return res
     def hamiltonTour(self):
         if any(self.degrees(n) <= 1 for n in self.nodes()) or not self.connected():
             return False
-        for u in self.nodes():
-            for v in self.neighboring(u):
-                res = self.hamiltonWalk(u, v)
-                if res:
-                    return res[0] + [u], res[1] + sum(self.link_weights(res[0][i], res[0][i + 1]) for i in range(len(res[0]) - 1)) + self.link_weights(res[0][-1], res[0][0])
+        u = self.nodes()[0]
+        for v in self.neighboring(u):
+            res = self.hamiltonWalk(u, v)
+            if res:
+                return res[0] + [u], res[1] + sum(self.link_weights(res[0][i], res[0][i + 1]) for i in range(len(res[0]) - 1)) + self.link_weights(res[0][-1], res[0][0])
         return False
     def hamiltonWalk(self, u: Node = None, v: Node = None):
         def dfs(x: Node, y: Node = None, nodes: [Node] = None, links: [Link] = None, can_continue_from: [Node] = None, res_stack: [Node] = None):
