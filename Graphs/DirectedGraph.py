@@ -393,16 +393,12 @@ class DirectedGraph:
             return False
         return dfs(self.__nodes, self.__links)
     def hamiltonWalkExists(self, u: Node, v: Node = None):
-        res, ctr = self.nodes()[0].value(), self.nodes()[0].value()
-        if res + ctr == res:
-            ctr = self.nodes()[1].value()
-        while Node(res) in self.nodes():
-            res += ctr
-        new = Node(res)
-        self.add(new, [v], [u])
-        result = self.hamiltonTourExists()
-        self.remove(new)
-        return result
+        if u in self.next(v):
+            return True if all(n in (u, v) for n in self.nodes()) else self.hamiltonTourExists()
+        self.connect_from_to(v, u)
+        res = self.hamiltonTourExists()
+        self.disconnect(v, u)
+        return res
     def hamiltonTour(self):
         if any(not self.__degrees[u][0] or not self.__degrees[u][1] for u in self.__nodes) or not self.__connected(self.__nodes, self.__links):
             return False
@@ -756,6 +752,13 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                 return dfs(u, [], 0, sum(self.weights(l) for l in self.links() if self.weights(l) < 0))
             return [], 0
         raise ValueError('Unrecognized node(s)!')
+    def hamiltonWalkExists(self, u: Node, v: Node = None):
+        if u in self.next(v):
+            return True if all(n in (u, v) for n in self.nodes()) else self.hamiltonTourExists()
+        self.connect_from_to(v, (u, 0))
+        res = self.hamiltonTourExists()
+        self.disconnect(v, u)
+        return res
     def hamiltonTour(self):
         if any(not self.degrees(n)[0] or not self.degrees(n)[1] for n in self.nodes()) or not self.connected():
             return False
