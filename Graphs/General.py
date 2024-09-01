@@ -6,8 +6,7 @@ class Dict:
             if arg not in self.__items:
                 if len(arg) != 2:
                     raise ValueError('Pairs of keys and values expected!')
-                if arg[1] is not None:
-                    self.__items.append(arg)
+                self.__items.append(arg)
         for i, item1 in enumerate(self.__items):
             for item2 in self.__items[i + 1:]:
                 if item1[0] == item2[0]:
@@ -76,12 +75,10 @@ class SortedKeysDict(Dict):
             if arg not in self.__items:
                 if len(arg) != 2:
                     raise ValueError('Pairs of keys and values expected!')
-                if arg[1] is not None:
-                    self.__items.insert(arg)
-        for i, item1 in enumerate(self.__items):
-            for item2 in self.__items[i + 1:]:
-                if item1[0] == item2[0]:
-                    raise KeyError('No similar keys in a dictionary allowed!')
+                self.__items.insert(arg)
+        for i in range(len(self.__items) - 1):
+            if self.__items[i][0] == self.__items[i + 1][0]:
+                raise KeyError('No similar keys in a dictionary allowed!')
     def pop(self, item):
         low, high = 0, len(self)
         while low < high:
