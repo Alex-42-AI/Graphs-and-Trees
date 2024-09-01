@@ -189,6 +189,8 @@ class BinNode(Node):
         self.right = right
     def leaf(self):
         return self.left == self.right is None
+    def __bool__(self):
+        return self.value() is not None
     def __eq__(self, other):
         if isinstance(other, BinNode):
             return (self.value(), self.left, self.right) == (other.value(), other.left, other.right)
