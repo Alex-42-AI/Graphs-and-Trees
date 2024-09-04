@@ -1162,7 +1162,6 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
 class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirectedGraph):
     def __init__(self, *pairs: (Node, float)):
         WeightedNodesUndirectedGraph.__init__(*pairs)
-        self.__link_weights = Dict()
 
     def total_weight(self):
         return self.total_nodes_weight() + self.total_links_weight()
