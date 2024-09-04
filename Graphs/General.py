@@ -1,4 +1,4 @@
-from Personal.Lists import SortedList
+from Lists import SortedList
 
 
 class Dict:
