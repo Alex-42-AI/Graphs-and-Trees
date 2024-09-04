@@ -288,7 +288,7 @@ class UndirectedGraph:
             return list(map(list, self.nodes().value()))
         if k == len(self.nodes()):
             return [[], [self.nodes()]][self.full()]
-        result = []
+        result = SortedList()
         for p in permutations(self.nodes().value(), k):
             can = True
             for i, _n in enumerate(p):
@@ -299,12 +299,12 @@ class UndirectedGraph:
                 if not can: break
             if can:
                 exists = False
-                for clique in result:
+                for clique in result.value():
                     if all(_n in clique for _n in p):
                         exists = True
                         break
                 if not exists:
-                    result.append(list(p))
+                    result.insert(list(p))
         return result
 
     def chromaticNumberNodes(self):
@@ -552,18 +552,20 @@ class UndirectedGraph:
         if isinstance(other, UndirectedGraph):
             res = self.copy()
             for n in other.nodes().value():
-                if n not in res.nodes(): res.add(n)
+                if n not in res.nodes():
+                    res.add(n)
             for l in other.links():
-                if l not in res.links(): res.connect(l[0], l[1])
+                if l not in res.links():
+                    res.connect(l[0], l[1])
             return res
         raise TypeError(f"Addition not defined between class UndirectedGraph and type {type(other).__name__}!")
 
     def __eq__(self, other):
         if isinstance(other, UndirectedGraph):
+            if len(self.links()) != len(other.links()) or self.nodes() != other.nodes(): return False
             for l in self.links():
-                if l not in other.links():
-                    return False
-            return len(self.links()) == len(other.links()) and self.nodes() == other.nodes()
+                if l not in other.links(): return False
+            return True
         return False
 
     def __str__(self):
@@ -795,11 +797,11 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
 
     def __eq__(self, other):
         if isinstance(other, WeightedNodesUndirectedGraph):
+            if self.node_weights() != other.node_weights() or len(self.links()) != len(other.links()): return False
             for l in self.links():
-                if l not in other.links():
-                    return False
-            return self.node_weights() == other.node_weights() and len(self.links()) == len(other.links())
-        return super().__eq__(other)
+                if l not in other.links(): return False
+            return True
+        return False
 
     def __str__(self):
         return '({' + ', '.join(f'{str(n)} -> {self.node_weights(n)}' for n in self.nodes().value()) + '}, ' + str(self.links()) + ')'
@@ -1105,7 +1107,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
     def __eq__(self, other):
         if isinstance(other, WeightedLinksUndirectedGraph):
             return self.nodes() == other.nodes() and self.link_weights() == other.link_weights()
-        return super().__eq__(other)
+        return False
 
     def __str__(self):
         return '({' + ', '.join(str(n) for n in self.nodes().value()) + '}, ' + str(self.link_weights()) + ')'
