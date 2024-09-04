@@ -411,7 +411,7 @@ class UndirectedGraph:
         def helper(curr):
             if not self.nodes():
                 return curr
-            result = [*self.nodes().value()]
+            result = self.nodes().value()
             for u in self.nodes().value():
                 neighbors = self.neighboring(u).value()
                 self.remove(u)
@@ -427,7 +427,7 @@ class UndirectedGraph:
         def helper(curr):
             if not self.nodes():
                 return curr
-            result = [*self.nodes().value()]
+            result = self.nodes().value()
             for u in self.nodes().value():
                 neighbors = self.neighboring(u).value()
                 rest = SortedKeysDict(*[(n, self.neighboring(n).value()) for n in neighbors])
@@ -440,6 +440,9 @@ class UndirectedGraph:
             return result
 
         return helper([])
+
+    def maxAntiClique(self):
+        return list(filter(lambda x: x not in self.vertexCover(), self.nodes().value()))
 
     def hamiltonTourExists(self):
         def dfs(x):
@@ -659,7 +662,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         def helper(curr):
             if not self.nodes():
                 return curr
-            result, result_sum = [*self.nodes().value()], self.total_nodes_weight()
+            result, result_sum = self.nodes().value(), self.total_nodes_weight()
             for u in self.nodes().value():
                 neighbors, w = self.neighboring(u).value(), self.node_weights(u)
                 self.remove(u)
@@ -676,7 +679,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         def helper(curr):
             if not self.nodes():
                 return curr
-            result, result_sum = [*self.nodes().value()], self.total_nodes_weight()
+            result, result_sum = self.nodes().value(), self.total_nodes_weight()
             for u in self.nodes().value():
                 neighbors, w = self.neighboring(u).value(), self.node_weights(u)
                 rest = SortedKeysDict(*[(n, (self.node_weights(n), self.neighboring(n).value())) for n in neighbors])
@@ -692,6 +695,9 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
             return result
 
         return helper([])
+
+    def maxAntiClique(self):
+        return list(filter(lambda x: x not in super().vertexCover(), self.nodes().value()))
 
     def hamiltonTourExists(self):
         def dfs(x):
@@ -980,7 +986,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         def helper(curr):
             if not self.nodes():
                 return curr
-            result = [*self.nodes().value()]
+            result = self.nodes().value()
             for u in self.nodes().value():
                 neighbors = self.link_weights(u)
                 self.remove(u)
@@ -996,7 +1002,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         def helper(curr):
             if not self.nodes():
                 return curr
-            result = [*self.nodes().value()]
+            result = self.nodes().value()
             for u in self.nodes().value():
                 neighbors = self.neighboring(u).value()
                 rest, rest_w = SortedKeysDict(*[(n, self.neighboring(n).value()) for n in neighbors]), SortedKeysDict(*[(n, self.link_weights(n)) for n in neighbors])
@@ -1226,7 +1232,7 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
         def helper(curr):
             if not self.nodes():
                 return curr
-            result, result_sum = [*self.nodes().value()], self.total_nodes_weight()
+            result, result_sum = self.nodes().value(), self.total_nodes_weight()
             for u in self.nodes().value():
                 neighbors_weights, w = self.link_weights(u), self.node_weights(u)
                 self.remove(u)
@@ -1243,7 +1249,7 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
         def helper(curr):
             if not self.nodes():
                 return curr
-            result, result_sum = [*self.nodes().value()], self.total_nodes_weight()
+            result, result_sum = self.nodes().value(), self.total_nodes_weight()
             for u in self.nodes().value():
                 w, neighbors_weights = self.node_weights(u), SortedKeysDict(*[(n, self.node_weights(n)) for n in self.neighboring(u).value()])
                 rest, rest_w = SortedKeysDict(*[(n, self.neighboring(n).value()) for n in neighbors_weights.keys()]), SortedKeysDict(*[(n, self.link_weights(n)) for n in neighbors_weights.keys()])
@@ -1258,6 +1264,9 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
             return result
 
         return helper([])
+
+    def maxAntiClique(self):
+        return list(filter(lambda x: x not in UndirectedGraph.vertexCover(self), self.nodes().value()))
 
     def isomorphic(self, other: UndirectedGraph):
         if isinstance(other, WeightedUndirectedGraph):
