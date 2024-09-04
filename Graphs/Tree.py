@@ -234,6 +234,14 @@ class Tree:
                 queue += res_descendants
         return res
 
+    def subtree(self, u: Node):
+        queue, res = [u], Tree(u)
+        while queue:
+            v = queue.pop(0)
+            for n in self.descendants(v):
+                res.add_nodes_to(v, n)
+        return res
+
     def extend_tree_at(self, n: Node, tree):
         if n not in self.nodes():
             raise Exception('Node not found!')
@@ -425,6 +433,14 @@ class WeightedNodesTree(Tree):
                 res.add_nodes_to(u, *res_descendants)
                 for d in res_descendants: res.__weights[d] = self.weights(d)
                 queue += res_descendants
+        return res
+
+    def subtree(self, u: Node):
+        queue, res = [u], WeightedNodesTree((u, self.weights(u)))
+        while queue:
+            v = queue.pop(0)
+            for n in self.descendants(v):
+                res.add_nodes_to(v, (n, self.weights(n)))
         return res
 
     def add_nodes_to(self, u: Node, new_p: (Node, float), *rest_p: (Node, float)):
