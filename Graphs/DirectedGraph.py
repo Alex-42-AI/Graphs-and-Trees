@@ -569,7 +569,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
         super().remove(n, *nodes)
 
     def subgraph(self, u: Node):
-        queue, res = [u], DirectedGraph((u, self.node_weights(u)))
+        queue, res = [u], WeightedNodesDirectedGraph((u, self.node_weights(u)))
         while queue:
             v = queue.pop(0)
             for n in self.next(v).value():
@@ -821,7 +821,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
         return res
 
     def subgraph(self, u: Node):
-        queue, res = [u], DirectedGraph(u)
+        queue, res = [u], WeightedLinksDirectedGraph(u)
         while queue:
             v = queue.pop(0)
             for n in self.next(v).value():
@@ -1025,7 +1025,7 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
 
     def remove(self, u: Node, *rest: Node):
         for n in (u,) + rest:
-            self.__node_weights.pop(n)
+            self._WeightedNodesDirectedGraph__node_weights.pop(n)
         WeightedLinksDirectedGraph.remove(self, u, *rest)
 
     def connect_from_to(self, u: Node, v_w: (Node, float), *nodes_weights: (Node, float)):
@@ -1045,7 +1045,7 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
         return res
 
     def subgraph(self, u: Node):
-        queue, res = [u], DirectedGraph((u, self.node_weights(u)))
+        queue, res = [u], WeightedDirectedGraph((u, self.node_weights(u)))
         while queue:
             v = queue.pop(0)
             for n in self.next(v).value():
@@ -1148,18 +1148,18 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
         if isinstance(other, WeightedDirectedGraph):
             for n in other.nodes().value():
                 if n in res.nodes():
-                    res.__node_weights[n] += other.node_weights(n)
+                    res._WeightedNodesDirectedGraph__node_weights[n] += other.node_weights(n)
                 else:
                     res.add((n, other.node_weights(n)))
             for l in other.links():
                 if l in res.links():
-                    res.__link_weights += other.link_weights(l)
+                    res._WeightedLinksDirectedGraph__link_weights += other.link_weights(l)
                 else:
                     res.connect_from_to(l[0], (l[1], other.link_weights(l)))
         elif isinstance(other, WeightedNodesDirectedGraph):
             for n in other.nodes().value():
                 if n in res.nodes():
-                    res._WeightedNodesDirectedGraph__node_weights[n] += other.node_weights(n)
+                    res._WeightedNodesDirectedGraph_WeightedNodesDirectedGraph__node_weights[n] += other.node_weights(n)
                 else:
                     res.add((n, other.node_weights(n)))
             for (u, v) in other.links():
