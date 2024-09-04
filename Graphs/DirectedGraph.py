@@ -187,7 +187,7 @@ class DirectedGraph:
             for n in self.next(v).value():
                 if n in res.nodes():
                     res.connect_from_to(v, n)
-                else: res.add(n, v)
+                else: res.add(n, v), queue.append(n)
         return res
 
     def cut_nodes(self):
@@ -575,7 +575,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
             for n in self.next(v).value():
                 if n in res.nodes():
                     res.connect_from_to(v, n)
-                else: res.add((n, self.node_weights(n)), v)
+                else: res.add((n, self.node_weights(n)), v), queue.append(n)
         return res
 
     def minimalPathNodes(self, u: Node, v: Node):
