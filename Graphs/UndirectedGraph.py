@@ -155,6 +155,17 @@ class UndirectedGraph:
                 total.insert(m), queue.append(m)
         return False
 
+    def component(self, u: Node):
+        queue, res = [u], UndirectedGraph(u)
+        while queue:
+            v = queue.pop(0)
+            for n in self.neighboring(v).value():
+                if n in res.nodes():
+                    res.connect(v, n)
+                else:
+                    res.add(n, v)
+        return res
+
     def cut_nodes(self):
         def dfs(u: Node, l: int):
             colors[u], levels[u], min_back, is_root, count, is_cut = 1, l, l, not l, 0, False
@@ -323,10 +334,14 @@ class UndirectedGraph:
                                 colors[v] = i
                                 break
                 return max(colors.values())
-            if so_far is None: so_far = SortedList()
-            if _except is None: _except = SortedList()
-            if nodes is None: nodes = sorted(self.nodes().value(), key=lambda _n: self.degrees(_n))
-            if not nodes: return curr
+            if so_far is None:
+                so_far = SortedList()
+            if _except is None:
+                _except = SortedList()
+            if nodes is None:
+                nodes = sorted(self.nodes().value(), key=lambda _n: self.degrees(_n))
+            if not nodes:
+                return curr
             if self.__full(nodes, [l for l in self.links() if l[0] in nodes and l[1] in nodes]):
                 return len(nodes) + curr
             curr_degrees = SortedKeysDict(*[(n, 0) for n in nodes])
@@ -359,7 +374,8 @@ class UndirectedGraph:
         res_graph = UndirectedGraph(*[Node(l) for l in self.links()])
         for n in res_graph.nodes().value():
             for m in res_graph.nodes().value():
-                if m != n and (n.value()[0] in m.value() or n.value()[1] in m.value()): res_graph.connect(n, m)
+                if m != n and (n.value()[0] in m.value() or n.value()[1] in m.value()):
+                    res_graph.connect(n, m)
         return res_graph.chromaticNumberNodes()
 
     def pathWithLength(self, u: Node, v: Node, length: int):
@@ -401,7 +417,8 @@ class UndirectedGraph:
                 self.remove(u)
                 res = helper(curr + [u])
                 self.add(u, *neighbors)
-                if len(res) < len(result): result = res
+                if len(res) < len(result):
+                    result = res
             return result
 
         return helper([])
@@ -562,9 +579,11 @@ class UndirectedGraph:
 
     def __eq__(self, other):
         if isinstance(other, UndirectedGraph):
-            if len(self.links()) != len(other.links()) or self.nodes() != other.nodes(): return False
+            if len(self.links()) != len(other.links()) or self.nodes() != other.nodes():
+                return False
             for l in self.links():
-                if l not in other.links(): return False
+                if l not in other.links():
+                    return False
             return True
         return False
 
@@ -605,6 +624,17 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         for u in (n,) + rest:
             self.__node_weights.pop(u)
         super().remove(n, *rest)
+
+    def component(self, u: Node):
+        queue, res = [u], WeightedNodesUndirectedGraph((u, self.node_weights(u)))
+        while queue:
+            v = queue.pop(0)
+            for n in self.neighboring(v).value():
+                if n in res.nodes():
+                    res.connect(v, n)
+                else:
+                    res.add((n, self.node_weights(n)), v)
+        return res
 
     def minimalPathNodes(self, u: Node, v: Node):
         def dfs(x, curr_path, curr_w, total_negative, res_path=None, res_w=0):
@@ -692,7 +722,8 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
             for n in self.nodes().value():
                 if self.degrees(n) < 2 - (n in (x, v)):
                     return False
-            if not self.nodes(): return stack
+            if not self.nodes():
+                return stack
             tmp, w = self.neighboring(x).value(), self.node_weights(x)
             self.remove(x)
             for y in tmp:
@@ -797,9 +828,11 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
 
     def __eq__(self, other):
         if isinstance(other, WeightedNodesUndirectedGraph):
-            if self.node_weights() != other.node_weights() or len(self.links()) != len(other.links()): return False
+            if self.node_weights() != other.node_weights() or len(self.links()) != len(other.links()):
+                return False
             for l in self.links():
-                if l not in other.links(): return False
+                if l not in other.links():
+                    return False
             return True
         return False
 
@@ -864,6 +897,16 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
                 res.connect(u, (v, self.link_weights(u, v)))
         return res
 
+
+    def component(self, u: Node):
+        queue, res = [u], WeightedLinksUndirectedGraph(u)
+        while queue:
+            v = queue.pop(0)
+            for n in self.neighboring(v).value():
+                if n in res.nodes(): res.connect(v, (n, self.link_weights(v, n)))
+                else: res.add(n, v)
+        return res
+
     def euler_tour(self):
         if self.euler_tour_exists():
             u, v, w = self.links()[0][0], self.links()[0][1], self.link_weights(self.links()[0])
@@ -881,7 +924,8 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
             for comp in self.connection_components():
                 curr = WeightedLinksUndirectedGraph(*comp)
                 for u in comp:
-                    for v in self.neighboring(u).value(): curr.connect(u, (v, self.link_weights(u, v)))
+                    for v in self.neighboring(u).value():
+                        curr.connect(u, (v, self.link_weights(u, v)))
                 res.append(curr.minimal_spanning_tree())
             return res
         if not self.nodes():
@@ -1056,8 +1100,10 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
             this_nodes_degrees, other_nodes_degrees = {d: [] for d in this_degrees.keys()}, {d: [] for d in other_degrees.keys()}
             for d in this_degrees.keys():
                 for n in self.nodes().value():
-                    if self.degrees(n) == d: this_nodes_degrees[d].append(n)
-                    if other.degrees(n) == d: other_nodes_degrees[d].append(n)
+                    if self.degrees(n) == d:
+                        this_nodes_degrees[d].append(n)
+                    if other.degrees(n) == d:
+                        other_nodes_degrees[d].append(n)
             this_nodes_degrees, other_nodes_degrees = list(sorted(this_nodes_degrees.values(), key=lambda _p: len(_p))), list(sorted(other_nodes_degrees.values(), key=lambda _p: len(_p)))
             from itertools import permutations, product
             _permutations = [list(permutations(this_nodes)) for this_nodes in this_nodes_degrees]
@@ -1142,6 +1188,15 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
         for u in self.nodes().value():
             if self.degrees(u):
                 res.connect(u, *self.link_weights(u).items())
+        return res
+
+    def component(self, u: Node):
+        queue, res = [u], WeightedUndirectedGraph((u, self.node_weights(u)))
+        while queue:
+            v = queue.pop(0)
+            for n in self.neighboring(v).value():
+                if n in res.nodes(): res.connect(v, (n, self.link_weights(v, n)))
+                else: res.add((n, self.node_weights(n)), v)
         return res
 
     def minimalPath(self, u: Node, v: Node):
@@ -1251,7 +1306,8 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
             possibilities = product(*_permutations)
             for possibility in possibilities:
                 map_dict = []
-                for i, group in enumerate(possibility): map_dict += [*zip(group, other_nodes_degrees[i])]
+                for i, group in enumerate(possibility):
+                    map_dict += [*zip(group, other_nodes_degrees[i])]
                 possible = True
                 for n, u in map_dict:
                     for m, v in map_dict:
