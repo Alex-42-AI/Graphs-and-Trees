@@ -181,7 +181,14 @@ class DirectedGraph:
         return False
 
     def subgraph(self, u: Node):
-        pass
+        queue, res = [u], DirectedGraph(u)
+        while queue:
+            v = queue.pop(0)
+            for n in self.next(v).value():
+                if n in res.nodes():
+                    res.connect_from_to(v, n)
+                else: res.add(n, v)
+        return res
 
     def cut_nodes(self):
         def dfs(x: Node, l: int):
@@ -561,6 +568,16 @@ class WeightedNodesDirectedGraph(DirectedGraph):
             self.__node_weights.pop(u)
         super().remove(n, *nodes)
 
+    def subgraph(self, u: Node):
+        queue, res = [u], DirectedGraph((u, self.node_weights(u)))
+        while queue:
+            v = queue.pop(0)
+            for n in self.next(v).value():
+                if n in res.nodes():
+                    res.connect_from_to(v, n)
+                else: res.add((n, self.node_weights(n)), v)
+        return res
+
     def minimalPathNodes(self, u: Node, v: Node):
         def dfs(x, curr_path, curr_w, total_negative, res_path=None, res_w=0):
             if res_path is None:
@@ -803,6 +820,16 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                     res.connect_from_to(u, (v, self.link_weights(u, v)))
         return res
 
+    def subgraph(self, u: Node):
+        queue, res = [u], DirectedGraph(u)
+        while queue:
+            v = queue.pop(0)
+            for n in self.next(v).value():
+                if n in res.nodes():
+                    res.connect_from_to(v, (n, self.link_weights(v, n)))
+                else: res.add(n, v)
+        return res
+
     def euler_tour(self):
         if self.euler_tour_exists():
             v, u = self.links()[0]
@@ -1015,6 +1042,17 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
         for n in self.nodes().value():
             if self.degrees(n)[1]:
                 res.connect_from_to(n, *self.link_weights(n).items().value())
+        return res
+
+    def subgraph(self, u: Node):
+        queue, res = [u], DirectedGraph((u, self.node_weights(u)))
+        while queue:
+            v = queue.pop(0)
+            for n in self.next(v).value():
+                if n in res.nodes():
+                    res.connect_from_to(v, (n, self.link_weights(v, n)))
+                else:
+                    res.add((n, self.node_weights(n)), v)
         return res
 
     def minimalPath(self, u: Node, v: Node):
