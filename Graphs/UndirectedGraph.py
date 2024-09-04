@@ -163,7 +163,7 @@ class UndirectedGraph:
                 if n in res.nodes():
                     res.connect(v, n)
                 else:
-                    res.add(n, v)
+                    res.add(n, v), queue.append(n)
         return res
 
     def cut_nodes(self):
@@ -633,7 +633,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
                 if n in res.nodes():
                     res.connect(v, n)
                 else:
-                    res.add((n, self.node_weights(n)), v)
+                    res.add((n, self.node_weights(n)), v), queue.append(n)
         return res
 
     def minimalPathNodes(self, u: Node, v: Node):
@@ -903,8 +903,10 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         while queue:
             v = queue.pop(0)
             for n in self.neighboring(v).value():
-                if n in res.nodes(): res.connect(v, (n, self.link_weights(v, n)))
-                else: res.add(n, v)
+                if n in res.nodes():
+                    res.connect(v, (n, self.link_weights(v, n)))
+                else:
+                    res.add(n, v), queue.append(n)
         return res
 
     def euler_tour(self):
@@ -1197,7 +1199,7 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
                 if n in res.nodes():
                     res.connect(v, (n, self.link_weights(v, n)))
                 else:
-                    res.add((n, self.node_weights(n)), v)
+                    res.add((n, self.node_weights(n)), v), queue.append(n)
         return res
 
     def minimalPath(self, u: Node, v: Node):
