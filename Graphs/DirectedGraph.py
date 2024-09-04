@@ -827,7 +827,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
             for n in self.next(v).value():
                 if n in res.nodes():
                     res.connect_from_to(v, (n, self.link_weights(v, n)))
-                else: res.add(n, v)
+                else: res.add(n, v), queue.append(n)
         return res
 
     def euler_tour(self):
@@ -1052,7 +1052,7 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
                 if n in res.nodes():
                     res.connect_from_to(v, (n, self.link_weights(v, n)))
                 else:
-                    res.add((n, self.node_weights(n)), v)
+                    res.add((n, self.node_weights(n)), v), queue.append(n)
         return res
 
     def minimalPath(self, u: Node, v: Node):
