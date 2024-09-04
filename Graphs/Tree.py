@@ -238,8 +238,8 @@ class Tree:
         queue, res = [u], Tree(u)
         while queue:
             v = queue.pop(0)
-            for n in self.descendants(v):
-                res.add_nodes_to(v, n)
+            for n in self.descendants(v).value():
+                res.add_nodes_to(v, n), queue.append(n)
         return res
 
     def extend_tree_at(self, n: Node, tree):
@@ -439,8 +439,8 @@ class WeightedNodesTree(Tree):
         queue, res = [u], WeightedNodesTree((u, self.weights(u)))
         while queue:
             v = queue.pop(0)
-            for n in self.descendants(v):
-                res.add_nodes_to(v, (n, self.weights(n)))
+            for n in self.descendants(v).value():
+                res.add_nodes_to(v, (n, self.weights(n))), queue.append(n)
         return res
 
     def add_nodes_to(self, u: Node, new_p: (Node, float), *rest_p: (Node, float)):
