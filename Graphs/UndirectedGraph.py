@@ -1161,26 +1161,26 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
 
 class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirectedGraph):
     def __init__(self, *pairs: (Node, float)):
-        WeightedNodesUndirectedGraph.__init__(*pairs)
+        WeightedNodesUndirectedGraph.__init__(self, *pairs)
 
     def total_weight(self):
         return self.total_nodes_weight() + self.total_links_weight()
 
     def add(self, n_w: (Node, float), *nodes_link_weights: (Node, float)):
         if n_w[0] not in self.node_weights():
-            self.__node_weights[n_w[0]] = n_w[1]
-        WeightedLinksUndirectedGraph.add(n_w[0], *nodes_link_weights)
+            self._WeightedNodesUndirectedGraph__node_weights[n_w[0]] = n_w[1]
+        WeightedLinksUndirectedGraph.add(self, n_w[0], *nodes_link_weights)
 
     def remove(self, u: Node, *rest: Node):
         for n in (u,) + rest:
-            self.__node_weights.pop(n)
-        WeightedLinksUndirectedGraph.remove(u, *rest)
+            self._WeightedNodesUndirectedGraph__node_weights.pop(n)
+        WeightedLinksUndirectedGraph.remove(self, u, *rest)
 
     def connect(self, u: Node, v_w: (Node, float), *nodes_weights: (Node, float)):
-        WeightedLinksUndirectedGraph.connect(u, v_w, *nodes_weights)
+        WeightedLinksUndirectedGraph.connect(self, u, v_w, *nodes_weights)
 
     def disconnect(self, u: Node, v: Node, *rest: Node):
-        WeightedLinksUndirectedGraph.disconnect(u, v, *rest)
+        WeightedLinksUndirectedGraph.disconnect(self, u, v, *rest)
 
     def copy(self):
         res = WeightedUndirectedGraph(*self.node_weights().items())
@@ -1194,8 +1194,10 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
         while queue:
             v = queue.pop(0)
             for n in self.neighboring(v).value():
-                if n in res.nodes(): res.connect(v, (n, self.link_weights(v, n)))
-                else: res.add((n, self.node_weights(n)), v)
+                if n in res.nodes():
+                    res.connect(v, (n, self.link_weights(v, n)))
+                else:
+                    res.add((n, self.node_weights(n)), v)
         return res
 
     def minimalPath(self, u: Node, v: Node):
@@ -1335,7 +1337,7 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
             for u in other.nodes().value():
                 for v in other.neighboring(u).value():
                     if v in res.neighboring(u):
-                        res.__link_weights[Link(u, v)] += other.link_weights(u, v)
+                        res._WeightedNodesUndirectedGraph__link_weights[Link(u, v)] += other.link_weights(u, v)
                     else:
                         res.connect(u, (v, other.link_weights(u, v)))
         elif isinstance(other, WeightedNodesUndirectedGraph):
@@ -1354,7 +1356,7 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
             for u in other.nodes().value():
                 for v in other.neighboring(u).value():
                     if v in res.neighboring(u):
-                        res.__link_weights[Link(u, v)] += other.link_weights(u, v)
+                        res._WeightedNodesUndirectedGraph__link_weights[Link(u, v)] += other.link_weights(u, v)
                     else:
                         res.connect(u, (v, other.link_weights(u, v)))
         elif isinstance(other, UndirectedGraph):
