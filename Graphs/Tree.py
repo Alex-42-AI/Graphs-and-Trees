@@ -322,16 +322,25 @@ class Tree:
         dp = SortedKeysDict(*[(n, [[n], []]) for n in self.nodes().value()])
 
         def dfs(r):
-            if not self.descendants(r):
+            if r in self.leaves():
                 return
-            s0, s1, s2 = [], [], []
-            for d in self.descendants(r).value():
-                dfs(d)
-                s0 += dp[d][1]
-                tmp = [dp[w][1] for w in self.descendants(d).value()] + [dp[w][0] for w in self.descendants(r).value() if w != d]
-                s1, s2 = s1 + dp[d][0], s2 if len(s2) <= len(tmp) else tmp
-            dp[r][0] += s0 if len(s0) <= len(s2) else s2
-            dp[r][1] = s0 + [r] if len(s0) < len(s1) else s1
+            only_leaves, min_no_root = True, None
+            for d in self.descendants(r):
+                if d in self.leaves():
+                    dp[r][1].append(d)
+                    min_no_root = d
+                else: only_leaves = False
+            if only_leaves:
+                return
+            for d in self.descendants(r):
+                if d not in self.leaves():
+                    dfs(d)
+                    dp[r][0] += dp[d][0] if len(dp[d][0]) < len(dp[d][1]) else dp[d][1]
+                    if min_no_root is None or len(dp[d][0]) < len(dp[min_no_root][0]):
+                        min_no_root = d
+            for d in self.descendants(r):
+                if d != min_no_root:
+                    dp[r][1] += dp[d][1] if len(dp[d][1]) < len(dp[d][0]) and d != min_no_root else dp[d][0]
 
         dfs(self.root())
         return dp[self.root()][0] if len(dp[self.root()][0]) <= len(dp[self.root()][1]) else dp[self.root()][1]
@@ -484,16 +493,24 @@ class WeightedNodesTree(Tree):
         dp = SortedKeysDict(*[(n, [[n], []]) for n in self.nodes().value()])
 
         def dfs(r):
-            if not self.descendants(r):
+            if r in self.leaves():
                 return
-            s0, s1, s2 = [], [], []
-            for d in self.descendants(r).value():
-                dfs(d)
-                s0 += dp[d][1]
-                tmp = [dp[w][1] for w in self.descendants(d).value()] + [dp[w][0] for w in self.descendants(r).value() if w != d]
-                s1, s2 = s1 + dp[d][0], s2 if sum(map(self.weights, s2)) <= sum(map(self.weights, tmp)) + self.weights(d) else tmp
-            dp[r][0] += s0 if sum(map(self.weights, s0)) <= sum(map(self.weights, s2)) else s2
-            dp[r][1] = s0 + [r] if sum(map(self.weights, s0)) + self.weights(r) <= sum(map(self.weights, s1)) else s1
+            only_leaves, min_no_root = True, None
+            for d in self.descendants(r):
+                if d in self.leaves():
+                    dp[r][1].append(d)
+                    min_no_root = d
+                else: only_leaves = False
+            if only_leaves:
+                return
+            for d in self.descendants(r):
+                if d not in self.leaves():
+                    dfs(d)
+                    dp[r][0] += dp[d][0] if sum(map(self.weights, dp[d][0])) < sum(map(self.weights, dp[d][1])) else dp[d][1]
+                    if min_no_root is None or sum(map(self.weights, dp[d][0])) < sum(map(self.weights, dp[min_no_root][0])): min_no_root = d
+            for d in self.descendants(r):
+                if d != min_no_root:
+                    dp[r][1] += dp[r][1] += dp[d][1] if sum(map(self.weights, dp[d][1])) < sum(map(self.weights, dp[d][0])) and d != min_no_root else dp[d][0]
 
         dfs(self.root())
         return dp[self.root()][0] if sum(map(self.weights, dp[self.root()][0])) <= sum(map(self.weights, dp[self.root()][1])) else dp[self.root()][1]
