@@ -319,54 +319,32 @@ class UndirectedGraph:
         return result
 
     def chromaticNumberNodes(self):
-        def helper(nodes: [Node] = None, curr=0, so_far: SortedList = None, _except: SortedList = None):
-            if len(self.links()) > 30:
-                nodes = sorted(self.nodes().value(), key=lambda _n: self.degrees(_n))
-                colors, total, queue, k, n = SortedKeysDict((nodes[0], 0)), SortedList(), [nodes[0]], 1, len(nodes)
-                total.insert(nodes[0])
-                while k < n and queue:
-                    u = queue.pop(0)
-                    for v in filter(lambda x: x not in total, self.neighboring(u).value()):
-                        total.insert(v), queue.append(v)
-                        cols, k = [colors[_n] for _n in filter(lambda x: x in total, self.neighboring(v).value())], k + 1
-                        for i in range(len(cols) + 1):
-                            if i not in cols:
-                                colors[v] = i
-                                break
-                return max(colors.values())
-            if so_far is None:
-                so_far = SortedList()
-            if _except is None:
-                _except = SortedList()
-            if nodes is None:
-                nodes = sorted(self.nodes().value(), key=lambda _n: self.degrees(_n))
-            if not nodes:
-                return curr
-            if self.__full(nodes, [l for l in self.links() if l[0] in nodes and l[1] in nodes]):
-                return len(nodes) + curr
-            curr_degrees = SortedKeysDict(*[(n, 0) for n in nodes])
-            for u in nodes:
-                for v in nodes:
-                    if Link(u, v) in self.links(): curr_degrees[u] += 1
-            nodes = [nodes[0]] + sorted([_n for _n in nodes if _n != nodes[0]], key=lambda _n: curr_degrees[_n])
-            so_far.insert(nodes[0])
-            rest = [_n for _n in nodes if _n not in self.neighboring(nodes[0]) and _n != nodes[0] and _n not in _except]
-            if not rest:
-                _res = helper([n for n in nodes if n not in so_far], curr + 1, so_far)
-                so_far.remove(nodes[0])
-                return _res
-            res = len(self.nodes())
-            for u in rest:
-                new = SortedList()
-                for _n in nodes:
-                    if _n in self.neighboring(nodes[0]) + self.neighboring(u):
-                        new.insert(_n)
-                _res = helper([u] + [_n for _n in nodes if _n not in (nodes[0], u)], curr, so_far, _except + new)
-                if u in so_far: so_far.remove(u)
-                res = min(res, _res)
-            return res
-
-        return (2 - bool(self.links())) if self.tree() else helper()
+        def helper(res):
+            if not self.nodes():
+                return res
+            nodes = list(map(list, self.nodes().value()))
+            for anti_clique in self.independentSet():
+                neighbors = SortedKeysDict(*[(n, self.neighboring(n).value()) for n in anti_clique])
+                for n in anti_clique:
+                    self.remove(n)
+                curr = helper(res + [anti_clique])
+                for n in anti_clique:
+                    self.add(n, *neighbors[n])
+                if len(curr) < len(nodes):
+                    nodes = curr
+            return nodes
+        if self.tree():
+            queue, colors, c0, c1 = [self.nodes()[0]], SortedKeysDict(*[(n, 0) for n in self.nodes()]), [], []
+            while queue:
+                u = queue.pop(0)
+                for v in self.neighboring(u):
+                    colors[v] = 1 - colors[u]
+                    queue.append(v)
+            for n, c in colors.items().value():
+                if c: c1.append(n)
+                else: c0.append(n)
+            return [c0, c1]
+        return helper([])
 
     def chromaticNumberLinks(self):
         if not self.links():
