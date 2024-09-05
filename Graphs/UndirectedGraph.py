@@ -329,6 +329,7 @@ class UndirectedGraph:
                 if len(curr) < len(nodes):
                     nodes = curr
             return nodes
+
         if self.tree():
             queue, colors, c0, c1 = [self.nodes()[0]], SortedKeysDict(*[(n, 0) for n in self.nodes()]), [], []
             while queue:
@@ -337,8 +338,10 @@ class UndirectedGraph:
                     colors[v] = 1 - colors[u]
                     queue.append(v)
             for n, c in colors.items().value():
-                if c: c1.append(n)
-                else: c0.append(n)
+                if c:
+                    c1.append(n)
+                else:
+                    c0.append(n)
             return [c0, c1]
         return helper([])
 
@@ -647,6 +650,26 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
                 return dfs(u, [], 0, sum(self.node_weights(n) for n in self.nodes().value() if self.node_weights(n) < 0))
             return [], 0
         raise ValueError("Unrecognized node(s)!")
+
+    def chromaticNumberNodes(self):
+        def helper(res):
+            if not self.nodes():
+                return res
+            nodes = list(map(list, self.nodes().value()))
+            for anti_clique in self.independentSet():
+                weights, neighbors = SortedKeysDict(*[(n, self.node_weights(n)) for n in anti_clique]), SortedKeysDict(*[(n, self.neighboring(n).value()) for n in anti_clique])
+                for n in anti_clique:
+                    self.remove(n)
+                curr = helper(res + [anti_clique])
+                for n in anti_clique:
+                    self.add((n, weights[n]), *neighbors[n])
+                if len(curr) < len(nodes):
+                    nodes = curr
+            return nodes
+
+        if self.tree():
+            return super().chromaticNumberNodes()
+        return helper([])
 
     def vertexCover(self):
         def helper(curr):
@@ -988,6 +1011,26 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
             return [], 0
         raise ValueError('Unrecognized node(s)!')
 
+    def chromaticNumberNodes(self):
+        def helper(res):
+            if not self.nodes():
+                return res
+            nodes = list(map(list, self.nodes().value()))
+            for anti_clique in self.independentSet():
+                neighbors = SortedKeysDict(*[(n, self.link_weights(n).items().value()) for n in anti_clique])
+                for n in anti_clique:
+                    self.remove(n)
+                curr = helper(res + [anti_clique])
+                for n in anti_clique:
+                    self.add(n, *neighbors[n])
+                if len(curr) < len(nodes):
+                    nodes = curr
+            return nodes
+
+        if self.tree():
+            return super().chromaticNumberNodes()
+        return helper([])
+
     def vertexCover(self):
         def helper(curr):
             if not self.links():
@@ -1252,6 +1295,26 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
                 return dfs(u, [], self.node_weights(u), sum(self.link_weights(l) for l in self.links() if self.link_weights(l) < 0) + sum(self.node_weights(n) for n in self.nodes() if self.node_weights(n) < 0))
             return [], 0
         raise ValueError('Unrecognized node(s)!')
+
+    def chromaticNumberNodes(self):
+        def helper(res):
+            if not self.nodes():
+                return res
+            nodes = list(map(list, self.nodes().value()))
+            for anti_clique in self.independentSet():
+                weights, neighbors = SortedKeysDict(*[(n, self.node_weights(n)) for n in anti_clique]), SortedKeysDict(*[(n, self.link_weights(n).items().value()) for n in anti_clique])
+                for n in anti_clique:
+                    self.remove(n)
+                curr = helper(res + [anti_clique])
+                for n in anti_clique:
+                    self.add((n, weights[n]), *neighbors[n])
+                if len(curr) < len(nodes):
+                    nodes = curr
+            return nodes
+
+        if self.tree():
+            return UndirectedGraph(self).chromaticNumberNodes()
+        return helper([])
 
     def vertexCover(self):
         def helper(curr):
