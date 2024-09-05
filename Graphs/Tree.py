@@ -316,33 +316,37 @@ class Tree:
         return res
 
     def vertex_cover(self):
-        dp = SortedKeysDict(*[(n, [1, 0]) for n in self.nodes().value()])
+        return list(filter(lambda x: x not in self.independent_set(), self.nodes().value()))
+
+    def dominating_set(self):
+        dp = SortedKeysDict(*[(n, [[n], []]) for n in self.nodes().value()])
+
+        def dfs(r):
+            if not self.descendants(r):
+                return
+            s0, s1, s2 = [], [], []
+            for d in self.descendants(r).value():
+                dfs(d)
+                s0 += dp[d][1]
+                tmp = [dp[w][1] for w in self.descendants(d).value()] + [dp[w][0] for w in self.descendants(r).value() if w != d]
+                s1, s2 = s1 + dp[d][0], s2 if len(s2) <= len(tmp) else tmp
+            dp[r][0] += s0 if len(s0) <= len(s2) else s2
+            dp[r][1] = s0 + [r] if len(s0) < len(s1) else s1
+
+        dfs(self.root())
+        return dp[self.root()][0] if len(dp[self.root()][0]) <= len(dp[self.root()][1]) else dp[self.root()][1]
+
+    def independent_set(self):
+        dp = SortedKeysDict(*[(n, [[n], []]) for n in self.nodes().value()])
 
         def dfs(x: Node):
             for y in self.descendants(x).value():
                 dfs(y)
                 dp[x][0] += dp[y][1]
-                dp[x][1] += max(dp[y])
+                dp[x][1] += dp[y][0] if len(dp[y][0]) >= len(dp[y][1]) else dp[y][1]
 
         dfs(self.root())
-        return len(self.nodes()) - max(dp[self.root()])
-
-    def dominating_set(self):
-        dp = SortedKeysDict(*[(n, [1, 0]) for n in self.nodes().value()])
-
-        def dfs(r):
-            if not self.descendants(r):
-                return
-            s0, s1, s2 = 0, 0, 0
-            for d in self.descendants(r).value():
-                dfs(d)
-                s0 += dp[d][1]
-                s1, s2 = s1 + dp[d][0], min(s2, sum(dp[w][1] for w in self.descendants(d).value()) + sum(dp[_d][0] for _d in self.descendants(r).value()) - dp[d][0])
-            dp[r][0] += min(s0, s2)
-            dp[r][1] = min(s0 + 1, s1)
-
-        dfs(self.root())
-        return dp[self.root()][0]
+        return dp[self.root()][0] if len(dp[self.root()][0]) >= len(dp[self.root()][1]) else dp[self.root()][1]
 
     def isomorphic(self, other):
         if isinstance(other, Tree):
@@ -466,33 +470,33 @@ class WeightedNodesTree(Tree):
         self.__weights.pop(u), super().remove(u)
 
     def vertex_cover(self):
-        dp = SortedKeysDict(*[(n, [self.weights(n), 0]) for n in self.nodes().value()])
-
+        dp = SortedKeysDict(*[(n, [[n], []]) for n in self.nodes().value()])
         def dfs(u: Node):
             for v in self.descendants(u).value():
                 dfs(v)
-                dp[u][0] += dp[v][1]
-                dp[u][1] += max(dp[v])
+                dp[u][0] += dp[v][0] if sum(map(self.weights, dp[v][0])) <= sum(map(self.weights, dp[v][1])) else dp[v][1]
+                dp[u][1] += dp[v][0]
 
         dfs(self.root())
-        return len(self.nodes()) - max(dp[self.root()])
+        return dp[self.root()][0] if sum(map(self.weights, dp[self.root()][0])) <= sum(map(self.weights, dp[self.root()][1])) else dp[self.root()][1]
 
     def dominating_set(self):
-        dp = SortedKeysDict(*[(n, [self.weights(n), 0]) for n in self.nodes().value()])
+        dp = SortedKeysDict(*[(n, [[n], []]) for n in self.nodes().value()])
 
         def dfs(r):
             if not self.descendants(r):
                 return
-            s0, s1, s2 = 0, 0, 0
+            s0, s1, s2 = [], [], []
             for d in self.descendants(r).value():
                 dfs(d)
                 s0 += dp[d][1]
-                s1, s2 = s1 + dp[d][0], min(s2, self.weights(d) + sum(dp[w][1] for w in self.descendants(d).value()) + sum(dp[_d][0] for _d in self.descendants(r).value()) - dp[d][0])
-            dp[r][0] += min(s0, s2)
-            dp[r][1] = min(s0 + self.weights(r), s1)
+                tmp = [dp[w][1] for w in self.descendants(d).value()] + [dp[w][0] for w in self.descendants(r).value() if w != d]
+                s1, s2 = s1 + dp[d][0], s2 if sum(map(self.weights, s2)) <= sum(map(self.weights, tmp)) + self.weights(d) else tmp
+            dp[r][0] += s0 if sum(map(self.weights, s0)) <= sum(map(self.weights, s2)) else s2
+            dp[r][1] = s0 + [r] if sum(map(self.weights, s0)) + self.weights(r) <= sum(map(self.weights, s1)) else s1
 
         dfs(self.root())
-        return dp[self.root()][0]
+        return dp[self.root()][0] if sum(map(self.weights, dp[self.root()][0])) <= sum(map(self.weights, dp[self.root()][1])) else dp[self.root()][1]
 
     def isomorphic(self, other):
         if isinstance(other, Tree):
