@@ -346,8 +346,6 @@ class UndirectedGraph:
         return helper([])
 
     def chromaticNumberLinks(self):
-        if not self.links():
-            return 0
         res_graph = UndirectedGraph(*[Node(l) for l in self.links()])
         for n in res_graph.nodes().value():
             for m in res_graph.nodes().value():
@@ -416,20 +414,33 @@ class UndirectedGraph:
     def dominatingSet(self):
         def helper(curr):
             if not self.nodes():
-                return curr
-            result = self.nodes().value()
+                return [curr]
+            tmp = list(filter(lambda x: not self.degrees(x), self.nodes().value()))
+            for _t in tmp:
+                self.remove(_t)
+            result = [self.nodes().value()]
             for u in self.nodes().value():
                 neighbors = self.neighboring(u).value()
                 rest = SortedKeysDict(*[(n, self.neighboring(n).value()) for n in neighbors])
                 self.remove(u, *neighbors)
                 res = helper(curr + [u])
-                for n in neighbors: self.add(n, *rest[n])
+                for n in neighbors:
+                    self.add(n, *rest[n])
                 self.add(u, *neighbors)
-                if len(res) < len(result):
+                if len(res[0]) == len(result[0]):
+                    result += res
+                elif len(res[0]) < len(result[0]):
                     result = res
+            for _t in tmp:
+                self.add(_t)
             return result
-
-        return helper([])
+        temp = list(filter(lambda x: not self.degrees(x), self.nodes().value()))
+        for t in temp:
+            self.remove(t)
+        r = helper([])
+        for t in temp:
+            self.add(t)
+        return r
 
     def independentSet(self):
         result = []
@@ -704,7 +715,10 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
     def dominatingSet(self):
         def helper(curr):
             if not self.nodes():
-                return curr
+                return [curr]
+            tmp = list(filter(lambda x: not self.degrees(x[0]), self.node_weights().items().value()))
+            for _t in tmp:
+                self.remove(_t[0])
             result, result_sum = self.nodes().value(), self.total_nodes_weight()
             for u in self.nodes().value():
                 neighbors, w = self.neighboring(u).value(), self.node_weights(u)
@@ -715,12 +729,22 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
                     p = rest[n]
                     self.add((n, p[0]), *p[1])
                 self.add((u, w), *neighbors)
-                res_sum = sum(self.node_weights(n) for n in res)
-                if res_sum < result_sum:
+                res_sum = sum(self.node_weights(n) for n in res[0])
+                if res_sum == result_sum:
+                    result += res
+                elif res_sum < result_sum:
                     result, result_sum = res, res_sum
+            for _t in tmp:
+                self.add(_t)
             return result
 
-        return helper([])
+        temp = list(filter(lambda x: not self.degrees(x[0]), self.node_weights().items().value()))
+        for t in temp:
+            self.remove(t[0])
+        r = helper([])
+        for t in temp:
+            self.add(t)
+        return r
 
     def independentSet(self):
         result = []
@@ -1063,7 +1087,10 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
     def dominatingSet(self):
         def helper(curr):
             if not self.nodes():
-                return curr
+                return [curr]
+            tmp = list(filter(lambda x: not self.degrees(x), self.nodes()))
+            for _t in tmp:
+                self.remove(_t)
             result = self.nodes().value()
             for u in self.nodes().value():
                 neighbors = self.neighboring(u).value()
@@ -1073,11 +1100,21 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
                 for n in neighbors:
                     self.add(n, *[(r, rest_w[n][r]) for r in rest[n]])
                 self.add(u, *neighbors)
-                if len(res) < len(result):
+                if len(res[0]) == len(result[0]):
+                    result += res
+                elif len(res[0]) < len(result[0]):
                     result = res
+            for _t in tmp:
+                self.add(_t)
             return result
 
-        return helper([])
+        temp = list(filter(lambda x: not self.degrees(x), self.nodes().value()))
+        for t in temp:
+            self.remove(t)
+        r = helper([])
+        for t in temp:
+            self.add(t)
+        return r
 
     def independentSet(self):
         result = []
@@ -1349,8 +1386,11 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
     def dominatingSet(self):
         def helper(curr):
             if not self.nodes():
-                return curr
-            result, result_sum = self.nodes().value(), self.total_nodes_weight()
+                return [curr]
+            tmp = list(filter(lambda x: not self.degrees(x[0]), self.node_weights().items().value()))
+            for _t in tmp:
+                self.remove(_t[0])
+            result, result_sum = self.nodes(), self.total_nodes_weight()
             for u in self.nodes().value():
                 w, neighbors_weights = self.node_weights(u), SortedKeysDict(*[(n, self.node_weights(n)) for n in self.neighboring(u).value()])
                 rest, rest_w = SortedKeysDict(*[(n, self.neighboring(n).value()) for n in neighbors_weights.keys()]), SortedKeysDict(*[(n, self.link_weights(n)) for n in neighbors_weights.keys()])
@@ -1359,12 +1399,22 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
                 for n, n_w in neighbors_weights.items():
                     self.add((n, n_w), *[(r, rest_w[n][r]) for r in rest[n]])
                 self.add((u, w), *neighbors_weights.items().value())
-                res_sum = sum(self.node_weights(n) for n in res)
-                if res_sum < result_sum:
+                res_sum = sum(self.node_weights(n) for n in res[0])
+                if res_sum == result_sum:
+                    result += res
+                elif res_sum < result_sum:
                     result, result_sum = res, res_sum
+            for _t in tmp:
+                self.add(t)
             return result
 
-        return helper([])
+        temp = list(filter(lambda x: not self.degrees(x[0]), self.node_weights().items().value()))
+        for t in temp:
+            self.remove(t[0])
+        r = helper([])
+        for t in temp:
+            self.add(t)
+        return r
 
     def independentSet(self):
         result = []
