@@ -434,6 +434,7 @@ class UndirectedGraph:
             for _t in tmp:
                 self.add(_t)
             return result
+
         temp = list(filter(lambda x: not self.degrees(x), self.nodes().value()))
         for t in temp:
             self.remove(t)
