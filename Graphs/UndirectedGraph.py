@@ -207,12 +207,8 @@ class UndirectedGraph:
         dfs(self.nodes()[0], 0)
         return res
 
-    @staticmethod
-    def __full(nodes: [Node], links: [Link]):
-        return 2 * len(links) == len(nodes) * (len(nodes) - 1)
-
     def full(self):
-        return self.__full(self.nodes().value(), self.links())
+        return 2 * len(self.links()) == len(self.nodes()) * (len(self.nodes()) - 1)
 
     def get_shortest_path(self, u: Node, v: Node):
         if u not in self.nodes() or v not in self.nodes(): raise Exception('Unrecognized node(s)!')
@@ -387,19 +383,32 @@ class UndirectedGraph:
 
     def vertexCover(self):
         def helper(curr):
-            if not self.nodes():
-                return curr
-            result = self.nodes().value()
+            if not self.links():
+                return [curr]
+            tmp = list(filter(lambda x: not self.degrees(x), self.nodes().value()))
+            for _t in tmp:
+                self.remove(_t)
+            result = [self.nodes().value()]
             for u in self.nodes().value():
                 neighbors = self.neighboring(u).value()
                 self.remove(u)
                 res = helper(curr + [u])
                 self.add(u, *neighbors)
-                if len(res) < len(result):
+                if len(res[0]) == len(result[0]):
+                    result += res
+                elif len(res[0]) < len(result[0]):
                     result = res
+            for _t in tmp:
+                self.add(_t)
             return result
 
-        return helper([])
+        temp = list(filter(lambda x: not self.degrees(x), self.nodes().value()))
+        for t in temp:
+            self.remove(t)
+        r = helper([])
+        for t in temp:
+            self.add(t)
+        return r
 
     def dominatingSet(self):
         def helper(curr):
@@ -419,8 +428,11 @@ class UndirectedGraph:
 
         return helper([])
 
-    def maxAntiClique(self):
-        return list(filter(lambda x: x not in self.vertexCover(), self.nodes().value()))
+    def independentSet(self):
+        result = []
+        for res in self.vertexCover():
+            result.append(list(filter(lambda x: x not in res, self.nodes().value())))
+        return result
 
     def hamiltonTourExists(self):
         def dfs(x):
@@ -638,20 +650,33 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
 
     def vertexCover(self):
         def helper(curr):
-            if not self.nodes():
-                return curr
-            result, result_sum = self.nodes().value(), self.total_nodes_weight()
+            if not self.links():
+                return [curr]
+            tmp = list(filter(lambda x: not self.degrees(x[0]), self.node_weights().items().value()))
+            for _t in tmp:
+                self.remove(_t[0])
+            result, result_sum = [self.nodes().value()], self.total_nodes_weight()
             for u in self.nodes().value():
                 neighbors, w = self.neighboring(u).value(), self.node_weights(u)
                 self.remove(u)
                 res = helper(curr + [u])
                 self.add((u, w), *neighbors)
-                res_sum = sum(self.node_weights(n) for n in res)
-                if res_sum < result_sum:
+                res_sum = sum(self.node_weights(n) for n in res[0])
+                if res_sum == result_sum:
+                    result += res
+                elif res_sum < result_sum:
                     result, result_sum = res, res_sum
+            for _t in tmp:
+                self.add(_t)
             return result
 
-        return helper([])
+        temp = list(filter(lambda x: not self.degrees(x[0]), self.node_weights().items().value()))
+        for t in temp:
+            self.remove(t[0])
+        r = helper([])
+        for t in temp:
+            self.add(t)
+        return r
 
     def dominatingSet(self):
         def helper(curr):
@@ -674,8 +699,11 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
 
         return helper([])
 
-    def maxAntiClique(self):
-        return list(filter(lambda x: x not in super().vertexCover(), self.nodes().value()))
+    def independentSet(self):
+        result = []
+        for res in super().vertexCover():
+            result.append(list(filter(lambda x: x not in res, self.nodes().value())))
+        return result
 
     def hamiltonTourExists(self):
         def dfs(x):
@@ -962,19 +990,32 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
 
     def vertexCover(self):
         def helper(curr):
-            if not self.nodes():
-                return curr
-            result = self.nodes().value()
+            if not self.links():
+                return [curr]
+            tmp = list(filter(lambda x: not self.degrees(x), self.nodes()))
+            for _t in tmp:
+                self.remove(_t)
+            result = [self.nodes().value()]
             for u in self.nodes().value():
-                neighbors = self.link_weights(u)
+                neighbors = self.link_weights(u).items().value()
                 self.remove(u)
                 res = helper(curr + [u])
-                self.add(u, *neighbors.items())
-                if len(res) < len(result):
+                self.add(u, *neighbors)
+                if len(res[0]) == len(result[0]):
+                    result += res
+                elif len(res[0]) < len(result[0]):
                     result = res
+            for _t in tmp:
+                self.add(_t)
             return result
 
-        return helper([])
+        temp = list(filter(lambda x: not self.degrees(x), self.nodes().value()))
+        for t in temp:
+            self.remove(t)
+        r = helper([])
+        for t in temp:
+            self.add(t)
+        return r
 
     def dominatingSet(self):
         def helper(curr):
@@ -994,6 +1035,12 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
             return result
 
         return helper([])
+
+    def independentSet(self):
+        result = []
+        for res in super().vertexCover():
+            result.append(list(filter(lambda x: x not in res, self.nodes().value())))
+        return result
 
     def hamiltonTourExists(self):
         def dfs(x):
@@ -1208,20 +1255,33 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
 
     def vertexCover(self):
         def helper(curr):
-            if not self.nodes():
-                return curr
-            result, result_sum = self.nodes().value(), self.total_nodes_weight()
+            if not self.links():
+                return [curr]
+            tmp = list(filter(lambda x: not self.degrees(x[0]), self.node_weights().items().value()))
+            for _t in tmp:
+                self.remove(_t[0])
+            result, result_sum = [self.nodes().value()], self.total_nodes_weight()
             for u in self.nodes().value():
-                neighbors_weights, w = self.link_weights(u), self.node_weights(u)
+                neighbors_weights, w = self.link_weights(u).items().value(), self.node_weights(u)
                 self.remove(u)
                 res = helper(curr + [u])
-                self.add((u, w), *neighbors_weights.items())
-                res_sum = sum(self.node_weights(n) for n in res)
-                if res_sum < result_sum:
+                self.add((u, w), *neighbors_weights)
+                res_sum = sum(self.node_weights(n) for n in res[0])
+                if res_sum == result_sum:
+                    result += res
+                elif res_sum < result_sum:
                     result, result_sum = res, res_sum
+            for _t in tmp:
+                self.add(t)
             return result
 
-        return helper([])
+        temp = list(filter(lambda x: not self.degrees(x[0]), self.node_weights().items().value()))
+        for t in temp:
+            self.remove(t[0])
+        r = helper([])
+        for t in temp:
+            self.add(t)
+        return r
 
     def dominatingSet(self):
         def helper(curr):
@@ -1243,8 +1303,11 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
 
         return helper([])
 
-    def maxAntiClique(self):
-        return list(filter(lambda x: x not in UndirectedGraph.vertexCover(self), self.nodes().value()))
+    def independentSet(self):
+        result = []
+        for res in UndirectedGraph.vertexCover(self):
+            result.append(list(filter(lambda x: x not in res, self.nodes().value())))
+        return result
 
     def isomorphic(self, other: UndirectedGraph):
         if isinstance(other, WeightedUndirectedGraph):
