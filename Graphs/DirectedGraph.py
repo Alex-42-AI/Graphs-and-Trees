@@ -7,7 +7,10 @@ class DirectedGraph:
         for n in nodes:
             if n not in self.__nodes:
                 self.__nodes.insert(n)
-        self.__links, self.__degrees, self.__prev, self.__next = [], SortedKeysDict(*[(n, [0, 0]) for n in self.__nodes], f=self.__f), SortedKeysDict(*[(n, SortedList(f)) for n in self.__nodes], f=self.__f), SortedKeysDict(*[(n, SortedList(f)) for n in self.__nodes], f=self.__f)
+        self.__links, self.__degrees, self.__prev, self.__next = [], SortedKeysDict(
+            *[(n, [0, 0]) for n in self.__nodes], f=self.__f), SortedKeysDict(
+            *[(n, SortedList(f)) for n in self.__nodes], f=self.__f), SortedKeysDict(
+            *[(n, SortedList(f)) for n in self.__nodes], f=self.__f)
 
     def nodes(self):
         return self.__nodes
@@ -689,7 +692,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
             return self.__link_weights
         elif isinstance(u_or_l, Node):
             if v is None: return SortedKeysDict(
-                *[(n, self.__link_weights[(u_or_l, n)]) for n in self.next(u_or_l).value()], f=self.__f)
+                *[(n, self.__link_weights[(u_or_l, n)]) for n in self.next(u_or_l).value()], f=self._DirectedGraph__f)
             return self.__link_weights[(u_or_l, v)]
         elif isinstance(u_or_l, tuple):
             return self.__link_weights[u_or_l]
@@ -792,8 +795,8 @@ class WeightedLinksDirectedGraph(DirectedGraph):
             if all(y not in self.nodes() for y in can_end_in.value()): return False
             tmp0, tmp1 = self.prev(x), self.next(x)
             tmp0weights, tmp1weights = SortedKeysDict(*[(t, self.link_weights(t, x)) for t in tmp0.value()],
-                                                      f=self.__f), SortedKeysDict(
-                *[(t, self.link_weights(x, t)) for t in tmp1.value()], f=self.__f)
+                                                      f=self._DirectedGraph__f), SortedKeysDict(
+                *[(t, self.link_weights(x, t)) for t in tmp1.value()], f=self._DirectedGraph__f)
             self.remove(x)
             for y in tmp1.value():
                 res = dfs(y)
@@ -998,7 +1001,7 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
         if isinstance(other, WeightedDirectedGraph):
             if len(self.links()) != len(other.links()) or len(self.nodes()) != len(other.nodes()): return False
             this_degrees, other_degrees, this_node_weights, other_node_weights, this_link_weights, other_link_weights = SortedKeysDict(
-                f=self.__f), SortedKeysDict(f=self.__f), dict(), dict(), dict(), dict()
+                f=self._DirectedGraph__f), SortedKeysDict(f=self._DirectedGraph__f), dict(), dict(), dict(), dict()
             for d in self.degrees().values():
                 if d in this_degrees:
                     this_degrees[d] += 1
@@ -1031,8 +1034,8 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
                     other_node_weights[w] = 1
             if this_degrees != other_degrees or this_node_weights != other_node_weights or this_link_weights != other_link_weights: return False
             this_nodes_degrees, other_nodes_degrees = SortedKeysDict(*[(d, []) for d in this_degrees.keys()],
-                                                                     f=self.__f), SortedKeysDict(
-                *[(d, []) for d in other_degrees.keys()], f=self.__f)
+                                                                     f=self._DirectedGraph__f), SortedKeysDict(
+                *[(d, []) for d in other_degrees.keys()], f=self._DirectedGraph__f)
             for d in this_degrees.keys():
                 for n in self.nodes().value():
                     if self.degrees(n) == d: this_nodes_degrees[d].append(n)
@@ -1100,7 +1103,8 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
         return res
 
     def __eq__(self, other):
-        if isinstance(other, WeightedDirectedGraph): return (self.node_weights(), self.link_weights()) == (other.node_weights(), other.link_weights())
+        if isinstance(other, WeightedDirectedGraph): return (self.node_weights(), self.link_weights()) == (
+        other.node_weights(), other.link_weights())
         return False
 
     def __str__(self):
