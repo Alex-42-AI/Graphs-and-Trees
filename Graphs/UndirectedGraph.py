@@ -6,7 +6,9 @@ class UndirectedGraph:
         self.__nodes, self.__f = SortedList(f), f
         for n in nodes:
             if n not in self.__nodes: self.__nodes.insert(n)
-        self.__links, self.__neighboring, self.__degrees = [], SortedKeysDict(*[(n, SortedList(f=f)) for n in self.__nodes.value()], f=f), SortedKeysDict(*[(n, 0) for n in self.__nodes.value()], f=f)
+        self.__links, self.__neighboring, self.__degrees = [], SortedKeysDict(
+            *[(n, SortedList(f)) for n in self.__nodes.value()], f=f), SortedKeysDict(
+            *[(n, 0) for n in self.__nodes.value()], f=f)
 
     def nodes(self):
         return self.__nodes
@@ -84,7 +86,8 @@ class UndirectedGraph:
 
     def connection_components(self):
         if len(self.nodes()) in (0, 1): return [self.nodes()]
-        components, queue, total, k, n = [[self.nodes()[0]]], [self.nodes()[0]], SortedList(self.__f), 1, len(self.nodes())
+        components, queue, total, k, n = [[self.nodes()[0]]], [self.nodes()[0]], SortedList(self.__f), 1, len(
+            self.nodes())
         total.insert(self.nodes()[0])
         while k < n:
             while queue:
@@ -102,7 +105,8 @@ class UndirectedGraph:
 
     def connected(self):
         if len(self.links()) < len(self.nodes()) - 1: return False
-        if 2 * len(self.links()) > (len(self.nodes()) - 1) * (len(self.nodes()) - 2) or len(self.nodes()) == 1: return True
+        if 2 * len(self.links()) > (len(self.nodes()) - 1) * (len(self.nodes()) - 2) or len(
+            self.nodes()) == 1: return True
         queue, total, k, n = [self.nodes()[0]], SortedList(self.__f), 1, len(self.nodes())
         total.insert(self.nodes()[0])
         while queue:
@@ -263,7 +267,7 @@ class UndirectedGraph:
         raise Exception('Unrecognized nodes!')
 
     def clique(self, n: Node, *nodes: Node):
-        res = SortedList()
+        res = SortedList(self.__f)
         for u in nodes:
             if u not in res and u in self.nodes(): res.insert(u)
         if not res: return True
@@ -419,11 +423,11 @@ class UndirectedGraph:
     def dominatingSet(self):
         nodes = self.nodes().copy()
 
-        def helper(curr, total=SortedList(), i=0):
+        def helper(curr, total=SortedList(self.__f), i=0):
             if total == self.nodes(): return [curr.copy()]
             result, j = [nodes], 1
             for u in nodes.value()[i:]:
-                new = SortedList()
+                new = SortedList(self.__f)
                 curr.insert(u), new.insert(u)
                 for n in self.neighboring(u).value():
                     if n not in total: new.insert(n)
@@ -436,7 +440,7 @@ class UndirectedGraph:
                 j += 1
             return result
 
-        return helper(SortedList())
+        return helper(SortedList(self.__f))
 
     def independentSet(self):
         result = []
@@ -672,16 +676,16 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
                 j += 1
             return result
 
-        return helper(SortedList(self.__f))
+        return helper(SortedList(self._UndirectedGraph__f))
 
     def dominatingSet(self):
         nodes = self.nodes().copy()
 
-        def helper(curr, total=SortedList(), i=0):
+        def helper(curr, total=SortedList(self._UndirectedGraph__f), i=0):
             if total == self.nodes(): return [curr.copy()]
             result, result_sum, j = [nodes], self.total_nodes_weight(), 1
             for u in nodes.value()[i:]:
-                new = SortedList()
+                new = SortedList(self._UndirectedGraph__f)
                 curr.insert(u), new.insert(u)
                 for n in self.neighboring(u).value():
                     if n not in total: new.insert(n)
@@ -695,7 +699,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
                 j += 1
             return result
 
-        return helper(SortedList())
+        return helper(SortedList(self._UndirectedGraph__f))
 
     def independentSet(self):
         result = []
@@ -844,7 +848,8 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
             return self.__link_weights
         elif isinstance(u_or_l, Node):
             if v is None: return SortedKeysDict(
-                *[(n, self.__link_weights[Link(n, u_or_l)]) for n in self.neighboring(u_or_l).value()])
+                *[(n, self.__link_weights[Link(n, u_or_l)]) for n in self.neighboring(u_or_l).value()],
+                f=self.__UndirectedGraph__f)
             return self.__link_weights[Link(u_or_l, v)]
         elif isinstance(u_or_l, Link):
             return self.__link_weights[u_or_l]
@@ -854,7 +859,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
 
     def add(self, u: Node, *nodes_weights: (Node, float)):
         if u not in self.nodes():
-            res = SortedKeysDict()
+            res = SortedKeysDict(f=self.__UndirectedGraph__f)
             for v, w in nodes_weights:
                 if v in self.nodes() and v not in res: res[v] = w
             for w in res.values():
@@ -991,7 +996,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
                 j += 1
             return result
 
-        return helper(SortedList(self.__f))
+        return helper(SortedList(self._UndirectedGraph__f))
 
     def hamiltonTourExists(self):
         def dfs(x):
@@ -1225,7 +1230,7 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
                 j += 1
             return result
 
-        return helper(SortedList(self.__f))
+        return helper(SortedList(self._UndirectedGraph__f))
 
     def independentSet(self):
         result = []
