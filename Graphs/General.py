@@ -168,7 +168,7 @@ class SortedKeysDict(Dict):
             for (k, v) in other.items():
                 res[k] = v
             return res
-        raise TypeError(f'Addition not defined between type SortedKeysDict and type {type(other)}!')
+        raise TypeError(f'Addition not defined between type SortedKeysDict and type {type(other).__name__}!')
 
     def __eq__(self, other):
         if isinstance(other, SortedKeysDict):
