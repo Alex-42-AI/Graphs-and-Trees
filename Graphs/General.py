@@ -6,11 +6,13 @@ class Dict:
         self.__items = []
         for arg in args:
             if arg not in self.__items:
-                if len(arg) != 2: raise ValueError('Pairs of keys and values expected!')
+                if len(arg) != 2:
+                    raise ValueError('Pairs of keys and values expected!')
                 self.__items.append(arg)
         for i, item1 in enumerate(self.__items):
             for item2 in self.__items[i + 1:]:
-                if item1[0] == item2[0]: raise KeyError('No similar keys in a dictionary allowed!')
+                if item1[0] == item2[0]:
+                    raise KeyError('No similar keys in a dictionary allowed!')
 
     def keys(self):
         return [p[0] for p in self.items()]
@@ -60,7 +62,8 @@ class Dict:
     def __add__(self, other):
         if isinstance(other, (dict, Dict)):
             res = self.copy()
-            for (k, v) in other.items(): res[k] = v
+            for (k, v) in other.items():
+                res[k] = v
             return res
         raise TypeError(f'Addition not defined between type Dict and type {type(other)__name__}!')
 
