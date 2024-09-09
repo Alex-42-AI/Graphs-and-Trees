@@ -340,21 +340,15 @@ class UndirectedGraph:
             return [[], [self.nodes()]][self.full()]
         result = []
         for p in permutations(self.nodes().value(), k):
-            can = True
-            for i, _n in enumerate(p):
-                for j in range(i + 1, len(p)):
-                    if Link(_n, p[j]) not in self.links():
-                        can = False
-                        break
-                if not can: break
-            if can:
-                exists = False
-                for clique in result:
-                    if all(_n in clique for _n in p):
-                        exists = True
-                        break
-                if not exists:
-                    result.append(list(p))
+            if not self.clique(*p):
+                break
+            exists = False
+            for clique in result:
+                if all(_n in clique for _n in p):
+                    exists = True
+                    break
+            if not exists:
+                result.append(list(p))
         return result
 
     def chromaticNumberNodes(self):
