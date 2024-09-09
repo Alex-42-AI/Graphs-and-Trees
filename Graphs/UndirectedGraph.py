@@ -424,26 +424,28 @@ class UndirectedGraph:
         nodes = self.nodes().copy()
 
         def helper(curr, total, i=0):
-            if total == self.nodes(): return [curr.copy()]
-            result, j = [nodes], 1
-            for u in nodes.value()[i:]:
+            if total == self.nodes():
+                return [curr.copy()]
+            result = [self.nodes()]
+            for j in range(i, len(nodes)):
+                u = nodes[j]
                 new = SortedList(self.__f)
                 curr.insert(u), new.insert(u)
-                for n in self.neighboring(u).value():
-                    if n not in total: new.insert(n)
-                res = helper(curr, total + new, i + j)
+                for v in self.neighboring(u).value():
+                    if v not in total:
+                        new.insert(v)
+                res = helper(curr, total + new, j + 1)
                 if len(res[0]) == len(result[0]):
                     result += res
                 elif len(res[0]) < len(result[0]):
                     result = res
                 curr.remove(u)
-                j += 1
             return result
 
         isolated = SortedList(self.__f)
         for n in nodes:
             if not self.degrees(n):
-                isolated.insert(n)
+                isolated.insert(n), nodes.remove(n)
         return helper(SortedList(self.__f), isolated)
 
     def independentSet(self):
@@ -686,27 +688,29 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         nodes = self.nodes().copy()
 
         def helper(curr, total, i=0):
-            if total == self.nodes(): return [curr.copy()]
-            result, result_sum, j = [nodes], self.total_nodes_weight(), 1
-            for u in nodes.value()[i:]:
+            if total == self.nodes():
+                return [curr.copy()]
+            result, result_sum = [self.nodes()], self.total_nodes_weight()
+            for j in range(i, len(nodes)):
+                u = nodes[j]
                 new = SortedList(self._UndirectedGraph__f)
                 curr.insert(u), new.insert(u)
-                for n in self.neighboring(u).value():
-                    if n not in total: new.insert(n)
-                res = helper(curr, total + new, i + j)
-                res_sum = sum(self.node_weights(n) for n in res[0])
+                for v in self.neighboring(u).value():
+                    if v not in total:
+                        new.insert(v)
+                res = helper(curr, total + new, j + 1)
+                res_sum = sum(self.node_weights(m) for m in res[0])
                 if res_sum == result_sum:
                     result += res
                 elif res_sum < result_sum:
                     result, result_sum = res, res_sum
                 curr.remove(u)
-                j += 1
             return result
 
         isolated = SortedList(self._UndirectedGraph__f)
         for n in nodes:
             if not self.degrees(n):
-                isolated.insert(n)
+                isolated.insert(n), nodes.remove(n)
         return helper(SortedList(self._UndirectedGraph__f), isolated)
 
     def independentSet(self):
