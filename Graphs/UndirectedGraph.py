@@ -423,7 +423,7 @@ class UndirectedGraph:
     def dominatingSet(self):
         nodes = self.nodes().copy()
 
-        def helper(curr, total=SortedList(self.__f), i=0):
+        def helper(curr, total, i=0):
             if total == self.nodes(): return [curr.copy()]
             result, j = [nodes], 1
             for u in nodes.value()[i:]:
@@ -440,7 +440,11 @@ class UndirectedGraph:
                 j += 1
             return result
 
-        return helper(SortedList(self.__f))
+        isolated = SortedList(self.__f)
+        for n in nodes:
+            if not self.degrees(n):
+                isolated.insert(n)
+        return helper(SortedList(self.__f), isolated)
 
     def independentSet(self):
         result = []
@@ -681,7 +685,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
     def dominatingSet(self):
         nodes = self.nodes().copy()
 
-        def helper(curr, total=SortedList(self._UndirectedGraph__f), i=0):
+        def helper(curr, total, i=0):
             if total == self.nodes(): return [curr.copy()]
             result, result_sum, j = [nodes], self.total_nodes_weight(), 1
             for u in nodes.value()[i:]:
@@ -699,7 +703,11 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
                 j += 1
             return result
 
-        return helper(SortedList(self._UndirectedGraph__f))
+        isolated = SortedList(self._UndirectedGraph__f)
+        for n in nodes:
+            if not self.degrees(n):
+                isolated.insert(n)
+        return helper(SortedList(self._UndirectedGraph__f), isolated)
 
     def independentSet(self):
         result = []
