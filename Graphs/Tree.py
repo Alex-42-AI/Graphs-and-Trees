@@ -439,7 +439,7 @@ class WeightedNodesTree(Tree):
         self.__weights.pop(u), super().remove(u)
 
     def vertex_cover(self):
-        dp = SortedKeysDict(*[(n, [[n], []]) for n in self.nodes().value()], f=self.__f)
+        dp = SortedKeysDict(*[(n, [[n], []]) for n in self.nodes().value()], f=self._Tree__f)
 
         def dfs(u: Node):
             for v in self.descendants(u).value():
@@ -453,7 +453,7 @@ class WeightedNodesTree(Tree):
             map(self.weights, dp[self.root()][1])) else dp[self.root()][1]
 
     def dominating_set(self):
-        dp = SortedKeysDict(*[(n, [[n], []]) for n in self.nodes().value()], f=self.__f)
+        dp = SortedKeysDict(*[(n, [[n], []]) for n in self.nodes().value()], f=self._Tree__f)
 
         def dfs(r):
             if r in self.leaves(): return
