@@ -62,7 +62,7 @@ class Dict:
             res = self.copy()
             for (k, v) in other.items(): res[k] = v
             return res
-        raise TypeError(f'Addition not defined between type Dict and type {type(other)}!')
+        raise TypeError(f'Addition not defined between type Dict and type {type(other)__name__}!')
 
     def __eq__(self, other):
         if isinstance(other, Dict):
@@ -110,7 +110,7 @@ class SortedKeysDict(Dict):
                 low = mid
 
     def copy(self):
-        return SortedKeysDict(*self.items().value(), self.__f)
+        return SortedKeysDict(*self.items().value(), f=self.__f)
 
     def items(self):
         return self.__items
