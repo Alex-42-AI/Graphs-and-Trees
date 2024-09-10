@@ -121,16 +121,21 @@ class DirectedGraph:
         sources, total = self.sources(), SortedList(self.__f)
         if not sources or not self.sinks():
             return True
-        stack = sources.copy()
-        while stack:
-            u = stack.pop()
-            for v in self.next(u).value():
+
+        def dfs(u, stack):
+            for v in self.next(u):
                 if v in total:
                     continue
                 if v in stack:
                     return True
-                stack.append(v)
+                if dfs(v, stack + [v]):
+                    return True
             total.insert(u)
+            return False
+
+        for n in sources:
+            if dfs(n, [n]):
+                return True
         return False
 
     def dag(self):
