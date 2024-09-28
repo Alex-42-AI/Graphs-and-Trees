@@ -1489,7 +1489,7 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
                 if n in res.nodes():
                     res.set_weight(n, res.node_weights(n) + other.node_weights(n))
                 else:
-                    res.set_weight(n, other.node_weights(n))
+                    res.add((n, other.node_weights(n)))
             for u in other.nodes():
                 for v in other.neighboring(u):
                     if v not in res.neighboring(u):
