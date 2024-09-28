@@ -133,7 +133,7 @@ class UndirectedGraph:
         
     def reachable(self, u: Node, v: Node):
         if u not in self.nodes() or v not in self.nodes():
-            raise Exception('Unrecognized u(s).')
+            raise Exception('Unrecognizednode(s).')
         if u == v:
             return True
         total, queue = SortedList(self.f()), [u]
@@ -1125,7 +1125,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
             if self.reachable(u, v):
                 return dfs(u, [], 0, sum(self.link_weights(l) for l in self.links() if self.link_weights(l) < 0))
             return [], 0
-        raise ValueError('Unrecognized u(s)!')
+        raise ValueError('Unrecognizednode(s)!')
         
     def chromaticNumberNodes(self):
         max_nodes = list(map(lambda x: [x], self.nodes()))
@@ -1404,7 +1404,7 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
             if self.reachable(u, v):
                 return dfs(u, [], self.node_weights(u), sum(self.link_weights(l) for l in self.links() if self.link_weights(l) < 0) + sum(self.node_weights(n) for n in self.nodes() if self.node_weights(n) < 0))
             return [], 0
-        raise ValueError('Unrecognized u(s)!')
+        raise ValueError('Unrecognizednode(s)!')
         
     def loopWithLength(self, length: int):
         if abs(length) < 3:
