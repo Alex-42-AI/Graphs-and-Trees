@@ -271,7 +271,7 @@ class UndirectedGraph:
                         dfs(n, [])
                 return result
             return False
-        raise Exception('Unrecognized nodes!')
+        raise Exception('Unrecognized node(s)!')
         
     def clique(self, n: Node, *nodes: Node):
         res = SortedList(self.f())
