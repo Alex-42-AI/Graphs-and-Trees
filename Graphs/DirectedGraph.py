@@ -1,4 +1,4 @@
-from Personal.DiscreteMath.Graphs.General import Node, Dict, SortedKeysDict, SortedList
+from Graphs.General import Node, Dict, SortedKeysDict, SortedList
 
 
 class DirectedGraph:
