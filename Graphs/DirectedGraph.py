@@ -14,7 +14,8 @@ class DirectedGraph:
             for v in next_nodes:
                 if v in self.nodes():
                     self.connect_to_from(v, u)
-                else: self.add(v, [u])
+                else:
+                    self.add(v, [u])
     def nodes(self):
         return self.__nodes
     def links(self):
