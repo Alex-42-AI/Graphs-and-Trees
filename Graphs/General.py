@@ -46,9 +46,6 @@ class Dict:
     def __delitem__(self, key):
         self.pop(key)
         
-    def __call__(self, x):
-        return self[x]
-        
     def __getitem__(self, item):
         for (k, v) in self.items():
             if k == item:
@@ -164,6 +161,9 @@ class SortedKeysDict(Dict):
                     break
                 low = mid
         self.__items.insert((key, value))
+        
+    def __call__(self, x):
+        return self.f(x)
         
     def __add__(self, other):
         if isinstance(other, SortedKeysDict):
