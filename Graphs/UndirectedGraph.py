@@ -523,12 +523,14 @@ class UndirectedGraph:
         
     def hamiltonWalk(self, u: Node = None, v: Node = None):
         def dfs(x, stack):
+            if not self.degrees(x) or v is not None and not self.degrees(v):
+                return False
             too_many = v is not None
             for n in self.nodes():
-                if self.degrees(n) < 2 - (n in (x, v)):
-                    if too_many == 2:
+                if n not in (x, v) and self.degrees(n) < 2:
+                    if too_many:
                         return False
-                    too_many += 1
+                    too_many = True
             if not self.nodes():
                 return stack
             neighbors = self.neighboring(x)
