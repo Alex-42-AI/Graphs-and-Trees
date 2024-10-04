@@ -207,6 +207,7 @@ class DirectedGraph:
                         res.add(n, [], [v]), queue.append(n)
             return res
         raise ValueError("Unrecognized node!")
+        
     def subgraph(self, u: Node):
         if u in self.nodes():
             queue, res = [u], DirectedGraph(Dict((u, ([], []))), self.f())
