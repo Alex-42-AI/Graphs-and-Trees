@@ -134,22 +134,28 @@ class DirectedGraph:
         return [v for v in self.nodes() if not self.degrees(v)[1]]
         
     def has_loop(self):
-        sources, total = self.sources(), SortedList(self.f())
+        sources, total, stack = self.sources(), SortedList(self.f()), SortedList(self.f())
         if not sources or not self.sinks():
             return True
-        def dfs(u, stack):
+            
+        def dfs(u):
             for v in self.next(u):
                 if v in total:
                     continue
                 if v in stack:
                     return True
-                if dfs(v, stack + [v]):
+                stack.insert(v)
+                if dfs(v):
                     return True
+                stack.remove(v)
             total.insert(u)
             return False
+            
         for n in sources:
-            if dfs(n, [n]):
+            stack.insert(n)
+            if dfs(n):
                 return True
+            stack.remove(n)
         return False
         
     def dag(self):
@@ -162,7 +168,8 @@ class DirectedGraph:
         while queue:
             u = queue.pop(0)
             res.append(u), total.insert(u)
-            for v in filter(lambda x: x not in total, self.next(u)): queue.append(v), total.insert(v)
+            for v in filter(lambda x: x not in total, self.next(u)):
+                queue.append(v), total.insert(v)
         return res
         
     def connection_components(self):
