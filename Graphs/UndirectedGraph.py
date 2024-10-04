@@ -700,7 +700,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         
     def minimalPathNodes(self, u: Node, v: Node):
         if u in self.nodes() and v in self.nodes():
-            from Personal.DiscreteMath.Graphs.DirectedGraph import WeightedLinksDirectedGraph
+            from Graphs.DirectedGraph import WeightedLinksDirectedGraph
             res = WeightedLinksDirectedGraph(Dict(*[(n, (Dict(), Dict(*[(m, self.node_weights(n)) for m in self.neighboring(n)]))) for n in self.nodes()]), self.f()).minimalPathLinks(u, v)
             return [Link(l[0], l[1]) for l in res[0]], res[1] + self.node_weights(v) * bool(res[0])
         raise ValueError("Unrecognized node(s)!")
@@ -1370,7 +1370,7 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
         
     def minimalPath(self, u: Node, v: Node):
         if u in self.nodes() and v in self.nodes():
-            from Personal.DiscreteMath.Graphs.DirectedGraph import WeightedLinksDirectedGraph
+            from Graphs.DirectedGraph import WeightedLinksDirectedGraph
             res = WeightedLinksDirectedGraph(Dict(*[(n, (Dict(), Dict(*[(m, self.node_weights(n) + self.link_weights(n, m)) for m in self.neighboring(n)]))) for n in self.nodes()]), self.f()).minimalPathLinks(u, v)
             return [Link(l[0], l[1]) for l in res[0]], res[1] + self.node_weights(v) * bool(res[0])
         raise ValueError('Unrecognized node(s)!')
