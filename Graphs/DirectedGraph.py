@@ -364,7 +364,8 @@ class DirectedGraph:
         for c in self.stronglyConnectedComponents():
             g = self.subgraph(c[0])
             for n in g.nodes():
-                if n not in c: g.remove(n)
+                if n not in c:
+                    g.remove(n)
             res.add(Node(g))
         for u in res.nodes():
             linked_to = SortedList(lambda x: len(x.nodes()))
