@@ -361,7 +361,11 @@ class DirectedGraph:
         
     def sccDag(self):
         res = DirectedGraph(f=lambda x: len(x.nodes()))
-        for c in self.stronglyConnectedComponents(): res.add(Node(self.subgraph(c[0])))
+        for c in self.stronglyConnectedComponents():
+            g = self.subgraph(c[0])
+            for n in g.nodes():
+                if n not in c: g.remove(n)
+            res.add(Node(g))
         for u in res.nodes():
             linked_to = SortedList(lambda x: len(x.nodes()))
             linked_to.insert(u)
