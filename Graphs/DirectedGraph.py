@@ -362,10 +362,14 @@ class DirectedGraph:
     def sccDag(self):
         res = DirectedGraph(f=lambda x: len(x.nodes()))
         for c in self.stronglyConnectedComponents():
-            g = self.subgraph(c[0])
-            for n in g.nodes():
-                if n not in c:
-                    g.remove(n)
+            queue, g = [c[0]], DirectedGraph(Dict((c[0], ([], []))), self.f())
+            while queue:
+                v = queue.pop(0)
+                for n in self.next(v):
+                    if n in g.nodes():
+                        g.connect(n, [v])
+                    elif n in c:
+                        g.add(n, [v]), queue.append(n)
             res.add(Node(g))
         for u in res.nodes():
             linked_to = SortedList(lambda x: len(x.nodes()))
