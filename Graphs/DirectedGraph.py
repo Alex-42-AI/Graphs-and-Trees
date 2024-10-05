@@ -75,15 +75,15 @@ class DirectedGraph:
             if points_to is None:
                 points_to = []
             for v in pointed_by:
-                if u != v and v not in self.next(u) and v in self.nodes():
-                    self.__links.append((u, v)), self.__next[u].insert(v), self.__prev[v].insert(u)
-                    self.__degrees[u][1] += 1
-                    self.__degrees[v][0] += 1
-            for v in points_to:
-                if u != v and u not in self.next(v) and v in self.nodes():
-                    self.__links.append((v, u)), self.__next[v].insert(u), self.__prev[u].insert(v)
+                if u != v and v not in self.prev(u) and v in self.nodes():
+                    self.__links.append((v, u)), self.__prev[u].insert(v), self.__next[v].insert(u)
                     self.__degrees[u][0] += 1
                     self.__degrees[v][1] += 1
+            for v in points_to:
+                if u != v and v not in self.next(u) and v in self.nodes():
+                    self.__links.append((u, v)), self.__prev[v].insert(u), self.__next[u].insert(v)
+                    self.__degrees[u][1] += 1
+                    self.__degrees[v][0] += 1
                     
     def disconnect(self, u: Node, pointed_by: [Node] = None, points_to: [Node] = None):
         if u in self.nodes():
@@ -167,9 +167,12 @@ class DirectedGraph:
         queue, res, total = self.sources(), [], SortedList(self.f())
         while queue:
             u = queue.pop(0)
-            res.append(u), total.insert(u)
-            for v in filter(lambda x: x not in total, self.next(u)):
-                queue.append(v), total.insert(v)
+            if all(v in total for v in self.prev(u)):
+                res.append(u), total.insert(u)
+                for v in self.next(u):
+                    if v in queue:
+                        queue.remove(v)
+                    queue.append(v)
         return res
         
     def connection_components(self):
@@ -206,7 +209,8 @@ class DirectedGraph:
                 for n in self.next(v):
                     if n in res.nodes():
                         res.connect(n, [v])
-                    else: res.add(n, [v]), queue.append(n)
+                    else:
+                        res.add(n, [v]), queue.append(n)
                 for n in self.prev(v):
                     if n in res.nodes():
                         res.connect(v, [n])
@@ -240,28 +244,8 @@ class DirectedGraph:
                     min_back = min(min_back, b)
                 if colors[y] == 1 and levels[y] < min_back and levels[y] + 1 != l:
                     min_back = levels[y]
-            if is_cut or is_root and count > 1: res.append(x)
-            colors[x] = 2
-            return min_back
-            
-        levels = SortedKeysDict(*[(n, 0) for n in self.nodes()], f=self.f())
-        colors, res = levels.copy(), []
-        for n in self.nodes():
-            if not colors[n]:
-                dfs(n, 0)
-        return res
-        
-    def bridge_links(self):
-        def dfs(x: Node, l: int):
-            colors[x], levels[x], min_back = 1, l, l
-            for y in self.next(x):
-                if not colors[y]:
-                    b = dfs(y, l + 1)
-                    if b > l:
-                        res.append((x, y))
-                    else: min_back = min(min_back, b)
-                if colors[y] == 1 and levels[y] < min_back and levels[y] + 1 != l:
-                    min_back = levels[y]
+            if is_cut or is_root and count > 1:
+                res.append(x)
             colors[x] = 2
             return min_back
             
@@ -299,16 +283,18 @@ class DirectedGraph:
     def euler_walk_exists(self, u: Node, v: Node):
         if self.euler_tour_exists():
             return u == v
+        if self.degrees(u)[0] + 1 != self.degrees(u)[1] or self.degrees(v)[0] != self.degrees(v)[1] + 1:
+            return False
         for n in self.nodes():
-            if self.degrees(n)[1] % 2 and n != u or self.degrees(n)[0] % 2 and n != v:
+            if n not in (u, v) and (self.degrees(n)[1] - self.degrees(n)[0]) % 2:
                 return False
-        return self.degrees(u)[1] - self.degrees(u)[0] == self.degrees(v)[0] - self.degrees(v)[1] == 1 and self.connected()
+        return self.connected()
         
     def euler_tour(self):
         if self.euler_tour_exists():
             v, u = self.links()[0]
             self.disconnect(u, [v])
-            res = self.euler_walk(u, v)
+            res = [(v, u)] + self.euler_walk(u, v)
             self.connect(u, [v])
             return res
         return False
@@ -375,8 +361,7 @@ class DirectedGraph:
         
     def sccDag(self):
         res = DirectedGraph(f=lambda x: len(x.nodes()))
-        for c in self.stronglyConnectedComponents():
-            res.add(Node(self.subgraph(c[0])))
+        for c in self.stronglyConnectedComponents(): res.add(Node(self.subgraph(c[0])))
         for u in res.nodes():
             linked_to = SortedList(lambda x: len(x.nodes()))
             linked_to.insert(u)
@@ -389,9 +374,10 @@ class DirectedGraph:
         return res
         
     def pathWithLength(self, u: Node, v: Node, length: int):
+        if u not in self.nodes() or v not in self.nodes():
+            raise Exception('Unrecognized node(s).')
+            
         def dfs(x: Node, l: int, stack):
-            if x not in self.nodes() or v not in self.nodes():
-                raise Exception('Unrecognized node(s).')
             if not l:
                 return (False, stack)[x == v]
             for y in filter(lambda _x: (x, _x) not in stack, self.next(x)):
@@ -401,7 +387,7 @@ class DirectedGraph:
             return False
             
         tmp = self.get_shortest_path(u, v)
-        if len(tmp) > length:
+        if not tmp or len(tmp) > length:
             return False
         if length == len(tmp):
             return tmp
@@ -410,7 +396,9 @@ class DirectedGraph:
     def loopWithLength(self, length: int):
         for u in self.nodes():
             for v in self.next(u):
+                self.disconnect(v, [u])
                 res = self.pathWithLength(v, u, length - 1)
+                self.connect(v, [u])
                 if res:
                     return [(u, v)] + res
         return False
@@ -457,17 +445,24 @@ class DirectedGraph:
         
     def hamiltonWalk(self, u: Node = None, v: Node = None):
         def dfs(x, stack):
+            too_many = v is not None
             for n in self.nodes():
-                if not self.degrees(n)[1] and n != v or not self.degrees(n)[0] and n != x:
+                if not self.degrees(n)[0] and n != x:
                     return False
-            if not self.nodes():
-                return stack
+                if not self.degrees(n)[1] and n != v:
+                    if too_many:
+                        return False
+                    too_many = True
             tmp0, tmp1 = self.prev(x), self.next(x)
             self.remove(x)
+            if not self.nodes():
+                self.add(x, tmp0, tmp1)
+                return stack
             for y in tmp1:
                 if y == v:
                     if self.nodes() == [v]:
-                        return stack
+                        self.add(x, tmp0, tmp1)
+                        return stack + [v]
                     continue
                 res = dfs(y, stack + [y])
                 if res:
