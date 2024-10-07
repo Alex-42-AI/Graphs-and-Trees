@@ -122,25 +122,24 @@ class SortedKeysDict(Dict):
         return len(self.items())
         
     def __contains__(self, item):
-        low, high = 0, len(self)
+        low, high, f_item = 0, len(self), self.f(item)
         while low < high:
             mid = (low + high) // 2
-            if self.__f(item) == self.__f(self.items()[mid][0]):
+            if f_item == self.__f(self.items()[mid][0]):
                 return True
-            if self.__f(item) < self.__f(self.items()[mid][0]):
-                high = mid
+            if f_item < self.__f(self.items()[mid][0]): high = mid
             else:
                 if low == mid:
                     return False
                 low = mid
                 
     def __getitem__(self, item):
-        low, high = 0, len(self)
+        low, high, f_item = 0, len(self), self.f(item)
         while low < high:
             mid = (low + high) // 2
-            if self.__f(item) == self.__f(self.items()[mid][0]):
+            if f_item == self.__f(self.items()[mid][0]):
                 return self.items()[mid][1]
-            if self.__f(item) < self.__f(self.items()[mid][0]):
+            if f_item < self.__f(self.items()[mid][0]):
                 high = mid
             else:
                 if low == mid:
@@ -148,13 +147,13 @@ class SortedKeysDict(Dict):
                 low = mid
                 
     def __setitem__(self, key, value):
-        low, high = 0, len(self)
+        low, high, f_key = 0, len(self), self.f(key)
         while low < high:
             mid = (low + high) // 2
-            if self.__f(key) == self.__f(self.items()[mid][0]):
+            if f_key == self.__f(self.items()[mid][0]):
                 self.__items[mid] = (key, value)
                 return
-            if self.__f(key) < self.__f(self.items()[mid][0]):
+            if f_key < self.__f(self.items()[mid][0]):
                 high = mid
             else:
                 if low == mid:
