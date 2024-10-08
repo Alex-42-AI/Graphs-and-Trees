@@ -1,4 +1,4 @@
-from Lists import SortedList
+from Personal.Lists import SortedList
 
 
 class Dict:
@@ -7,12 +7,12 @@ class Dict:
         for arg in args:
             if arg not in self.__items:
                 if len(arg) != 2:
-                    raise ValueError('Pairs of keys and values expected!')
+                    raise ValueError("Pairs of keys and values expected!")
                 self.__items.append(arg)
         for i, item1 in enumerate(self.__items):
             for item2 in self.__items[i + 1:]:
                 if item1[0] == item2[0]:
-                    raise KeyError('No similar keys in a dictionary allowed!')
+                    raise KeyError("No similar keys in a dictionary allowed!")
                     
     def keys(self):
         return [p[0] for p in self.items()]
@@ -38,7 +38,8 @@ class Dict:
     def copy(self):
         return Dict(*self.items())
         
-    def __len__(self): return len(self.items())
+    def __len__(self):
+        return len(self.items())
         
     def __contains__(self, item):
         return item in self.keys()
@@ -64,7 +65,7 @@ class Dict:
             for (k, v) in other.items():
                 res[k] = v
             return res
-        raise TypeError(f'Addition not defined between type Dict and type {type(other).__name__}!')
+        raise TypeError(f"Addition not defined between type Dict and type {type(other).__name__}!")
         
     def __eq__(self, other):
         if isinstance(other, Dict):
@@ -72,7 +73,6 @@ class Dict:
                 if i not in other.items():
                     return False
             return len(self.items()) == len(other.items())
-            
         if isinstance(other, dict):
             for k, v in self.items():
                 if k not in other.keys() or other.get(k) != v:
@@ -81,7 +81,7 @@ class Dict:
         return False
         
     def __str__(self):
-        return '{' + ', '.join(f'{k}: {v}' for k, v in self.items()) + '}'
+        return "{" + ", ".join(f"{k}: {v}" for k, v in self.items()) + "}"
         
     def __repr__(self):
         return str(self)
@@ -93,19 +93,22 @@ class SortedKeysDict(Dict):
         for arg in args:
             if arg not in self.__items:
                 if len(arg) != 2:
-                    raise ValueError('Pairs of keys and values expected!')
+                    raise ValueError("Pairs of keys and values expected!")
                 self[arg[0]] = arg[1]
         for i in range(len(self.__items) - 1):
             if self.__items[i][0] == self.__items[i + 1][0]:
-                raise KeyError('No similar keys in a dictionary allowed!')
+                raise KeyError("No similar keys in a dictionary allowed!")
                 
+    def f(self, x=None):
+        return self.__f if x is None else self.__f(x)
+        
     def pop(self, item):
-        low, high = 0, len(self)
+        low, high, f_item = 0, len(self), self.f(item)
         while low < high:
             mid = (low + high) // 2
-            if self.__f(item) == self.__f(self.items()[mid][0]):
+            if f_item == self.__f(self.items()[mid][0]):
                 return self.__items.pop(mid)[1]
-            if self.__f(item) < self.__f(self.items()[mid][0]):
+            if f_item < self.__f(self.items()[mid][0]):
                 high = mid
             else:
                 if low == mid:
@@ -113,7 +116,7 @@ class SortedKeysDict(Dict):
                 low = mid
                 
     def copy(self):
-        return SortedKeysDict(*self.items().value(), f=self.__f)
+        return SortedKeysDict(*self.items(), f=self.f())
         
     def items(self):
         return self.__items
@@ -127,7 +130,8 @@ class SortedKeysDict(Dict):
             mid = (low + high) // 2
             if f_item == self.__f(self.items()[mid][0]):
                 return True
-            if f_item < self.__f(self.items()[mid][0]): high = mid
+            if f_item < self.__f(self.items()[mid][0]):
+                high = mid
             else:
                 if low == mid:
                     return False
@@ -170,18 +174,18 @@ class SortedKeysDict(Dict):
             for (k, v) in other.items():
                 res[k] = v
             return res
-        raise TypeError(f'Addition not defined between type SortedKeysDict and type {type(other).__name__}!')
+        raise TypeError(f"Addition not defined between type SortedKeysDict and type {type(other).__name__}!")
         
     def __eq__(self, other):
         if isinstance(other, SortedKeysDict):
-            for p in self.items().value():
+            for p in self.items():
                 if p not in other.items():
                     return False
             return len(self) == len(other)
         return False
         
     def __str__(self):
-        return '{' + ', '.join(f'{k}: {v}' for k, v in self.items().value()) + '}'
+        return "{" + ", ".join(f"{k}: {v}" for k, v in self.items()) + "}"
 
 
 class Node:
@@ -192,38 +196,38 @@ class Node:
         return self.__value
         
     def copy(self):
-        return Node(self.__value)
+        return Node(self.value())
         
     def __bool__(self):
-        return bool(self.__value)
+        return bool(self.value())
         
     def __eq__(self, other):
         if isinstance(other, Node):
-            return self.__value == other.__value
+            return self.value() == other.value()
         return False
         
     def __lt__(self, other):
         if isinstance(other, Node):
-            return self.__value < other.__value
-        return False
+            return self.value() < other.value()
+        return self.value() < other
         
     def __le__(self, other):
         if isinstance(other, Node):
-            return self.__value <= other.__value
-        return False
+            return self.value() <= other.value()
+        return self.value() <= other
         
     def __ge__(self, other):
         if isinstance(other, Node):
-            return self.__value >= other.__value
-        return False
+            return self.value() >= other.value()
+        return self.value() >= other
         
     def __gt__(self, other):
         if isinstance(other, Node):
-            return self.__value > other.__value
-        return False
+            return self.value() > other.value()
+        return self.value() > other
         
     def __str__(self):
-        return '(' + str(self.__value) + ')'
+        return "(" + str(self.value()) + ")"
         
     def __repr__(self):
         return str(self)
@@ -246,12 +250,13 @@ class Link:
         return 1 + (self.u() != self.v())
         
     def __eq__(self, other):
+        
         if isinstance(other, Link):
             return (self.u(), self.v()) in [(other.u(), other.v()), (other.v(), other.u())]
         return False
         
     def __str__(self):
-        return f'{self.u()}-{self.v()}'
+        return f"{self.u()}-{self.v()}"
         
     def __repr__(self):
         return str(self)
