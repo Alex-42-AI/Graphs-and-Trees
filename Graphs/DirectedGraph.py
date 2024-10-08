@@ -372,7 +372,7 @@ class DirectedGraph:
     def pathWithLength(self, u: Node, v: Node, length: int):
         def dfs(x: Node, l: int, stack):
             if not l:
-                return ([], stack)[x == v]
+                return ([], list(map(lambda link: link[0], stack)) + [v])[x == v]
             for y in filter(lambda _x: (x, _x) not in stack, self.next(x)):
                 res = dfs(y, l - 1, stack + [(x, y)])
                 if res:
@@ -384,8 +384,7 @@ class DirectedGraph:
             return []
         if length + 1 == len(tmp):
             return tmp
-        result = dfs(u, length, [])
-        return list(map(lambda link: link[0], result)) + [result[-1][1]]
+        return dfs(u, length, [])
         
     def loopWithLength(self, length: int):
         if abs(length) < 2:
