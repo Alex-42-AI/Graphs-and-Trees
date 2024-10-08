@@ -394,7 +394,8 @@ class UndirectedGraph:
         
     def pathWithLength(self, u: Node, v: Node, length: int):
         def dfs(x: Node, l: int, stack: [Link]):
-            if not l: return ([], stack)[x == v]
+            if not l:
+                return ([], list(map(lambda link: link.u(), stack)) + [v])[x == v]
             for y in filter(lambda _x: Link(x, _x) not in stack, self.neighboring(x)):
                 res = dfs(y, l - 1, stack + [Link(x, y)])
                 if res:
@@ -406,8 +407,7 @@ class UndirectedGraph:
             return []
         if length + 1 == len(tmp):
             return tmp
-        result = dfs(u, length, [])
-        return list(map(lambda link: link.u(), result)) + [result[-1].v()]
+        return dfs(u, length, [])
         
     def loopWithLength(self, length: int):
         if abs(length) < 3:
