@@ -101,6 +101,7 @@ class DirectedGraph:
         if m > (n - 1) * (n - 2) or n < 2:
             return True
         return self.component(self.nodes()[0]) == self
+        
     def sources(self):
         return [u for u in self.nodes() if not self.degrees(u)[0]]
         
@@ -131,6 +132,7 @@ class DirectedGraph:
                 return True
             stack.remove(n)
         return False
+        
     def dag(self):
         return not self.has_loop()
         
@@ -899,6 +901,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                             res.connect(v, [u]), linked_to.insert(v)
                             break
         return res
+        
     def minimalPathLinks(self, u: Node, v: Node):
         def dfs(x, curr_path, curr_w, total_negative, res_path=(), res_w=0):
             for y in filter(lambda _y: (x, _y) not in curr_path, self.next(x)):
@@ -1045,8 +1048,10 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
         
     def remove(self, u: Node, *rest: Node):
         WeightedLinksDirectedGraph.remove(self, u, *rest)
-        for n in (u,) + rest: self.add(n), super().remove(n)
+        for n in (u,) + rest:
+            self.add(n), super().remove(n)
         return self
+        
     def connect(self, u: Node, pointed_by_weights: Dict = Dict(), points_to_weights: Dict = Dict()):
         return WeightedLinksDirectedGraph.connect(self, u, pointed_by_weights, points_to_weights)
     
@@ -1198,7 +1203,8 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
         res = self.copy()
         if isinstance(other, WeightedDirectedGraph):
             for n in other.nodes():
-                if n in res.nodes(): res.set_weight(n, res.node_weights(n) + other.node_weights(n))
+                if n in res.nodes():
+                    res.set_weight(n, res.node_weights(n) + other.node_weights(n))
                 else:
                     res.add((n, other.node_weights(n)))
             for l in other.links():
