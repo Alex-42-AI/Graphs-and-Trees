@@ -3,7 +3,9 @@ from Graphs.General import Node, Link, Dict, SortedKeysDict, SortedList
 
 class UndirectedGraph:
     def __init__(self, neighborhood: Dict = Dict(), f=lambda x: x):
-        self.__nodes, self.__f, self.__links, self.__neighboring, self.__degrees = SortedList(f), f, [], SortedKeysDict(f=f), SortedKeysDict(f=f)
+        self.__nodes , self.__links = SortedList(f), []
+        self.__f = f
+        self.__neighboring, self.__degrees = SortedKeysDict(f=f), SortedKeysDict(f=f)
         for u, neighbors in neighborhood.items():
             if u not in self.nodes():
                 self.add(u)
@@ -236,7 +238,7 @@ class UndirectedGraph:
         if u == v:
             return self.euler_tour_exists()
         for n in self.nodes():
-            if self.degrees(n) % 2 and n not in [u, v]:
+            if self.degrees(n) % 2 == (n not in [u, v]):
                 return False
         return self.degrees(u) % 2 == self.degrees(v) % 2 == 1 and self.connected()
         
