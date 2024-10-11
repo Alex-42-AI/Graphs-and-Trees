@@ -238,7 +238,7 @@ class UndirectedGraph:
         if u == v:
             return self.euler_tour_exists()
         for n in self.nodes():
-            if self.degrees(n) % 2 == (n not in [u, v]):
+            if n not in (u, v) and self.degrees(n) % 2:
                 return False
         return self.degrees(u) % 2 == self.degrees(v) % 2 == 1 and self.connected()
         
@@ -254,7 +254,7 @@ class UndirectedGraph:
             for y in self.neighboring(x):
                 if Link(x, y) not in result + stack:
                     if y == n:
-                        stack.append(Link(x, y))
+                        result.insert(i + 1, Link(x, y))
                         while stack:
                             result.insert(i + 1, stack.pop())
                         return True
