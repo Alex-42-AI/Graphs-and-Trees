@@ -267,7 +267,7 @@ class DirectedGraph:
         if self.degrees(u)[0] + 1 != self.degrees(u)[1] or self.degrees(v)[0] != self.degrees(v)[1] + 1:
             return False
         for n in self.nodes():
-            if n not in (u, v) and (self.degrees(n)[1] - self.degrees(n)[0]) % 2:
+            if n not in (u, v) and self.degrees(n)[1] != self.degrees(n)[0]:
                 return False
         return self.connected()
         
@@ -284,7 +284,7 @@ class DirectedGraph:
             for y in self.next(x):
                 if (x, y) not in result + stack:
                     if y == n:
-                        stack.append((x, y))
+                        result.insert(i + 1, (x, y))
                         while stack:
                             result.insert(i + 1, stack.pop())
                         return True
@@ -300,7 +300,7 @@ class DirectedGraph:
                 i, n = -1, result[0][0]
                 dfs(n, [])
                 for i, l in enumerate(result):
-                    n = l[0]
+                    n = l[1]
                     dfs(n, [])
                 return list(map(lambda _l: _l[0], result)) + [v]
         return []
@@ -1006,12 +1006,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
         
     def __eq__(self, other):
         if isinstance(other, WeightedLinksDirectedGraph):
-            if self.nodes() != other.nodes() or self.link_weights() != other.link_weights():
-                return False
-            for n in self.nodes():
-                if n not in other.nodes():
-                    return False
-            return True
+            return self.nodes() == other.nodes() and self.link_weights() == other.link_weights()
         return False
         
     def __str__(self):
