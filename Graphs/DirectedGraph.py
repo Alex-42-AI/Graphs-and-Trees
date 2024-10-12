@@ -3,7 +3,7 @@ from Graphs.General import Node, Dict, SortedKeysDict, SortedList
 
 class DirectedGraph:
     def __init__(self, neighborhood: Dict = Dict(), f=lambda x: x):
-        self.__nodes, self.__f, self.__links, self.__prev, self.__next, self.__degrees = SortedList(f), f, [], SortedKeysDict(f=f), SortedKeysDict(f=f), SortedKeysDict(f=f)
+        self.__nodes, self.__f, self.__links, self.__prev, self.__next, self.__degrees = SortedList(f=f), f, [], SortedKeysDict(f=f), SortedKeysDict(f=f), SortedKeysDict(f=f)
         for u, (prev_nodes, next_nodes) in neighborhood.items():
             self.add(u)
             for v in prev_nodes:
@@ -38,7 +38,7 @@ class DirectedGraph:
     def add(self, u: Node, pointed_by: [Node] = (), points_to: [Node] = ()):
         if u not in self.nodes():
             self.__nodes.insert(u)
-            self.__degrees[u], self.__next[u], self.__prev[u] = [0, 0], SortedList(self.f()), SortedList(self.f())
+            self.__degrees[u], self.__next[u], self.__prev[u] = [0, 0], SortedList(f=self.f()), SortedList(f=self.f())
             DirectedGraph.connect(self, u, pointed_by, points_to)
         return self
         
@@ -86,10 +86,7 @@ class DirectedGraph:
         return res
         
     def transposed(self):
-        res = DirectedGraph(Dict(*[(n, ([], [])) for n in self.nodes()]), self.f())
-        for (u, v) in self.links():
-            res.connect(u, [v])
-        return res
+        return DirectedGraph(Dict(*[(u, (self.next(u), self.prev(u))) for u in self.nodes()]))
         
     def copy(self):
         return DirectedGraph(Dict(*[(n, (self.prev(n), self.next(n))) for n in self.nodes()]), self.f())
@@ -109,7 +106,7 @@ class DirectedGraph:
         return [v for v in self.nodes() if not self.degrees(v)[1]]
         
     def has_loop(self):
-        sources, total, stack = self.sources(), SortedList(self.f()), SortedList(self.f())
+        sources, total, stack = self.sources(), SortedList(f=self.f()), SortedList(f=self.f())
         if not sources or not self.sinks():
             return True
             
@@ -139,10 +136,10 @@ class DirectedGraph:
     def toposort(self):
         if not self.dag():
             return []
-        layer, total = self.sources(), SortedList(self.f())
+        layer, total = self.sources(), SortedList(f=self.f())
         res = layer.copy()
         while layer:
-            new = SortedList(self.f())
+            new = SortedList(f=self.f())
             for u in layer:
                 total.insert(u)
                 for v in self.next(u):
@@ -157,8 +154,9 @@ class DirectedGraph:
     def connection_components(self):
         if not self:
             return [[]]
-        components, queue, total, k, n = [[self.nodes()[0]]], [self.nodes()[0]], SortedList(self.f()), 1, len(self.nodes())
-        total.insert(self.nodes()[0])
+        components, queue = [[self.nodes()[0]]], [self.nodes()[0]]
+        total = SortedList(self.nodes()[0], f=self.f())
+        k, n = 1, len(self.nodes())
         while k < n:
             while queue:
                 u = queue.pop(0)
@@ -183,7 +181,8 @@ class DirectedGraph:
     def component(self, u: Node):
         if u not in self.nodes():
             raise ValueError("Unrecognized node!")
-        queue, res = [u], DirectedGraph(Dict((u, ([], []))), self.f())
+        queue = [u]
+        res = DirectedGraph(Dict((u, ([], []))), self.f())
         while queue:
             v = queue.pop(0)
             for n in self.next(v):
@@ -201,7 +200,8 @@ class DirectedGraph:
     def subgraph(self, u: Node):
         if u not in self.nodes():
             raise ValueError("Unrecognized node!")
-        queue, res = [u], DirectedGraph(Dict((u, ([], []))), self.f())
+        queue = [u]
+        res = DirectedGraph(Dict((u, ([], []))), self.f())
         while queue:
             v = queue.pop(0)
             for n in self.next(v):
@@ -213,7 +213,8 @@ class DirectedGraph:
         
     def cut_nodes(self):
         def dfs(x: Node, l: int):
-            colors[x], levels[x], min_back, is_root, count, is_cut = 1, l, l, not l, 0, False
+            colors[x], levels[x], min_back = 1, l, l
+            is_root, count, is_cut = not l, 0, False
             for y in self.next(x) + self.prev(x):
                 if not colors[y]:
                     count += 1
@@ -239,8 +240,8 @@ class DirectedGraph:
         if u not in self.nodes() or v not in self.nodes():
             raise Exception("Unrecognized node(s)!")
         previous = SortedKeysDict(*[(n, None) for n in self.nodes()], f=self.f())
-        queue, total = [u], SortedList(self.f())
-        total.insert(u), previous.pop(u)
+        queue, total = [u], SortedList(u, f=self.f())
+        previous.pop(u)
         while queue:
             n = queue.pop(0)
             if n == v:
@@ -275,8 +276,7 @@ class DirectedGraph:
         if self.euler_tour_exists():
             tmp = DirectedGraph.copy(self)
             v, u = self.links()[0]
-            tmp.disconnect(u, [v])
-            return [(v, u)] + tmp.euler_walk(u, v)
+            return tmp.disconnect(u, [v]).euler_walk(u, v)
         return []
         
     def euler_walk(self, u: Node, v: Node):
@@ -339,34 +339,11 @@ class DirectedGraph:
             for c in self.connection_components():
                 res += self.component(c[0]).stronglyConnectedComponents()
             return res
-        total, res = SortedList(self.f()), []
+        total, res = SortedList(f=self.f()), []
         for n in self.nodes():
             if n not in total:
-                curr = SortedList(self.f())
-                curr.insert(n), dfs(n, [n]), res.append(curr), total.insert(n)
-        return res
-        
-    def sccDag(self):
-        res = DirectedGraph(f=lambda x: len(x.nodes()))
-        for c in self.stronglyConnectedComponents():
-            queue, g = [c[0]], DirectedGraph(Dict((c[0], ([], []))), self.f())
-            while queue:
-                v = queue.pop(0)
-                for n in self.next(v):
-                    if n in g.nodes():
-                        g.connect(n, [v])
-                    elif n in c:
-                        g.add(n, [v]), queue.append(n)
-            res.add(Node(g))
-        for u in res.nodes():
-            linked_to = SortedList(lambda x: len(x.nodes()))
-            linked_to.insert(u)
-            for n in u.nodes():
-                for m in self.next(n):
-                    for v in res.nodes():
-                        if v not in linked_to and m in v.nodes():
-                            res.connect(v, [u]), linked_to.insert(v)
-                            break
+                curr = SortedList(n, f=self.f())
+                dfs(n, [n]), res.append(curr), total.insert(n)
         return res
         
     def pathWithLength(self, u: Node, v: Node, length: int):
@@ -427,8 +404,7 @@ class DirectedGraph:
         if u in self.next(v):
             return True if all(n in (u, v) for n in self.nodes()) else self.hamiltonTourExists()
         tmp = DirectedGraph.copy(self)
-        tmp.connect(u, [v])
-        return tmp.hamiltonTourExists()
+        return tmp.connect(u, [v]).hamiltonTourExists()
         
     def hamiltonTour(self):
         if self.sources() or self.sinks():
@@ -481,11 +457,12 @@ class DirectedGraph:
             raise Exception("Unrecognized node(s).")
         return dfs(u, [u])
         
-    def isomorphic(self, other):
+    def isomorphicFunction(self, other):
         if isinstance(other, DirectedGraph):
             if len(self.links()) != len(other.links()) or len(self.nodes()) != len(other.nodes()):
-                return False
-            this_degrees, other_degrees = SortedKeysDict(f=self.f()), SortedKeysDict(f=self.f())
+                return SortedKeysDict()
+            this_degrees = SortedKeysDict(f=self.f())
+            other_degrees = SortedKeysDict(f=self.f())
             for d in self.degrees().values():
                 if d in this_degrees:
                     this_degrees[d] += 1
@@ -497,15 +474,17 @@ class DirectedGraph:
                 else:
                     other_degrees[d] = 1
             if this_degrees != other_degrees:
-                return False
-            this_nodes_degrees, other_nodes_degrees = SortedKeysDict(*[(d, []) for d in this_degrees.keys()], f=self.f()), SortedKeysDict(*[(d, []) for d in other_degrees.keys()], f=self.f())
+                return SortedKeysDict()
+            this_nodes_degrees = SortedKeysDict(*[(d, []) for d in this_degrees.keys()], f=self.f())
+            other_nodes_degrees = SortedKeysDict(*[(d, []) for d in other_degrees.keys()], f=self.f())
             for d in this_degrees.keys():
                 for n in self.nodes():
                     if self.degrees(n) == d:
                         this_nodes_degrees[d].append(n)
                     if other.degrees(n) == d:
                         other_nodes_degrees[d].append(n)
-            this_nodes_degrees, other_nodes_degrees = list(sorted(this_nodes_degrees.values(), key=lambda _p: len(_p))), list(sorted(other_nodes_degrees.values(), key=lambda _p: len(_p)))
+            this_nodes_degrees = list(sorted(this_nodes_degrees.values(), key=lambda _p: len(_p)))
+            other_nodes_degrees = list(sorted(other_nodes_degrees.values(), key=lambda _p: len(_p)))
             
             from itertools import permutations, product
             
@@ -514,7 +493,7 @@ class DirectedGraph:
             for possibility in possibilities:
                 map_dict = []
                 for i, group in enumerate(possibility):
-                map_dict += [*zip(group, other_nodes_degrees[i])]
+                    map_dict += [*zip(group, other_nodes_degrees[i])]
                 possible = True
                 for n, u in map_dict:
                     for m, v in map_dict:
@@ -524,9 +503,9 @@ class DirectedGraph:
                     if not possible:
                         break
                 if possible:
-                    return True
-            return False
-        return False
+                    return SortedKeysDict(*map_dict, f=self.f())
+            return SortedKeysDict()
+        return SortedKeysDict()
         
     def __bool__(self):
         return bool(self.nodes())
@@ -615,10 +594,14 @@ class WeightedNodesDirectedGraph(DirectedGraph):
             self.__node_weights[u] = w
         return self
         
+    def transposed(self):
+        return WeightedNodesDirectedGraph(Dict(*[(u, (self.node_weights(u), (self.next(u), self.prev(u)))) for u in self.nodes()]))
+        
     def component(self, u: Node):
         if u not in self.nodes():
             raise ValueError("Unrecognized node!")
-        queue, res = [u], WeightedNodesDirectedGraph(Dict((u, (self.node_weights(u), [], []))), self.f())
+        queue = [u]
+        res = WeightedNodesDirectedGraph(Dict((u, (self.node_weights(u), ([], [])))), self.f())
         while queue:
             v = queue.pop(0)
             for n in self.next(v):
@@ -636,7 +619,8 @@ class WeightedNodesDirectedGraph(DirectedGraph):
     def subgraph(self, u: Node):
         if u not in self.nodes():
             raise ValueError("Unrecognized node!")
-        queue, res = [u], WeightedNodesDirectedGraph(Dict((u, (self.node_weights(u), [], []))), self.f())
+        queue = [u]
+        res = WeightedNodesDirectedGraph(Dict((u, (self.node_weights(u), ([], [])))), self.f())
         while queue:
             v = queue.pop(0)
             for n in self.next(v):
@@ -646,37 +630,14 @@ class WeightedNodesDirectedGraph(DirectedGraph):
                     res.add((n, self.node_weights(n)), [v]), queue.append(n)
         return res
         
-    def sccDag(self):
-        res = DirectedGraph(f=lambda x: len(x.nodes()))
-        for c in self.stronglyConnectedComponents():
-            queue, g = [c[0]], WeightedNodesDirectedGraph(Dict((c[0], (self.node_weights(c[0]), ([], [])))), self.f())
-            while queue:
-                v = queue.pop(0)
-                for n in self.next(v):
-                    if n in g.nodes():
-                        g.connect(n, [v])
-                    elif n in c:
-                        g.add((n, self.node_weights(n)), [v]), queue.append(n)
-            res.add(Node(g))
-        for u in res.nodes():
-            linked_to = SortedList(lambda x: len(x.nodes()))
-            linked_to.insert(u)
-            for n in u.nodes():
-                for m in self.next(n):
-                    for v in res.nodes():
-                        if v not in linked_to and m in v.nodes():
-                            res.connect(v, [u]), linked_to.insert(v)
-                            break
-        return res
-        
     def minimalPathNodes(self, u: Node, v: Node):
         res = WeightedLinksDirectedGraph(Dict(*[(n, (Dict(*[(m, self.node_weights(n)) for m in self.prev(n)]), Dict(*[(m, self.node_weights(n)) for m in self.next(n)]))) for n in self.nodes()]), self.f()).minimalPathLinks(u, v)
         return res[0], res[1] + self.node_weights(v) * bool(res[0])
         
-    def isomorphic(self, other):
+    def isomorphicFunction(self, other):
         if isinstance(other, WeightedNodesDirectedGraph):
             if len(self.links()) != len(other.links()) or len(self.nodes()) != len(other.nodes()):
-                return False
+                return SortedKeysDict()
             this_degrees, other_degrees, this_weights, other_weights = dict(), dict(), dict(), dict()
             for d in self.degrees().values():
                 if d in this_degrees:
@@ -699,7 +660,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
                 else:
                     other_weights[w] = 1
             if this_degrees != other_degrees or this_weights != other_weights:
-                return False
+                return SortedKeysDict()
             this_nodes_degrees, other_nodes_degrees = {d: [] for d in this_degrees.keys()}, {d: [] for d in other_degrees.keys()}
             for d in this_degrees.keys():
                 for n in self.nodes():
@@ -707,7 +668,8 @@ class WeightedNodesDirectedGraph(DirectedGraph):
                         this_nodes_degrees[d].append(n)
                     if other.degrees(n) == d:
                         other_nodes_degrees[d].append(n)
-            this_nodes_degrees, other_nodes_degrees = list(sorted(this_nodes_degrees.values(), key=lambda _p: len(_p))), list(sorted(other_nodes_degrees.values(), key=lambda _p: len(_p)))
+            this_nodes_degrees = list(sorted(this_nodes_degrees.values(), key=lambda _p: len(_p)))
+            other_nodes_degrees = list(sorted(other_nodes_degrees.values(), key=lambda _p: len(_p)))
             
             from itertools import permutations, product
             
@@ -726,9 +688,9 @@ class WeightedNodesDirectedGraph(DirectedGraph):
                     if not possible:
                         break
                 if possible:
-                    return True
-            return False
-        return super().isomorphic(other)
+                    return SortedKeysDict(*map_dict, f=self.f())
+            return SortedKeysDict()
+        return super().isomorphicFunction(other)
         
     def __add__(self, other):
         if not isinstance(other, DirectedGraph):
@@ -781,7 +743,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                 self.add(u)
             for v, w in prev_pairs.items():
                 if v not in self.nodes():
-                    self.add(v, Dict(), Dict((u, w)))
+                    self.add(v, points_to_weights=Dict((u, w)))
                 elif v not in self.prev(u):
                     self.connect(u, Dict((v, w)))
             for v, w in next_pairs.items():
@@ -842,15 +804,16 @@ class WeightedLinksDirectedGraph(DirectedGraph):
         return self
         
     def transposed(self):
-        return WeightedLinksDirectedGraph(Dict(*[(u, (Dict(*[(v, self.link_weights(u, v)) for v in self.next(u)]), Dict(*[(v, self.link_weights(u, v)) for v in self.prev(u)]))) for u in self.nodes()]), self.f())
-    
+        return WeightedLinksDirectedGraph(Dict(*[(u, (self.link_weights(u), Dict(*[(v, self.link_weights(v, u)) for v in self.prev(u)]))) for u in self.nodes()]), self.f())
+        
     def copy(self):
-        return WeightedLinksDirectedGraph(Dict(*[(u, (Dict(*[(v, self.link_weights(u, v)) for v in self.prev(u)]), Dict(*[(v, self.link_weights(u, v)) for v in self.next(u)]))) for u in self.nodes()]), self.f())
-    
+        return WeightedLinksDirectedGraph(Dict(*[(u, (Dict(*[(v, self.link_weights(v, u)) for v in self.prev(u)]), self.link_weights(u))) for u in self.nodes()]), self.f())
+        
     def component(self, u: Node):
         if u not in self.nodes():
             raise ValueError("Unrecognized node!")
-        queue, res = [u], WeightedLinksDirectedGraph(Dict((u, (Dict(), Dict()))), self.f())
+        queue = [u]
+        res = WeightedLinksDirectedGraph(Dict((u, (Dict(), Dict()))), self.f())
         while queue:
             v = queue.pop(0)
             for n in self.next(v):
@@ -868,7 +831,8 @@ class WeightedLinksDirectedGraph(DirectedGraph):
     def subgraph(self, u: Node):
         if u not in self.nodes():
             raise ValueError("Unrecognized node!")
-        queue, res = [u], WeightedLinksDirectedGraph(Dict((u, (Dict(), Dict()))), self.f())
+        queue = [u]
+        res = WeightedLinksDirectedGraph(Dict((u, (Dict(), Dict()))), self.f())
         while queue:
             v = queue.pop(0)
             for n in self.next(v):
@@ -878,31 +842,8 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                     res.add(n, Dict((v, self.link_weights(v, n)))), queue.append(n)
         return res
         
-    def sccDag(self):
-        res = DirectedGraph(f=lambda x: len(x.nodes()))
-        for c in self.stronglyConnectedComponents():
-            queue, g = [c[0]], WeightedLinksDirectedGraph(Dict((c[0], (Dict(), Dict()))), self.f())
-            while queue:
-                v = queue.pop(0)
-                for n in self.next(v):
-                    if n in g.nodes():
-                        g.connect(n, Dict((v, self.link_weights(v, n))))
-                    elif n in c:
-                        g.add(n, Dict((v, self.link_weights(v, n)))), queue.append(n)
-            res.add(Node(g))
-        for u in res.nodes():
-            linked_to = SortedList(lambda x: len(x.nodes()))
-            linked_to.insert(u)
-            for n in u.nodes():
-                for m in self.next(n):
-                    for v in res.nodes():
-                        if v not in linked_to and m in v.nodes():
-                            res.connect(v, [u]), linked_to.insert(v)
-                            break
-        return res
-        
     def minimalPathLinks(self, u: Node, v: Node):
-        def dfs(x, curr_path, curr_w, total_negative, res_path=(), res_w=0):
+        def dfs(x, curr_path, curr_w, total_negative, res_path, res_w=0):
             for y in filter(lambda _y: (x, _y) not in curr_path, self.next(x)):
                 if curr_w + self.link_weights((x, y)) + total_negative >= res_w and res_path:
                     continue
@@ -916,15 +857,16 @@ class WeightedLinksDirectedGraph(DirectedGraph):
         if u not in self.nodes() or v not in self.nodes():
             raise ValueError("Unrecognized node(s)!")
         if self.reachable(u, v):
-            result = dfs(u, [], 0, sum(self.link_weights(l) for l in self.links() if self.link_weights(l) < 0))
+            result = dfs(u, [], 0, sum(self.link_weights(l) for l in self.links() if self.link_weights(l) < 0), [])
             return list(map(lambda l: l[0], result[0])) + [result[0][-1][1]], result[1]
         return [], 0
         
-    def isomorphic(self, other):
+    def isomorphicFunction(self, other):
         if isinstance(other, WeightedLinksDirectedGraph):
             if len(self.links()) != len(other.links()) or len(self.nodes()) != len(other.nodes()):
-                return False
-            this_degrees, other_degrees, this_weights, other_weights = SortedKeysDict(f=self.f()), SortedKeysDict(f=self.f()), dict(), dict()
+                return SortedKeysDict()
+            this_degrees, other_degrees = SortedKeysDict(f=self.f()), SortedKeysDict(f=self.f())
+            this_weights, other_weights = dict(), dict()
             for d in self.degrees().values():
                 if d in this_degrees:
                     this_degrees[d] += 1
@@ -946,15 +888,17 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                 else:
                     other_weights[w] = 1
             if this_degrees != other_degrees or this_weights != other_weights:
-                return False
-            this_nodes_degrees, other_nodes_degrees = SortedKeysDict(*[(d, []) for d in this_degrees.keys()], f=self.f()), SortedKeysDict(*[(d, []) for d in other_degrees.keys()], f=self.f())
+                return SortedKeysDict()
+            this_nodes_degrees = SortedKeysDict(*[(d, []) for d in this_degrees.keys()], f=self.f())
+            other_nodes_degrees = SortedKeysDict(*[(d, []) for d in other_degrees.keys()], f=self.f())
             for d in this_degrees.keys():
                 for n in self.nodes():
                     if self.degrees(n) == d:
                         this_nodes_degrees[d].append(n)
                     if other.degrees(n) == d:
                         other_nodes_degrees[d].append(n)
-            this_nodes_degrees, other_nodes_degrees = list(sorted(this_nodes_degrees.values(), key=lambda _p: len(_p))), list(sorted(other_nodes_degrees.values(), key=lambda _p: len(_p)))
+            this_nodes_degrees = list(sorted(this_nodes_degrees.values(), key=lambda _p: len(_p)))
+            other_nodes_degrees = list(sorted(other_nodes_degrees.values(), key=lambda _p: len(_p)))
             
             from itertools import permutations, product
             
@@ -973,9 +917,9 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                     if not possible:
                         break
                 if possible:
-                    return True
-            return False
-        return super().isomorphic(other)
+                    return SortedKeysDict(*map_dict, f=self.f())
+            return SortedKeysDict()
+        return super().isomorphicFunction(other)
         
     def __add__(self, other):
         if not isinstance(other, DirectedGraph):
@@ -1023,11 +967,11 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
                 if v in self.nodes():
                     self.connect(u, Dict((v, w)))
                 else:
-                    self.add((v, 0), Dict(), Dict((u, w)))
+                    self.add((v, 0), points_to_weights=Dict((u, w)))
         for u, p in neighborhood.items():
             for v, w in p[1][1].items():
                 if v in self.nodes():
-                    self.connect(u, Dict(), Dict((v, w)))
+                    self.connect(v, Dict((u, w)))
                 else:
                     self.add((v, 0), Dict((u, w)))
                     
@@ -1048,10 +992,10 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
         
     def connect(self, u: Node, pointed_by_weights: Dict = Dict(), points_to_weights: Dict = Dict()):
         return WeightedLinksDirectedGraph.connect(self, u, pointed_by_weights, points_to_weights)
-    
+        
     def disconnect(self, u: Node, pointed_by: [Node] = (), points_to: [Node] = ()):
         return WeightedLinksDirectedGraph.disconnect(self, u, pointed_by, points_to)
-    
+        
     def set_weight(self, el: Node | tuple, w: float):
         if el in self.nodes():
             super().set_weight(el, w)
@@ -1059,13 +1003,17 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
             WeightedLinksDirectedGraph.set_weight(self, el, w)
         return self
         
+    def transposed(self):
+        return WeightedDirectedGraph(Dict(*[(u, (self.node_weights(u), (self.link_weights(u), Dict(*[(v, self.link_weights(v, u)) for v in self.prev(u)])))) for u in self.nodes()]), self.f())
+    
     def copy(self):
-        return WeightedDirectedGraph(Dict(*[(u, (self.node_weights(u), (Dict(*[(v, self.link_weights(u, v)) for v in self.prev(u)]), Dict(*[(v, self.link_weights(u, v)) for v in self.next(u)])))) for u in self.nodes()]), self.f())
+        return WeightedDirectedGraph(Dict(*[(u, (self.node_weights(u), (Dict(*[(v, self.link_weights(v, u)) for v in self.prev(u)]), self.link_weights(u)))) for u in self.nodes()]), self.f())
     
     def component(self, u: Node):
         if u not in self.nodes():
             raise ValueError("Unrecognized node!")
-        queue, res = [u], WeightedDirectedGraph(Dict((u, (self.node_weights(u), (Dict(), Dict())))), self.f())
+        queue = [u]
+        res = WeightedDirectedGraph(Dict((u, (self.node_weights(u), (Dict(), Dict())))), self.f())
         while queue:
             v = queue.pop(0)
             for n in self.next(v):
@@ -1083,7 +1031,8 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
     def subgraph(self, u: Node):
         if u not in self.nodes():
             raise ValueError("Unrecognized node!")
-        queue, res = [u], WeightedDirectedGraph(Dict((u, (self.node_weights(u), (Dict(), Dict())))), self.f())
+        queue = [u]
+        res = WeightedDirectedGraph(Dict((u, (self.node_weights(u), (Dict(), Dict())))), self.f())
         while queue:
             v = queue.pop(0)
             for n in self.next(v):
@@ -1093,38 +1042,16 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
                     res.add((n, self.node_weights(n)), Dict((v, self.link_weights(v, n)))), queue.append(n)
         return res
         
-    def sccDag(self):
-        res = DirectedGraph(f=lambda x: len(x.nodes()))
-        for c in self.stronglyConnectedComponents():
-            queue, g = [c[0]], WeightedLinksDirectedGraph(Dict((c[0], (self.node_weights(c[0]), (Dict(), Dict())))), self.f())
-            while queue:
-                v = queue.pop(0)
-                for n in self.next(v):
-                    if n in g.nodes():
-                        g.connect(n, Dict((v, self.link_weights(v, n))))
-                    elif n in c:
-                        g.add((n, self.node_weights(n)), Dict((v, self.link_weights(v, n)))), queue.append(n)
-            res.add(Node(g))
-        for u in res.nodes():
-            linked_to = SortedList(lambda x: len(x.nodes()))
-            linked_to.insert(u)
-            for n in u.nodes():
-                for m in self.next(n):
-                    for v in res.nodes():
-                        if v not in linked_to and m in v.nodes():
-                            res.connect(v, [u]), linked_to.insert(v)
-                            break
-        return res
-        
     def minimalPath(self, u: Node, v: Node):
         res = WeightedLinksDirectedGraph(Dict(*[(n, (Dict(*[(m, self.node_weights(n) + self.link_weights(m, n)) for m in self.prev(n)]), Dict(*[(m, self.node_weights(n) + self.link_weights(n, m)) for m in self.next(n)]))) for n in self.nodes()]), self.f()).minimalPathLinks(u, v)
         return res[0], res[1] + self.node_weights(v) * bool(res[0])
         
-    def isomorphic(self, other):
+    def isomorphicFunction(self, other):
         if isinstance(other, WeightedDirectedGraph):
             if len(self.links()) != len(other.links()) or len(self.nodes()) != len(other.nodes()):
-                return False
-            this_degrees, other_degrees, this_node_weights, other_node_weights, this_link_weights, other_link_weights = SortedKeysDict(f=self.f()), SortedKeysDict(f=self.f()), dict(), dict(), dict(), dict()
+                return SortedKeysDict()
+            this_degrees, other_degrees = SortedKeysDict(f=self.f()), SortedKeysDict(f=self.f())
+            this_node_weights, other_node_weights, this_link_weights, other_link_weights = dict(), dict(), dict(), dict()
             for d in self.degrees().values():
                 if d in this_degrees:
                     this_degrees[d] += 1
@@ -1156,15 +1083,17 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
                 else:
                     other_node_weights[w] = 1
             if this_degrees != other_degrees or this_node_weights != other_node_weights or this_link_weights != other_link_weights:
-                return False
-            this_nodes_degrees, other_nodes_degrees = SortedKeysDict(*[(d, []) for d in this_degrees.keys()], f=self.f()), SortedKeysDict(*[(d, []) for d in other_degrees.keys()], f=self.f())
+                return SortedKeysDict()
+            this_nodes_degrees = SortedKeysDict(*[(d, []) for d in this_degrees.keys()], f=self.f()),
+            other_nodes_degrees = SortedKeysDict(*[(d, []) for d in other_degrees.keys()], f=self.f())
             for d in this_degrees.keys():
                 for n in self.nodes():
                     if self.degrees(n) == d:
                         this_nodes_degrees[d].append(n)
                     if other.degrees(n) == d:
                         other_nodes_degrees[d].append(n)
-            this_nodes_degrees, other_nodes_degrees = list(sorted(this_nodes_degrees.values(), key=lambda _p: len(_p))), list(sorted(other_nodes_degrees.values(), key=lambda _p: len(_p)))
+            this_nodes_degrees = list(sorted(this_nodes_degrees.values(), key=lambda _p: len(_p)))
+            other_nodes_degrees = list(sorted(other_nodes_degrees.values(), key=lambda _p: len(_p)))
             
             from itertools import permutations, product
             
@@ -1183,11 +1112,11 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
                     if not possible:
                         break
                 if possible:
-                    return True
-            return False
+                    return SortedKeysDict(*map_dict, f=self.f())
+            return SortedKeysDict()
         if isinstance(other, (WeightedNodesDirectedGraph, WeightedLinksDirectedGraph)):
-            return type(other).isomorphic(other, self)
-        return DirectedGraph.isomorphic(self, other)
+            return type(other).isomorphicFunction(other, self)
+        return DirectedGraph.isomorphicFunction(self, other)
         
     def __add__(self, other):
         if not isinstance(other, DirectedGraph):
