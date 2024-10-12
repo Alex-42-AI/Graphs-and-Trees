@@ -11,7 +11,7 @@ class Dict:
                 if arg[0] in self:
                     raise KeyError("No similar keys in a dictionary allowed!")
                 self.__items.append(arg)
-                    
+                
     def keys(self):
         return [p[0] for p in self.items()]
         
@@ -87,7 +87,7 @@ class Dict:
 
 class SortedKeysDict(Dict):
     def __init__(self, *args, f=lambda x: x):
-        self.__items, self.__f = SortedList(lambda x: f(x[0])), f
+        self.__items, self.__f = SortedList(f=lambda x: f(x[0])), f
         for arg in args:
             if arg not in self.__items:
                 if len(arg) != 2:
@@ -247,7 +247,6 @@ class Link:
         return 1 + (self.u() != self.v())
         
     def __eq__(self, other):
-        
         if isinstance(other, Link):
             return (self.u(), self.v()) in [(other.u(), other.v()), (other.v(), other.u())]
         return False
