@@ -3,7 +3,8 @@ from Graphs.General import Node, Dict, SortedKeysDict, SortedList
 
 class DirectedGraph:
     def __init__(self, neighborhood: Dict = Dict(), f=lambda x: x):
-        self.__nodes, self.__f, self.__links, self.__prev, self.__next, self.__degrees = SortedList(f=f), f, [], SortedKeysDict(f=f), SortedKeysDict(f=f), SortedKeysDict(f=f)
+        self.__nodes, self.__f, self.__links = SortedList(f=f), f, []
+        self.__prev, self.__next, self.__degrees = SortedKeysDict(f=f), SortedKeysDict(f=f), SortedKeysDict(f=f)
         for u, (prev_nodes, next_nodes) in neighborhood.items():
             self.add(u)
             for v in prev_nodes:
@@ -38,7 +39,8 @@ class DirectedGraph:
     def add(self, u: Node, pointed_by: [Node] = (), points_to: [Node] = ()):
         if u not in self.nodes():
             self.__nodes.insert(u)
-            self.__degrees[u], self.__next[u], self.__prev[u] = [0, 0], SortedList(f=self.f()), SortedList(f=self.f())
+            self.__degrees[u] = [0, 0]
+            self.__next[u], self.__prev[u] = SortedList(f=self.f()), SortedList(f=self.f())
             DirectedGraph.connect(self, u, pointed_by, points_to)
         return self
         
@@ -176,7 +178,7 @@ class DirectedGraph:
     def reachable(self, u: Node, v: Node):
         if u not in self.nodes() or v not in self.nodes():
             raise Exception("Unrecognized node(s).")
-        return v in self.subgraph(u).nodes()
+        return v in self.subgraph(u)
         
     def component(self, u: Node):
         if u not in self.nodes():
@@ -461,8 +463,7 @@ class DirectedGraph:
         if isinstance(other, DirectedGraph):
             if len(self.links()) != len(other.links()) or len(self.nodes()) != len(other.nodes()):
                 return SortedKeysDict()
-            this_degrees = SortedKeysDict(f=self.f())
-            other_degrees = SortedKeysDict(f=self.f())
+            this_degrees, other_degrees = dict(), dict()
             for d in self.degrees().values():
                 if d in this_degrees:
                     this_degrees[d] += 1
@@ -475,8 +476,8 @@ class DirectedGraph:
                     other_degrees[d] = 1
             if this_degrees != other_degrees:
                 return SortedKeysDict()
-            this_nodes_degrees = SortedKeysDict(*[(d, []) for d in this_degrees.keys()], f=self.f())
-            other_nodes_degrees = SortedKeysDict(*[(d, []) for d in other_degrees.keys()], f=self.f())
+            this_nodes_degrees = {d: [] for d in this_degrees.keys()}
+            other_nodes_degrees = {d: [] for d in other_degrees.keys()}
             for d in this_degrees.keys():
                 for n in self.nodes():
                     if self.degrees(n) == d:
@@ -825,7 +826,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                 if n in res.nodes():
                     res.connect(v, Dict((n, self.link_weights((n, v)))))
                 else:
-                    res.add(n, Dict(), Dict((v, self.link_weights((n, v))))), queue.append(n)
+                    res.add(n, points_to_weights=Dict((v, self.link_weights((n, v))))), queue.append(n)
         return res
         
     def subgraph(self, u: Node):
@@ -889,8 +890,8 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                     other_weights[w] = 1
             if this_degrees != other_degrees or this_weights != other_weights:
                 return SortedKeysDict()
-            this_nodes_degrees = SortedKeysDict(*[(d, []) for d in this_degrees.keys()], f=self.f())
-            other_nodes_degrees = SortedKeysDict(*[(d, []) for d in other_degrees.keys()], f=self.f())
+            this_nodes_degrees = {d: [] for d in this_degrees.keys()}
+            other_nodes_degrees = {d: [] for d in other_degrees.keys()}
             for d in this_degrees.keys():
                 for n in self.nodes():
                     if self.degrees(n) == d:
@@ -1025,7 +1026,7 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
                 if n in res.nodes():
                     res.connect(v, Dict((n, self.link_weights(n, v))))
                 else:
-                    res.add((n, self.node_weights(n)), Dict(), Dict((v, self.link_weights((n, v))))), queue.append(n)
+                    res.add((n, self.node_weights(n)), points_to_weights=Dict((v, self.link_weights((n, v))))), queue.append(n)
         return res
         
     def subgraph(self, u: Node):
@@ -1084,8 +1085,8 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
                     other_node_weights[w] = 1
             if this_degrees != other_degrees or this_node_weights != other_node_weights or this_link_weights != other_link_weights:
                 return SortedKeysDict()
-            this_nodes_degrees = SortedKeysDict(*[(d, []) for d in this_degrees.keys()], f=self.f()),
-            other_nodes_degrees = SortedKeysDict(*[(d, []) for d in other_degrees.keys()], f=self.f())
+            this_nodes_degrees = {d: [] for d in this_degrees.keys()}
+            other_nodes_degrees = {d: [] for d in other_degrees.keys()}
             for d in this_degrees.keys():
                 for n in self.nodes():
                     if self.degrees(n) == d:
