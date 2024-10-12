@@ -139,7 +139,8 @@ class UndirectedGraph:
             raise Exception("Unrecognized node(s)!")
         if u == v:
             return True
-        total, queue = SortedList(u, f=self.f()), [u]
+        total = SortedList(u, f=self.f())
+        queue = [u]
         while queue:
             n = queue.pop(0)
             for m in filter(lambda x: x not in total, self.neighboring(n)):
@@ -151,7 +152,8 @@ class UndirectedGraph:
     def component(self, u: Node):
         if u not in self.nodes():
             raise ValueError("Unrecognized node!")
-        queue, res = [u], UndirectedGraph(Dict((u, [])), self.f())
+        queue = [u]
+        res = UndirectedGraph(Dict((u, [])), self.f())
         while queue:
             v = queue.pop(0)
             for n in self.neighboring(v):
@@ -214,7 +216,8 @@ class UndirectedGraph:
     def get_shortest_path(self, u: Node, v: Node):
         if u not in self.nodes() or v not in self.nodes():
             raise Exception("Unrecognized node(s)!")
-        previous, queue, total = SortedKeysDict(*[(n, None) for n in self.nodes()], f=self.f()), [u], SortedList(u, f=self.f())
+        previous = SortedKeysDict(*[(n, None) for n in self.nodes()], f=self.f())
+        queue, total = [u], SortedList(u, f=self.f())
         previous.pop(u)
         while queue:
             n = queue.pop(0)
@@ -304,7 +307,8 @@ class UndirectedGraph:
         res = []
         for n in self.nodes():
             if self.clique(n, *self.neighboring(n)):
-                queue, total = [n], SortedList(n, f=self.f())
+                queue = [n]
+                total = SortedList(n, f=self.f())
                 res, continuer = [n], False
                 while queue:
                     u, can_be = queue.pop(0), True
@@ -383,7 +387,8 @@ class UndirectedGraph:
                 if not found:
                     result.append([u])
             return result
-        max_nodes, tmp = self.nodes().value().copy(), UndirectedGraph.copy(self)
+        max_nodes = self.nodes().value().copy()
+        tmp = UndirectedGraph.copy(self)
         return helper([])
         
     def chromaticNumberLinks(self):
@@ -424,7 +429,8 @@ class UndirectedGraph:
         return []
         
     def vertexCover(self):
-        nodes, tmp = self.nodes().copy(), UndirectedGraph.copy(self)
+        nodes = self.nodes().copy()
+        tmp = UndirectedGraph.copy(self)
         
         def helper(curr, i=0):
             if not tmp.links():
@@ -499,7 +505,8 @@ class UndirectedGraph:
             return False
         if all(2 * self.degrees(n) >= len(self.nodes()) for n in self.nodes()) or 2 * len(self.links()) > (len(self.nodes()) - 1) * (len(self.nodes()) - 2) + 2:
             return True
-        u, tmp = self.nodes()[0], UndirectedGraph.copy(self)
+        u = self.nodes()[0]
+        tmp = UndirectedGraph.copy(self)
         can_end_in = tmp.neighboring(u).copy()
         return dfs(u)
         
@@ -935,7 +942,8 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
     def component(self, u: Node):
         if u not in self.nodes():
             raise ValueError("Unrecognized node!")
-        queue, res = [u], WeightedLinksUndirectedGraph(Dict((u, Dict())), self.f())
+        queue = [u]
+        res = WeightedLinksUndirectedGraph(Dict((u, Dict())), self.f())
         while queue:
             v = queue.pop(0)
             for n in self.neighboring(v):
@@ -951,12 +959,12 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         if not self.connected():
             res = []
             for comp in self.connection_components():
-                curr = self.component(comp[0])
-                res.append(curr.minimal_spanning_tree())
+                res.append(self.component(comp[0]).minimal_spanning_tree())
             return res
         if not self.links():
             return [], 0
-        res_links, total = [], SortedList(self.nodes()[0], f=self.f())
+        res_links = []
+        total = SortedList(self.nodes()[0], f=self.f())
         bridge_links = SortedList(*[Link(self.nodes()[0], u) for u in self.neighboring(self.nodes()[0])], f=lambda x: self.link_weights(x))
         for _ in range(1, len(self.nodes())):
             u, v = bridge_links[0].u(), bridge_links[0].v()
@@ -983,7 +991,8 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
                 if curr_w + self.link_weights(Link(y, x)) + total_negative >= res_w and res_path:
                     continue
                 if y == v and (curr_w + self.link_weights(Link(x, y)) < res_w or not res_path):
-                    res_path, res_w = curr_path + [Link(x, y)], curr_w + self.link_weights(Link(x, y))
+                    res_path = curr_path + [Link(x, y)]
+                    res_w = curr_w + self.link_weights(Link(x, y))
                 curr = dfs(y, curr_path + [Link(x, y)], curr_w + self.link_weights(Link(x, y)), total_negative - self.link_weights(Link(x, y)) * (self.link_weights(Link(x, y)) < 0), res_path, res_w)
                 if curr[1] < res_w or not res_path:
                     res_path, res_w = curr
@@ -1040,7 +1049,8 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
             possibilities = product(*_permutations)
             for possibility in possibilities:
                 map_dict = []
-                for i, group in enumerate(possibility): map_dict += [*zip(group, other_nodes_degrees[i])]
+                for i, group in enumerate(possibility):
+                    map_dict += [*zip(group, other_nodes_degrees[i])]
                 possible = True
                 for n, u in map_dict:
                     for m, v in map_dict:
@@ -1150,6 +1160,7 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
         
     def minimalPath(self, u: Node, v: Node):
         from Graphs.DirectedGraph import WeightedLinksDirectedGraph
+        
         res = WeightedLinksDirectedGraph(Dict(*[(n, (Dict(), Dict(*[(m, self.node_weights(n) + self.link_weights(n, m)) for m in self.neighboring(n)]))) for n in self.nodes()]), self.f()).minimalPathLinks(u, v)
         return res[0], res[1] + self.node_weights(v) * bool(res[0])
         
