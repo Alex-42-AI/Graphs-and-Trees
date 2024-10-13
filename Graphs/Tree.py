@@ -28,7 +28,9 @@ class BinTree:
         return self.__right
         
     def copy(self):
-        return BinTree(self.root(), self.left(), self.right())
+        if not self:
+            return
+        return BinTree(self.root(), self.left().copy(), self.right().copy())
         
     def subtree(self, u: Node):
         def dfs(tree):
@@ -117,14 +119,10 @@ class BinTree:
                 res += c + '  '
         return res[:-2]
         
-    def invert(self):
-        def dfs(tree):
-            if not tree:
-                return
-            dfs(tree.left()), dfs(tree.right())
-            tree.__left, tree.__right = tree.right(), tree.left()
-            
-        dfs(self)
+    def inverted(self):
+        tmp = self.copy()
+        tmp.__invert__()
+        return tmp
         
     def __preorder_print(self):
         def dfs(tree, traversal):
@@ -138,7 +136,7 @@ class BinTree:
         
     def __in_order_print(self):
         def dfs(tree, traversal):
-            if tree is not None:
+            if tree:
                 traversal = dfs(tree.left(), traversal)
                 traversal += [tree.root()]
                 traversal = dfs(tree.right(), traversal)
@@ -148,7 +146,7 @@ class BinTree:
         
     def __post_order_print(self):
         def dfs(tree, traversal):
-            if tree is not None:
+            if tree:
                 traversal = dfs(tree.left(), traversal)
                 traversal = dfs(tree.right(), traversal)
                 traversal += [tree.root()]
@@ -167,7 +165,13 @@ class BinTree:
             raise ValueError('Traversal type ' + str(traversal_type) + ' is not supported!')
             
     def __invert__(self):
-        self.invert()
+        def dfs(tree):
+            if not tree:
+                return
+            dfs(tree.left()), dfs(tree.right())
+            tree.__left, tree.__right = tree.right(), tree.left()
+            
+        dfs(self)
         
     def __contains__(self, item):
         if self.root() == item:
@@ -195,21 +199,19 @@ class BinTree:
 class Tree:
     def __init__(self, root: Node, inheritance: Dict, f=lambda x: x):
         self.__root, self.__f = root, f
-        sources, self.__hierarchy, self.__nodes, self.__links, self.__leaves = SortedList(f), SortedKeysDict((self.root(), SortedList(f)), f=self.f()), SortedList(f), [], SortedList(f)
-        for u in inheritance.keys():
-            if u not in sources:
-                sources.insert(u)
+        self.__hierarchy = SortedKeysDict((root, SortedList(f=f)), f=self.f())
+        sources, self.__nodes = SortedList(root, *inheritance.keys(), f=f), SortedList(*inheritance.keys(), f=f)
+        self.__links, self.__leaves = [], SortedList(root, f=f)
         for u, desc in inheritance.items():
+            self.__leaves.remove(root)
             if u not in self.nodes():
-                self.__nodes.insert(u)
-                self.__hierarchy[u] = SortedList(self.f())
+                self.__hierarchy[u] = SortedList(*desc, f=self.f())
                 for v in desc:
                     if v not in self.nodes() and v not in self.hierarchy(u):
-                        sources.remove(v), self.__leaves.remove(u), self.__leaves.insert(v), self.__nodes.insert(v), self.__links.append((u, v)), self.__hierarchy[u].insert(v)
-        self.__nodes.insert(root)
-        self.__hierarchy[root] = SortedList(self.f())
+                        sources.remove(v), self.__leaves.remove(u), self.__leaves.insert(v), self.__nodes.insert(v), self.__links.append((u, v))
+        self.__hierarchy[root] = SortedList(*sources, f=self.f())
         for s in sources:
-            self.__links.append((root, s)), self.__leaves.remove(s), self.__hierarchy[root].insert(s)
+            self.__links.append((root, s)), self.__leaves.remove(s)
             
     def root(self):
         return self.__root
@@ -251,7 +253,8 @@ class Tree:
     def subtree(self, u: Node):
         if u not in self.nodes():
             raise ValueError("Unrecognized node!")
-        queue, res = [u], Tree(u, Dict())
+        queue = [u]
+        res = Tree(u, Dict(), self.f())
         while queue:
             v = queue.pop(0)
             for n in self.descendants(v).value():
@@ -374,10 +377,10 @@ class Tree:
         dfs(self.root())
         return dp[self.root()][0] if len(dp[self.root()][0]) >= len(dp[self.root()][1]) else dp[self.root()][1]
         
-    def isomorphic(self, other):
+    def isomorphicFunction(self, other):
         if isinstance(other, Tree):
             if len(self.nodes()) != len(other.nodes()) or len(self.links()) != len(other.links()) or len(self.leaves()) != len(other.leaves()) or len(self.descendants(self.root())) != len(other.descendants(other.root())):
-                return False
+                return SortedKeysDict()
             this_hierarchies, other_hierarchies = dict(), dict()
             for n in self.nodes().value():
                 descendants = len(self.descendants(n))
@@ -392,14 +395,16 @@ class Tree:
                 else:
                     other_hierarchies[descendants] += 1
             if this_hierarchies != other_hierarchies:
-                return False
+                return SortedKeysDict()
             this_nodes_descendants, other_nodes_descendants = {d: [] for d in this_hierarchies.keys()}, {d: [] for d in other_hierarchies.keys()}
             for n in self.nodes().value():
                 this_nodes_descendants[len(self.descendants(n))].append(n)
             for n in other.nodes().value():
                 other_nodes_descendants[len(self.descendants(n))].append(n)
             this_nodes_descendants, other_nodes_descendants = list(sorted(this_nodes_descendants.values(), key=lambda x: len(x))), list(sorted(other_nodes_descendants.values(), key=lambda x: len(x)))
+            
             from itertools import permutations, product
+            
             _permutations = [list(permutations(this_nodes)) for this_nodes in this_nodes_descendants]
             possibilities = product(*_permutations)
             for possibility in possibilities:
@@ -415,9 +420,9 @@ class Tree:
                     if not possible:
                         break
                 if possible:
-                    return True
-            return False
-        return False
+                    return SortedKeysDict(*map_dict, f=self.f())
+            return SortedKeysDict()
+        return SortedKeysDict()
         
     def __bool__(self):
         return bool(self.nodes())
@@ -473,10 +478,11 @@ class WeightedNodesTree(Tree):
         return WeightedNodesTree((self.root(), self.weights(self.root())), Dict(*[(u, (self.weights(u), Dict(*[(v, self.weights(v)) for v in self.descendants(u)]))) for u in self.nodes()]), self.f())
         
     def subtree(self, u: Node):
-        queue, res = [u], WeightedNodesTree((u, self.weights(u)), Dict())
+        queue, res = [u], WeightedNodesTree((u, self.weights(u)), Dict(), self.f())
         while queue:
             v = queue.pop(0)
-            for n in self.descendants(v).value(): res.add_nodes_to(v, (n, self.weights(n))), queue.append(n)
+            for n in self.descendants(v).value():
+                res.add_nodes_to(v, (n, self.weights(n))), queue.append(n)
         return res
         
     def add_nodes_to(self, u: Node, new_p: (Node, float), *rest_p: (Node, float)):
@@ -535,35 +541,40 @@ class WeightedNodesTree(Tree):
                         min_no_root = d
             for d in self.descendants(r):
                 dp[r][1] += dp[d][1] if sum(map(self.weights, dp[d][1])) < sum(map(self.weights, dp[d][0])) and d != min_no_root else dp[d][0]
+                
         dfs(self.root())
         return dp[self.root()][0] if sum(map(self.weights, dp[self.root()][0])) <= sum(map(self.weights, dp[self.root()][1])) else dp[self.root()][1]
         
-    def isomorphic(self, other):
-        if isinstance(other, Tree):
+    def isomorphicFunction(self, other):
+        if isinstance(other, WeightedNodesTree):
             if len(self.nodes()) != len(other.nodes()) or len(self.links()) != len(other.links()) or len(self.leaves()) != len(other.leaves()) or len(self.descendants(self.root())) != len(other.descendants(other.root())):
-                return False
+                return SortedKeysDict()
             this_hierarchies, other_hierarchies = dict(), dict()
-            for n in self.nodes().value():
+            for n in self.nodes():
                 descendants = len(self.descendants(n))
                 if descendants not in this_hierarchies:
                     this_hierarchies[descendants] = 1
                 else:
                     this_hierarchies[descendants] += 1
-            for n in other.nodes().value():
+            for n in other.nodes():
                 descendants = len(other.descendants(n))
                 if descendants not in other_hierarchies:
                     other_hierarchies[descendants] = 1
                 else:
                     other_hierarchies[descendants] += 1
             if this_hierarchies != other_hierarchies:
-                return False
-            this_nodes_descendants, other_nodes_descendants = {d: [] for d in this_hierarchies.keys()}, {d: [] for d in other_hierarchies.keys()}
-            for n in self.nodes().value():
+                return SortedKeysDict()
+            this_nodes_descendants = {d: [] for d in this_hierarchies.keys()}
+            other_nodes_descendants = {d: [] for d in other_hierarchies.keys()}
+            for n in self.nodes():
                 this_nodes_descendants[len(self.descendants(n))].append(n)
-            for n in other.nodes().value():
+            for n in other.nodes():
                 other_nodes_descendants[len(self.descendants(n))].append(n)
-            this_nodes_descendants, other_nodes_descendants = list(sorted(this_nodes_descendants.values(), key=lambda x: len(x))), list(sorted(other_nodes_descendants.values(), key=lambda x: len(x)))
+            this_nodes_descendants = list(sorted(this_nodes_descendants.values(), key=lambda x: len(x)))
+            other_nodes_descendants = list(sorted(other_nodes_descendants.values(), key=lambda x: len(x)))
+            
             from itertools import permutations, product
+            
             _permutations = [list(permutations(this_nodes)) for this_nodes in this_nodes_descendants]
             possibilities = product(*_permutations)
             for possibility in possibilities:
@@ -573,15 +584,15 @@ class WeightedNodesTree(Tree):
                 possible = True
                 for n, u in map_dict:
                     for m, v in map_dict:
-                        if ((n, m) in self.links()) ^ ((u, v) in other.links()) or ((m, n) in self.links()) ^ ((v, u) in other.links()) or isinstance(other, WeightedNodesTree) and self.weights(n) != other.weights(u):
+                        if (m in self.descendants(n)) ^ (v in other.descendants(u)) or (n in self.descendants(m)) ^ (u in other.descendants(v)) or self.weights(n) != other.weights(u) or self.weights(m) != other.weights(v):
                             possible = False
                             break
                     if not possible:
                         break
                 if possible:
-                    return True
-            return False
-        return False
+                    return SortedKeysDict(*map_dict, f=self.f())
+            return SortedKeysDict()
+        return super().isomorphicFunction(other)
         
     def __eq__(self, other):
         if isinstance(other, WeightedNodesTree):
