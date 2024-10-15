@@ -825,8 +825,10 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
             raise TypeError(f"Addition not defined between class WeightedNOdesUndirectedGraph and type {type(other).__name__}!")
         if any(self(x) != other(x) for x in self.nodes() + other.nodes()):
             raise ValueError("Node sorting functions don't match!")
-        if isinstance(other, WeightedLinksUndirectedGraph):
+        if isinstance(other, WeightedDirectedGraph):
             return other + self
+        if isinstance(other, WeightedLinksDirectedGraph):
+            return WeightedDirectedGraph(f=self.f()) + self + other
         res = self.copy()
         if isinstance(other, WeightedNodesUndirectedGraph):
             for n in other.nodes():
