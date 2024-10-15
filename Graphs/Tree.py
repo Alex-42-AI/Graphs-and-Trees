@@ -4,7 +4,8 @@ from Graphs.General import Node, Dict, SortedKeysDict, SortedList
 class BinTree:
     def __init__(self, root=None, left=None, right=None):
         self.__root = Node(root)
-        if isinstance(root, Node): self.__root = root
+        if isinstance(root, Node):
+            self.__root = root
         self.__left, self.__right = None, None
         if root is not None:
             self.__left, self.__right = BinTree(), BinTree()
