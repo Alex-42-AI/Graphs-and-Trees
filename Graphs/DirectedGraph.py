@@ -972,9 +972,8 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
         return self
 
     def remove(self, u: Node, *rest: Node):
-        WeightedLinksDirectedGraph.remove(self, u, *rest)
         for n in (u,) + rest:
-            self.add(n), super().remove(n)
+            WeightedLinksDirectedGraph.disconnect(self, u, self.prev(u), self.next(u)), super().remove(n)
         return self
 
     def connect(self, u: Node, pointed_by_weights: Dict = Dict(), points_to_weights: Dict = Dict()):
