@@ -1,4 +1,4 @@
-from Personal.DiscreteMath.Graphs.General import Node, Link, SortedList
+from Graphs.General import Node, Link, SortedList
 
 
 class UndirectedGraph:
@@ -649,8 +649,7 @@ class UndirectedGraph:
     def __str__(self):
         return "({" + ", ".join(str(n) for n in self.nodes) + "}, {" + ", ".join(str(l) for l in self.links) + "})"
 
-    def __repr__(self):
-        return str(self)
+    __repr__ = __str__
 
 
 class WeightedNodesUndirectedGraph(UndirectedGraph):
@@ -706,7 +705,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         return res
 
     def minimalPathNodes(self, u: Node, v: Node):
-        from Personal.DiscreteMath.Graphs.DirectedGraph import WeightedLinksDirectedGraph
+        from Graphs.DirectedGraph import WeightedLinksDirectedGraph
         res = WeightedLinksDirectedGraph(dict([(n, (dict(), dict([(m, self.node_weights(n)) for m in self.neighboring(n)]))) for n in self.nodes]), self.f()).minimalPathLinks(u, v)
         return res[0], res[1] + self.node_weights(v) * bool(res[0])
 
@@ -1148,7 +1147,7 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
         return res
 
     def minimalPath(self, u: Node, v: Node):
-        from Personal.DiscreteMath.Graphs.DirectedGraph import WeightedLinksDirectedGraph
+        from Graphs.DirectedGraph import WeightedLinksDirectedGraph
         res = WeightedLinksDirectedGraph(dict([(n, (dict(), dict([(m, self.node_weights(n) + self.link_weights(n, m)) for m in self.neighboring(n)]))) for n in self.nodes]), self.f()).minimalPathLinks(u, v)
         return res[0], res[1] + self.node_weights(v) * bool(res[0])
 
