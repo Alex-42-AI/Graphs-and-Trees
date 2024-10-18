@@ -199,8 +199,7 @@ class Node:
     def __str__(self):
         return "(" + str(self.value) + ")"
 
-    def __repr__(self):
-        return "Node" + str(self)
+    __repr__ = __str__
 
 
 class Link:
@@ -229,5 +228,4 @@ class Link:
     def __str__(self):
         return f"{self.u}-{self.v}"
 
-    def __repr__(self):
-        return f"Link({self.u}, {self.v})"
+    __repr__ = __str__
