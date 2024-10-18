@@ -1,4 +1,4 @@
-from Personal.DiscreteMath.Graphs.General import Node, SortedList
+from Graphs.General import Node, SortedList
 
 
 class DirectedGraph:
