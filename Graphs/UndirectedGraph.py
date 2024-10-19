@@ -705,9 +705,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         return res
 
     def minimalPathNodes(self, u: Node, v: Node):
-        from Graphs.DirectedGraph import WeightedLinksDirectedGraph
-        res = WeightedLinksDirectedGraph(dict([(n, (dict(), dict([(m, self.node_weights(n)) for m in self.neighboring(n)]))) for n in self.nodes]), self.f()).minimalPathLinks(u, v)
-        return res[0], res[1] + self.node_weights(v) * bool(res[0])
+        return WeightedUndirectedGraph(dict([(n, (self.node_weights(n), dict([(m, 0) for m in self.neighboring(n)]))) for n in self.nodes]), self.f()).minimalPath(u, v)
 
     def weightedVertexCover(self):
         nodes, weights, tmp = self.nodes.copy(), self.total_nodes_weight, WeightedNodesUndirectedGraph.copy(self)
@@ -974,23 +972,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         return res_links, sum(map(lambda x: self.link_weights(x), res_links))
 
     def minimalPathLinks(self, u: Node, v: Node):
-        def dfs(x, curr_path, curr_w, total_negative, res_path, res_w=0):
-            for y in filter(lambda _y: Link(x, _y) not in curr_path, self.neighboring(x)):
-                if curr_w + self.link_weights(Link(y, x)) + total_negative >= res_w and res_path:
-                    continue
-                if y == v and (curr_w + self.link_weights(Link(x, y)) < res_w or not res_path):
-                    res_path, res_w = curr_path + [Link(x, y)], curr_w + self.link_weights(Link(x, y))
-                curr = dfs(y, curr_path + [Link(x, y)], curr_w + self.link_weights(Link(x, y)), total_negative - self.link_weights(Link(x, y)) * (self.link_weights(Link(x, y)) < 0), res_path, res_w)
-                if curr[1] < res_w or not res_path:
-                    res_path, res_w = curr
-            return res_path, res_w
-
-        if u not in self.nodes or v not in self.nodes:
-            raise ValueError("Unrecognized node(s)!")
-        if self.reachable(u, v):
-            result = dfs(u, [], 0, sum(self.link_weights(l) for l in self.links if self.link_weights(l) < 0), [])
-            return list(map(lambda l: l.u, result[0])) + [result[0][-1].v], result[1]
-        return [], 0
+        return WeightedUndirectedGraph(dict([(n, (0, self.link_weights(n))) for n in self.nodes]), self.f()).minimalPath(u, v)
 
     def isomorphicFunction(self, other: UndirectedGraph):
         if isinstance(other, WeightedLinksUndirectedGraph):
@@ -1147,9 +1129,25 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
         return res
 
     def minimalPath(self, u: Node, v: Node):
-        from Graphs.DirectedGraph import WeightedLinksDirectedGraph
-        res = WeightedLinksDirectedGraph(dict([(n, (dict(), dict([(m, self.node_weights(n) + self.link_weights(n, m)) for m in self.neighboring(n)]))) for n in self.nodes]), self.f()).minimalPathLinks(u, v)
-        return res[0], res[1] + self.node_weights(v) * bool(res[0])
+        def dfs(x, curr_path, curr_w, total_negative, res_path=None, res_w=0):
+            if res_path is None:
+                res_path = []
+            for y in filter(lambda _y: Link(x, _y) not in curr_path, self.neighboring(x)):
+                if curr_w + self.link_weights(x, y) + total_negative >= res_w and res_path:
+                    continue
+                if y == v and (curr_w + self.link_weights(x, y) + self.node_weights(y) < res_w or not res_path):
+                    res_path, res_w = curr_path + [Link(x, y)], curr_w + self.link_weights(x, y) + self.node_weights(y)
+                curr = dfs(y, curr_path + [Link(x, y)], curr_w + self.link_weights(x, y) + self.node_weights(y), total_negative - self.link_weights(x, y) * (self.link_weights(x, y) < 0) - self.node_weights(y) * (self.node_weights(y) < 0), res_path, res_w)
+                if curr[1] < res_w or not res_path:
+                    res_path, res_w = curr
+            return res_path, res_w
+
+        if u in self.nodes and v in self.nodes:
+            if self.reachable(u, v):
+                res = dfs(u, [], self.node_weights(u), sum(self.link_weights(l) for l in self.links if self.link_weights(l) < 0) + sum(self.node_weights(n) for n in self.nodes if self.node_weights(n) < 0))
+                return [l.u for l in res[0]] + [res[0][-1].v], res[1]
+            return [], 0
+        raise ValueError('Unrecognized node(s)!')
 
     def isomorphicFunction(self, other: UndirectedGraph):
         if isinstance(other, WeightedUndirectedGraph):
