@@ -200,19 +200,13 @@ class BinTree:
 class Tree:
     def __init__(self, root: Node, inheritance: dict, f=lambda x: x):
         self.__root, self.__f = root, f
-        sources, self.__links = SortedList(root, *inheritance.keys(), f=f), []
-        self.__hierarchy = dict([(root, SortedList(f=f))])
-        self.__nodes, self.__leaves = SortedList(*inheritance.keys(), f=f), SortedList(root, f=f)
+        self.__hierarchy, self.__parents = dict([(root, SortedList(f=f))]), dict()
+        self.__nodes, self.__leaves = SortedList(root, f=f), SortedList(root, f=f)
         for u, desc in inheritance.items():
-            self.__leaves.remove(root)
-            if u not in self.nodes:
-                self.__hierarchy[u] = SortedList(*desc, f=self.f())
-                for v in desc:
-                    if v not in self.nodes and v not in self.hierarchy(u):
-                        sources.remove(v), self.__leaves.remove(u), self.__leaves.insert(v), self.__nodes.insert(v), self.__links.append((u, v))
-        self.__hierarchy[root] = SortedList(*sources, f=self.f())
-        for s in sources:
-            self.__links.append((root, s)), self.__leaves.remove(s)
+            if u not in self:
+                self.add(root, u)
+            if desc:
+                self.add(u, *desc)
 
     @property
     def root(self):
@@ -223,12 +217,18 @@ class Tree:
         return self.__nodes
 
     @property
-    def links(self):
-        return self.__links
-
-    @property
     def leaves(self):
         return self.__leaves
+
+    @property
+    def height(self):
+        def helper(x: Node):
+            return 1 + max([0, *map(helper, self.descendants(x))])
+
+        return helper(self.root)
+
+    def parent(self, u: Node = None):
+        return self.__parents if u is None else self.__parents[u]
 
     def hierarchy(self, u: Node = None):
         return self.__hierarchy if u is None else self.__hierarchy[u]
@@ -238,19 +238,6 @@ class Tree:
 
     def f(self, x=None):
         return self.__f if x is None else self.__f(x)
-
-    def add_nodes_to(self, curr: Node, u: Node, *rest: Node):
-        if curr not in self.nodes:
-            raise Exception("Unrecognized node")
-        if curr in self.leaves: self.__leaves.remove(curr)
-        for v in [u] + [*rest]:
-            if v not in self.nodes:
-                self.__nodes.insert(v)
-                self.__hierarchy[curr].insert(v)
-                self.__links.append((curr, v))
-                self.__leaves.insert(v)
-                self.__hierarchy[v] = SortedList(f=self.f())
-        return self
 
     def copy(self):
         return Tree(self.root, dict([(u, self.descendants(u)) for u in self.nodes if u != self.root]), self.f())
@@ -262,10 +249,23 @@ class Tree:
         while queue:
             v = queue.pop(0)
             for n in self.descendants(v):
-                res.add_nodes_to(v, n), queue.append(n)
+                res.add(v, n), queue.append(n)
         return res
 
-    def extend_tree_at(self, tree):
+    def add(self, curr: Node, u: Node, *rest: Node):
+        if curr not in self.nodes:
+            raise Exception("Unrecognized node")
+        if curr in self.leaves: self.__leaves.remove(curr)
+        for v in [u] + [*rest]:
+            if v not in self.nodes:
+                self.__nodes.insert(v)
+                self.__hierarchy[curr].insert(v)
+                self.__parents[v] = curr
+                self.__leaves.insert(v)
+                self.__hierarchy[v] = SortedList(f=self.f())
+        return self
+
+    def add_tree(self, tree):
         if not isinstance(tree, Tree):
             raise TypeError("Tree expected!")
         if tree.root not in self.nodes:
@@ -276,30 +276,19 @@ class Tree:
             res = list(filter(lambda x: x not in self.nodes, tree.descendants(u)))
             if res:
                 if res:
-                    self.add_nodes_to(u, *res)
+                    self.add(u, *res)
                 queue += res
         return self
 
-    def move_node(self, u: Node, at_new: Node):
-        if u in self:
-            tmp = self.subtree(u)
-            self.remove(u)
-            self.add_nodes_to(at_new, dict([(u, tmp.weights(u))]) if isinstance(tmp, WeightedNodesTree) else u)
-            self.extend_tree_at(tmp)
-        return self
-
     def remove(self, u: Node):
-        if u not in self.nodes:
+        if u not in self:
             raise ValueError("Unrecognized node!")
         if u == self.root:
             raise ValueError("Can't remove root!")
-        self.__nodes.remove(u)
-        v, l = self.parent(u), 0
-        while l < len(self.links):
-            if u in self.links[l]:
-                self.__links.remove(self.links[l])
-                l -= 1
-            l += 1
+        self.__nodes.remove(u), self.__parents.pop(u)
+        v = self.parent(u)
+        for n in self.descendants(u):
+            self.__parents[n] = v
         self.__hierarchy[v] += self.hierarchy(u)
         if u in self.leaves:
             self.__leaves.remove(u)
@@ -307,13 +296,24 @@ class Tree:
                 self.__leaves.insert(v)
         self.__hierarchy.pop(u)
         return self
+    
+    def remove_tree(self, u: Node):
+        if u not in self:
+            raise ValueError("Unrecognized node!")
+        if u == self.root:
+            raise ValueError("Can't remove root!")
+        for v in self.descendants(u):
+            self.remove_tree(v)
+        self.remove(u)
+        return self
 
-    def parent(self, u: Node):
-        if u in self.nodes:
-            for l in self.links:
-                if u == l[1]:
-                    return l[0]
-        raise ValueError("Unrecognized node")
+    def move_node(self, u: Node, at_new: Node):
+        if u in self:
+            tmp = self.subtree(u)
+            self.remove(u)
+            self.add(at_new, dict([(u, tmp.weights(u))]) if isinstance(tmp, WeightedNodesTree) else u)
+            self.add_tree(tmp)
+        return self
 
     def node_depth(self, u: Node):
         if u in self.nodes:
@@ -323,13 +323,6 @@ class Tree:
                 d += 1
             return d
         raise ValueError("Unrecognized node")
-
-    @property
-    def height(self):
-        def helper(x: Node):
-            return 1 + max([0, *map(helper, self.descendants(x))])
-
-        return helper(self.root)
 
     def path_to(self, u: Node):
         x, res = u, []
@@ -382,7 +375,7 @@ class Tree:
 
     def isomorphicFunction(self, other):
         if isinstance(other, Tree):
-            if len(self.nodes) != len(other.nodes) or len(self.links) != len(other.links) or len(self.leaves) != len(other.leaves) or len(self.descendants(self.root)) != len(other.descendants(other.root)):
+            if len(self.nodes) != len(other.nodes) or len(self.leaves) != len(other.leaves) or len(self.descendants(self.root)) != len(other.descendants(other.root)):
                 return dict()
             this_hierarchies, other_hierarchies = dict(), dict()
             for n in self.nodes:
@@ -435,7 +428,7 @@ class Tree:
         return self.f(x)
 
     def __contains__(self, item):
-        return item in self.nodes or item in self.links
+        return item in self.nodes
 
     def __eq__(self, other):
         if isinstance(other, Tree):
@@ -486,19 +479,19 @@ class WeightedNodesTree(Tree):
         while queue:
             v = queue.pop(0)
             for n in self.descendants(v):
-                res.add_nodes_to(v, (n, self.weights(n))), queue.append(n)
+                res.add(v, (n, self.weights(n))), queue.append(n)
         return res
 
-    def add_nodes_to(self, u: Node, rest: dict = dict()):
+    def add(self, u: Node, rest: dict = dict()):
         if u not in self.nodes:
             raise Exception("Unrecognized node")
         for v, w in rest.items():
             if v not in self.nodes:
                 self.__weights[v] = w
-        return super().add_nodes_to(u, *rest.keys()) if rest else self
+        return super().add(u, *rest.keys()) if rest else self
 
-    def extend_tree_at(self, tree):
-        super().extend_tree_at(tree)
+    def add_tree(self, tree):
+        super().add_tree(tree)
         queue = [tree.root]
         while queue:
             u = queue.pop(0)
@@ -551,7 +544,7 @@ class WeightedNodesTree(Tree):
 
     def isomorphicFunction(self, other):
         if isinstance(other, WeightedNodesTree):
-            if len(self.nodes) != len(other.nodes) or len(self.links) != len(other.links) or len(self.leaves) != len(other.leaves) or len(self.descendants(self.root)) != len(other.descendants(other.root)):
+            if len(self.nodes) != len(other.nodes) or len(self.leaves) != len(other.leaves) or len(self.descendants(self.root)) != len(other.descendants(other.root)):
                 return dict()
             this_hierarchies, other_hierarchies = dict(), dict()
             for n in self.nodes:
