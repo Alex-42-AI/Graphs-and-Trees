@@ -454,14 +454,13 @@ class Tree:
 
 class WeightedNodesTree(Tree):
     def __init__(self, root_and_weight: (Node, float), inheritance: dict, f=lambda x: x):
-        super().__init__(root_and_weight[0], dict([(k, v[1].keys()) for k, v in inheritance.items()]), f)
+        super().__init__(root_and_weight[0], dict(), f)
         self.__weights = dict([root_and_weight])
-        for u, p in self.hierarchy():
-            if u not in self.__weights:
-                self.__weights[u] = p[0]
-                for v_w in p[1]:
-                    if v_w[0] not in self.__weights:
-                        self.__weights[v_w[0]] = v_w[1]
+        for u, (w, desc) in inheritance.items():
+            if u not in self:
+                self.add(root_and_weight[0], {u: w})
+            if desc:
+                self.add(u, dict([(v, inheritance[v][0]) for v in desc]))
 
     def weights(self, u: Node = None):
         return self.__weights if u is None else self.__weights.get(u)
