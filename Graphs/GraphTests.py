@@ -1,7 +1,7 @@
 from unittest import TestCase, main
-from Personal.DiscreteMath.Graphs.UndirectedGraph import *
-from Personal.DiscreteMath.Graphs.DirectedGraph import *
-from Personal.DiscreteMath.Graphs.Tree import *
+from Graphs.UndirectedGraph import *
+from Graphs.DirectedGraph import *
+from Graphs.Tree import *
 n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15, n16, n17, n18, n19, n20, n21 = Node(0), Node(1), Node(2), Node(3), Node(4), Node(5), Node(6), Node(7), Node(8), Node(9), Node(10), Node(11), Node(12), Node(13), Node(14), Node(15), Node(16), Node(17), Node(18), Node(19), Node(20), Node(21)
 class TestUndirectedGraph(TestCase):
     def setUp(self):
