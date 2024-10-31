@@ -94,9 +94,9 @@ class UndirectedGraph:
     def complementary(self):
         res = UndirectedGraph({n: [] for n in self.nodes}, self.f)
         for i, n in enumerate(self.nodes):
-            for j in range(i + 1, len(self.nodes)):
-                if self.nodes[j] not in self.neighboring(n):
-                    res.connect(n, self.nodes[j])
+            for m in self.nodes[i + 1:]:
+                if m not in self.neighboring(n):
+                    res.connect(n, m)
         return res
 
     def connection_components(self):
