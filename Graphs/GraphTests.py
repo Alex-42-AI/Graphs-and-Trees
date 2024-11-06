@@ -3,15 +3,12 @@ from Graphs.UndirectedGraph import *
 from Graphs.DirectedGraph import *
 from Graphs.Tree import *
 
-n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15, n16, n17, n18, n19, n20, n21 = (Node(0), Node(1),
-              Node(2), Node(3), Node(4), Node(5), Node(6), Node(7), Node(8), Node(9), Node(10), Node(11),
-              Node(12), Node(13), Node(14), Node(15), Node(16), Node(17), Node(18), Node(19), Node(20), Node(21))
+n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15, n16, n17, n18, n19, n20, n21 = Node(0), Node(1), Node(2), Node(3), Node(4), Node(5), Node(6), Node(7), Node(8), Node(9), Node(10), Node(11), Node(12), Node(13), Node(14), Node(15), Node(16), Node(17), Node(18), Node(19), Node(20), Node(21)
 
 
 class TestUndirectedGraph(TestCase):
     def setUp(self):
-        self.g0 = UndirectedGraph({n0: [n1, n2], n2: [n1, n3, n4, n5], n3: [n6], n4: [n5, n6], n7: [n6, n8, n9],
-                                   n8: [n5, n6], n11: [n10, n12, n13], n12: [n13], n14: []})
+        self.g0 = UndirectedGraph({n0: [n1, n2], n2: [n1, n3, n4, n5], n3: [n6], n4: [n5, n6], n7: [n6, n8, n9], n8: [n5, n6], n11: [n10, n12, n13], n12: [n13], n14: []})
         self.g1 = UndirectedGraph({n1: [n2, n3, n4], n2: [n0, n5], n5: [n0, n3, n4]})
         self.g2 = UndirectedGraph({n1: [n0, n2, n3], n3: [n2, n4], n5: [n0, n4, n6], n0: [n2]})
         self.g3 = UndirectedGraph({n1: [n0, n3, n4, n5], n2: [n0, n6, n7], n3: [n8, n9], n5: [n10, n11]})
@@ -32,12 +29,9 @@ class TestUndirectedGraph(TestCase):
         self.assertEqual(self.g3, self.g3.copy())
 
     def test_connection_components(self):
-        r = self.g0.connection_components()
-        for i in range(3):
-            self.assertListEqual(list(sorted(r[i])),
-                                 [[n0, n1, n2, n3, n4, n5, n6, n7, n8, n9], [n10, n11, n12, n13], [n14]][i])
-        self.assertListEqual([list(sorted(self.g1.connection_components()[0]))], [self.g1.nodes])
-        self.assertListEqual([list(sorted(self.g2.connection_components()[0]))], [self.g2.nodes])
+        self.assertListEqual(self.g0.connection_components(), [UndirectedGraph({n0: [n1, n2], n2: [n1, n3, n4, n5], n3: [n6], n4: [n5, n6], n7: [n6, n8, n9], n8: [n5, n6]}), UndirectedGraph({n11: [n10, n12, n13], n12: [n13]}), UndirectedGraph({n14: []})])
+        self.assertListEqual(self.g1.connection_components(), [self.g1])
+        self.assertListEqual(self.g2.connection_components(), [self.g2])
 
     def test_connected(self):
         self.assertFalse(self.g0.connected())
@@ -134,11 +128,11 @@ class TestUndirectedGraph(TestCase):
 
     def test_vertex_cover(self):
         g0, g1, g2 = self.g0.copy(), self.g1.copy(), self.g2.copy()
-        self.assertListEqual(self.g0.vertexCover(), [[n0, n2, n5, n6, n7, n11, n12], [n0, n2, n5, n6, n7, n11, n13],
-                                                     [n1, n2, n5, n6, n7, n11, n12], [n1, n2, n5, n6, n7, n11, n13]])
-        self.assertListEqual(self.g1.vertexCover(), [[n0, n1, n5], [n1, n2, n5]])
+        self.assertListEqual(self.g0.vertexCover(), [[n1, n2, n5, n6, n7, n11, n13], [n1, n2, n5, n6, n7, n11, n12],
+                                                     [n0, n2, n5, n6, n7, n11, n13], [n0, n2, n5, n6, n7, n11, n12]])
+        self.assertListEqual(self.g1.vertexCover(), [[n1, n2, n5], [n0, n1, n5]])
         self.assertListEqual(self.g2.vertexCover(),
-                             [[n0, n1, n3, n5], [n0, n2, n3, n5], [n1, n2, n3, n5], [n1, n2, n4, n5]])
+                             [[n1, n2, n4, n5], [n1, n2, n3, n5], [n0, n2, n3, n5], [n0, n1, n3, n5]])
         self.assertEqual((g0, g1, g2), (self.g0, self.g1, self.g2))
 
     def test_dominating_set(self):
@@ -440,7 +434,7 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
         self.assertEqual(res[1][1], 6)
         self.assertEqual(res[2][1], 0)
         for c in res:
-            g = UndirectedGraph({})
+            g = UndirectedGraph()
             for l in c[0]:
                 if l.u not in g.nodes:
                     if l.v not in g.nodes:
@@ -454,7 +448,7 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
             self.assertTrue(g.tree())
         res = self.g1.minimal_spanning_tree()
         self.assertEqual(res[1], 10)
-        g = UndirectedGraph({})
+        g = UndirectedGraph()
         for l in res[0]:
             if l.u not in g.nodes:
                 if l.v not in g.nodes: g.add(l.v)
@@ -467,7 +461,7 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
         self.assertTrue(g.tree())
         res = self.g2.minimal_spanning_tree()
         self.assertEqual(res[1], 1)
-        g = UndirectedGraph({})
+        g = UndirectedGraph()
         for l in res[0]:
             if l.u not in g.nodes:
                 if l.v not in g.nodes: g.add(l.v)
@@ -480,7 +474,7 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
         self.assertTrue(g.tree())
         res = self.g3.minimal_spanning_tree()
         self.assertEqual(res[1], 30)
-        g = UndirectedGraph({})
+        g = UndirectedGraph()
         for l in res[0]:
             if l.u not in g.nodes:
                 if l.v not in g.nodes: g.add(l.v)
@@ -771,12 +765,9 @@ class TestDirectedGraph(TestCase):
                          DirectedGraph({u: (self.g3.next(u), self.g3.prev(u)) for u in self.g3.nodes}, self.g3.f))
 
     def test_connection_components(self):
-        r = self.g0.connection_components()
-        for i in range(3):
-            self.assertListEqual(list(sorted(r[i])), [[n0, n1, n2, n3, n4, n5, n6, n7, n8, n9],
-                                                      [n10, n11, n12, n13], [n14]][i])
-        self.assertListEqual([list(sorted(self.g1.connection_components()[0]))], [self.g1.nodes])
-        self.assertListEqual([list(sorted(self.g2.connection_components()[0]))], [self.g2.nodes])
+        self.assertListEqual(self.g0.connection_components(), [])
+        self.assertListEqual(self.g1.connection_components(), [self.g1])
+        self.assertListEqual(self.g2.connection_components(), [self.g2])
 
     def test_connected(self):
         self.assertFalse(self.g0.connected())
