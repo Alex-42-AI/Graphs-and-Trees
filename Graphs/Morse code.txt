@@ -1,0 +1,9 @@
+[(5), (H), (4), (S), (None), ($), (None), (V), (3), (I), (F), (U), (?), (None), (_), (None), (2), (E), (&), (L), ("), (None), (R), (+), (.), (None), (A), (@), (None), (P), (W), (J), ('), (1), (), (-), (6), (B), (=), (D), (/), (X), (N), (C), (;), (None), (!), (K), ((), ()), (Y), (T), (7), (None), (,), (Z), (G), (Q), (M), (:), (8), (None), (O), (9), (None), (0)]
+Code in morse of '4' - . . . . -
+Total nodes - 55
+Total leaves - 24
+Tree height - 7
+Nodes on level 6 - [(None), (?), (_), ("), (.), (@), ('), (-), (;), (!), ()), (None), (:)]
+Tree width - 20
+Encoding message 'Testing encode.':
+-   .   . . .   -   . .   - .   - - .      .   - .   - . - .   - - -   - . .   .   . - . - . - 
