@@ -40,7 +40,7 @@ The unique methods for directed graph classes have unique methods for:
 5) returning a topological sort of the graph if it's a DAG;
 6) listing out the strongly-connected components in the graph.
 
-Furthermore, instead of having one method for connecting nodes, the directed graph uses two methods - connect_from_to and connect_to_from, that work as their names suggest. Also, the degrees method returns a pair of numbers, the first of which shows how many nodes point to a given one and the second one shows how many nodes it points to, if a node is given, otherwise it returns a dictionary of the same information for all nodes.
+Furthermore, the degrees method returns a pair of numbers, the first of which shows how many nodes point to a given one and the second one shows how many nodes it points to, if a node is given, otherwise it returns a dictionary of the same information for all nodes.
 
 Weighted graphs by nodes, in addition to their parental superclass, have methods for:
 1) returning the weight of a node, if such is given, otherwise returns the same for all nodes;
