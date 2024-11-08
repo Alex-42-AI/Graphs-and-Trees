@@ -236,7 +236,7 @@ class Tree:
         return Tree(self.root, {u: self.descendants(u) for u in self.nodes if u != self.root}, self.f)
 
     def subtree(self, u: Node):
-        if u not in self.nodes:
+        if u not in self:
             raise ValueError("Unrecognized node!")
         queue, res = [u], Tree(u, {}, self.f)
         while queue:
@@ -245,11 +245,11 @@ class Tree:
         return res
 
     def add(self, curr: Node, u: Node, *rest: Node):
-        if curr not in self.nodes:
+        if curr not in self:
             raise Exception("Unrecognized node")
         if curr in self.leaves: self.__leaves.remove(curr)
         for v in [u] + [*rest]:
-            if v not in self.nodes:
+            if v not in self:
                 self.__nodes.insert(v)
                 self.__hierarchy[curr].insert(v)
                 self.__parents[v] = curr
@@ -260,11 +260,11 @@ class Tree:
     def add_tree(self, tree):
         if not isinstance(tree, Tree):
             raise TypeError("Tree expected!")
-        if tree.root not in self.nodes:
+        if tree.root not in self:
             raise Exception("Unrecognized node!")
         queue = [tree.root]
         while queue:
-            if res := list(filter(lambda x: x not in self.nodes, tree.descendants(u := queue.pop(0)))):
+            if res := list(filter(lambda x: x not in self, tree.descendants(u := queue.pop(0)))):
                 if res:
                     self.add(u, *res)
                 queue += res
@@ -306,7 +306,7 @@ class Tree:
         return self
 
     def node_depth(self, u: Node):
-        if u in self.nodes:
+        if u in self:
             d = 0
             while u != self.root:
                 u = self.parents(u)
@@ -333,8 +333,7 @@ class Tree:
             only_leaves, min_no_root = True, None
             for d in self.descendants(r):
                 if d in self.leaves:
-                    dp[r][1].append(d)
-                    min_no_root = d
+                    dp[r][1].append(min_no_root := d)
                 else:
                     only_leaves = False
             if only_leaves:
@@ -396,7 +395,9 @@ class Tree:
             this_nodes_descendants = list(sorted(this_nodes_descendants.values(), key=lambda x: len(x)))
             other_nodes_descendants = list(sorted(other_nodes_descendants.values(), key=lambda x: len(x)))
             for possibility in product(*map(permutations, this_nodes_descendants)):
-                map_dict = dict(zip(reduce(lambda x, y: x + list(y), possibility, []), reduce(lambda x, y: x + y, other_nodes_descendants, [])))
+                flatten_self = reduce(lambda x, y: x + list(y), possibility, [])
+                flatten_other = reduce(lambda x, y: x + y, other_nodes_descendants, [])
+                map_dict = dict(zip(flatten_self, flatten_other))
                 possible = True
                 for n, u in map_dict.items():
                     for m, v in map_dict.items():
@@ -422,7 +423,7 @@ class Tree:
     def __eq__(self, other):
         if isinstance(other, Tree):
             for u in self.nodes:
-                if u not in other.nodes:
+                if u not in other:
                     return False
             if len(self.nodes) != len(other.nodes):
                 return False
@@ -462,7 +463,7 @@ class WeightedNodesTree(Tree):
         return self.__weights if u is None else self.__weights.get(u)
 
     def set_weight(self, u: Node, w: float):
-        if u in self.nodes:
+        if u in self:
             self.__weights[u] = w
         return self
 
@@ -478,10 +479,10 @@ class WeightedNodesTree(Tree):
         return res
 
     def add(self, curr: Node, rest: dict = {}):
-        if curr not in self.nodes:
+        if curr not in self:
             raise Exception("Unrecognized node")
         for u, w in rest.items():
-            if u not in self.nodes:
+            if u not in self:
                 self.__weights[u] = w
         return super().add(curr, *rest.keys()) if rest else self
 
@@ -568,7 +569,9 @@ class WeightedNodesTree(Tree):
             this_nodes_descendants = list(sorted(this_nodes_descendants.values(), key=lambda x: len(x)))
             other_nodes_descendants = list(sorted(other_nodes_descendants.values(), key=lambda x: len(x)))
             for possibility in product(*map(permutations, this_nodes_descendants)):
-                map_dict = dict(zip(reduce(lambda x, y: x + list(y), possibility, []), reduce(lambda x, y: x + y, other_nodes_descendants, [])))
+                flatten_self = reduce(lambda x, y: x + list(y), possibility, [])
+                flatten_other = reduce(lambda x, y: x + y, other_nodes_descendants, [])
+                map_dict = dict(zip(flatten_self, flatten_other))
                 possible = True
                 for n, u in map_dict.items():
                     if self.weights(n) != other.weights(u):
