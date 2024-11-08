@@ -166,6 +166,7 @@ with open("Morse code.txt", "a") as file:
     file.write(f"Nodes on level 6 - {morse_code.nodes_on_level(6)}\n")
     file.write(f"Tree width - {morse_code.width}\n")
     file.write(f"Encoding message 'Testing encode.':\n{morse_code.encode('Testing encode.')}\n")
+print_zig_zag(morse_code)
 for Type in ('preorder', 'in-order', 'post-order'):
     morse_code.print(Type)
 
