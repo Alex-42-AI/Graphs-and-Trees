@@ -311,8 +311,7 @@ class TestUndirectedGraph(TestCase):
     def test_add(self):
         tmp = UndirectedGraph({n11: [n12, n13, n14], n12: [n10, n15], n15: [n10, n13, n14]})
         res = self.g3 + tmp
-        helper = UndirectedGraph({n1: [n0, n3, n4, n5], n2: [n0, n6, n7], n3: [n8, n9], n5: [n10, n11],
-                                  n11: [n12, n13, n14], n10: [n12, n15], n15: [n12, n13, n14]})
+        helper = UndirectedGraph({n1: [n0, n3, n4, n5], n2: [n0, n6, n7], n3: [n8, n9], n5: [n10, n11], n11: [n12, n13, n14], n10: [n12, n15], n15: [n12, n13, n14]})
         self.assertEqual(res, helper)
 
 
