@@ -8,30 +8,29 @@ class SortedList:
     def value(self):
         return self.__value
 
-    def f(self, x=None):
-        return self.__f if x is None else self.__f(x)
+    @property
+    def f(self):
+        return self.__f
 
     def pop(self, index: int = -1):
         return self.__value.pop(index)
 
     def copy(self):
-        res = SortedList(f=self.f())
-        res.__value = self.value.copy()
-        return res
+        return SortedList(*self.value, f=self.f)
 
     def insert(self, x):
         try:
             low, high, f_x = 0, len(self), self.f(x)
             while low < high:
                 mid = (low + high) // 2
-                if f_x == self.f(self[mid]):
+                if f_x == (f_mid := self.f(self[mid])):
                     self.__value.insert(mid, x)
                     return self
-                if f_x < self.f(self[mid]):
+                if f_x < f_mid:
                     high = mid
                 else:
-                    if low == mid + 1:
-                        return self
+                    if low == mid:
+                        break
                     low = mid + 1
             self.__value.insert(high, x)
         except (ValueError, TypeError):
@@ -43,8 +42,8 @@ class SortedList:
             low, high, f_x = 0, len(self), self.f(x)
             while low < high:
                 mid = (low + high) // 2
-                if f_x == self.f(self[mid]):
-                    if x == self[mid]:
+                if f_x == (f_mid := self.f(mid_el := self[mid])):
+                    if x == mid_el:
                         self.pop(mid)
                         return self
                     i, j, still = mid - 1, mid + 1, True
@@ -63,7 +62,7 @@ class SortedList:
                             j += 1
                             still = True
                     return self
-                if f_x < self.f(self[mid]):
+                if f_x < f_mid:
                     high = mid
                 else:
                     if low == mid:
@@ -96,8 +95,8 @@ class SortedList:
             low, high, f_item = 0, len(self), self.f(item)
             while low < high:
                 mid = (low + high) // 2
-                if f_item == self.f(self[mid]):
-                    if item == self[mid]:
+                if f_item == (f_mid := self.f(el_mid := self[mid])):
+                    if item == el_mid:
                         return True
                     i, j = mid - 1, mid + 1
                     while True:
@@ -113,7 +112,7 @@ class SortedList:
                             continue
                         break
                     return False
-                if f_item < self.f(self[mid]):
+                if f_item < f_mid:
                     high = mid
                 else:
                     if low == mid:
@@ -126,11 +125,7 @@ class SortedList:
         return bool(self.value)
 
     def __getitem__(self, item: int | slice):
-        if isinstance(item, slice):
-            res = SortedList(f=self.f())
-            res.__value = self.value[item]
-            return res
-        return self.value[item]
+        return SortedList(*self.value[item], f=self.f) if isinstance(item, slice) else self.value[item]
 
     def __setitem__(self, i: int, value):
         self.remove(self[i]), self.insert(value)
@@ -141,8 +136,8 @@ class SortedList:
     def __eq__(self, other):
         if isinstance(other, SortedList):
             try:
-                if any(self.f(x) != other.f(x) for x in self) or any(self.f(x) != other.f(x) for x in other):
-                    return self.value == SortedList(*other.value, f=self.f()).value
+                if any(self.f(x) != other.f(x) for x in self.value + other.value):
+                    return self.value == SortedList(*other.value, f=self.f).value
                 return self.value == other.value
             except (ValueError, TypeError):
                 return False
@@ -215,14 +210,14 @@ class Link:
         return self.__v
 
     def __contains__(self, item: Node):
-        return item in (self.u, self.v)
+        return item in {self.u, self.v}
 
     def __hash__(self):
         return hash(frozenset((self.u, self.v)))
 
     def __eq__(self, other):
         if isinstance(other, Link):
-            return (self.u, self.v) in [(other.u, other.v), (other.v, other.u)]
+            return {self.u, self.v} == {other.u, other.v}
         return False
 
     def __str__(self):
