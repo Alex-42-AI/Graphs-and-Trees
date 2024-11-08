@@ -126,24 +126,32 @@ class BinTree:
 
     def __preorder_print(self):
         def dfs(tree, traversal):
-            if tree:
-                traversal = dfs(tree.right, dfs(tree.left, traversal + [tree.root]))
+            traversal += [tree.root]
+            if tree.left:
+                traversal = dfs(tree.left, traversal)
+            if tree.right:
+                traversal = dfs(tree.right, traversal)
             return traversal
 
         return dfs(self, [])
 
     def __in_order_print(self):
         def dfs(tree, traversal):
-            if tree:
-                traversal = dfs(tree.right, dfs(tree.left, traversal) + [tree.root])
+            if tree.left:
+                traversal = dfs(tree.left, traversal)
+            traversal += [tree.root]
+            if tree.right:
+                traversal = dfs(tree.right, traversal)
             return traversal
 
         return dfs(self, [])
 
     def __post_order_print(self):
         def dfs(tree, traversal):
-            if tree:
-                traversal = dfs(tree.right, dfs(tree.left, traversal))
+            if tree.left:
+                traversal = dfs(tree.left, traversal)
+            if tree.right:
+                traversal = dfs(tree.right, traversal)
             return traversal + [tree.root]
 
         return dfs(self, [])
