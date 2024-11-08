@@ -15,7 +15,7 @@ They also have the following methods in common:
 8) checking whether an Euler tour, an Euler walk, a Hamilton tour and a Hamilton walk exist;
 9) actually finding an Euler tour, an Euler walk, a Hamilton tour and a Hamilton walk;
 10) checking whether the graph is isomorphic to another graph and if so, returning the bijection between the nodes of the graphs;
-11) checking whether a node or a link is present in the graph;
+11) checking whether a node is present in the graph;
 12) checking whether two graphs are the same;
 13) combining two graphs into one (addition).
 
@@ -39,6 +39,7 @@ The unique methods for directed graph classes have unique methods for:
 4) checking whether the graph is a DAG (directed acyclic graph);
 5) returning a topological sort of the graph if it's a DAG;
 6) listing out the strongly-connected components in the graph.
+
 Furthermore, instead of having one method for connecting nodes, the directed graph uses two methods - connect_from_to and connect_to_from, that work as their names suggest. Also, the degrees method returns a pair of numbers, the first of which shows how many nodes point to a given one and the second one shows how many nodes it points to, if a node is given, otherwise it returns a dictionary of the same information for all nodes.
 
 Weighted graphs by nodes, in addition to their parental superclass, have methods for:
