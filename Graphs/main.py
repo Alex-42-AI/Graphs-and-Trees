@@ -109,21 +109,21 @@ def print_zig_zag(b_t: BinTree):
         new = []
         if from_left:
             for t in trees:
-                if t.left() and (t.left().left() is not None or t.left().right() is not None):
-                    new.insert(0, t.left()), print(t.left().root(), end=' ')
-                if t.right() and (t.right().left() is not None or t.right().right() is not None):
-                    new.insert(0, t.right()), print(t.right().root(), end=' ')
+                if t.left and (t.left.left is not None or t.left.right is not None):
+                    new.insert(0, t.left), print(t.left.root, end=' ')
+                if t.right and (t.right.left is not None or t.right.right is not None):
+                    new.insert(0, t.right), print(t.right.root, end=' ')
         else:
             for t in trees:
-                if t.right() and (t.right().left() is not None or t.right().right() is not None):
-                    new.insert(0, t.right()), print(t.right().root(), end=' ')
-                if t.left() and (t.left().left() is not None or t.left().right() is not None):
-                    new.insert(0, t.left()), print(t.left().root(), end=' ')
+                if t.right and (t.right.left is not None or t.right.right is not None):
+                    new.insert(0, t.right), print(t.right.root, end=' ')
+                if t.left and (t.left.left is not None or t.left.right is not None):
+                    new.insert(0, t.left), print(t.left.root, end=' ')
         if not new:
             return
         print(), bfs(not from_left, *new)
 
-    print(b_t.root()), bfs(True, b_t)
+    print(b_t.root), bfs(True, b_t)
 
 
 morse_code = BinTree('',
@@ -191,7 +191,7 @@ with open("K_5.txt", "a") as file:
     file.write(f"Dominating sets - {k_5.dominatingSet()}\n")
     file.write(f"Vertex covers - {k_5.vertexCover()}\n")
     file.write(f"Independent sets - {k_5.independentSet()}\n")
-with open("Peterson.txt", "a") as file:
+with open("Peterson graph.txt", "a") as file:
     file.write(f"{peterson_graph}\n")
     file.write(f"Is full k-partite - {peterson_graph.is_full_k_partite()}\n")
     file.write(f"Chromatic set destruction - {peterson_graph.chromaticNumberNodes()}\n")
