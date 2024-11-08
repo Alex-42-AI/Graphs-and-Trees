@@ -1,6 +1,6 @@
-from Personal.DiscreteMath.Graphs.UndirectedGraph import *
-from Personal.DiscreteMath.Graphs.DirectedGraph import *
-from Personal.DiscreteMath.Graphs.Tree import *
+from Graphs.UndirectedGraph import *
+from Graphs.DirectedGraph import *
+from Graphs.Tree import *
 
 def make_undirected_from_directed(graph: DirectedGraph):
     if isinstance(graph, WeightedDirectedGraph):
