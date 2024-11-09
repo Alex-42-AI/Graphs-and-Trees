@@ -238,36 +238,29 @@ class DirectedGraph:
                 return False
         return self.connected()
 
-    def eulerTour(self):
+    def euler_tour(self):
         if self.euler_tour_exists():
             tmp = DirectedGraph.copy(self)
             v, u = self.links[0]
-            return tmp.disconnect(u, [v]).eulerWalk(u, v)
+            return tmp.disconnect(u, [v]).euler_walk(u, v)
         return []
 
-    def eulerWalk(self, u: Node, v: Node):
-        def dfs(x, stack):
-            for y in self.next(x):
-                if (x, y) not in result + stack:
-                    if y == n:
-                        result.insert(i + 1, (x, y))
-                        while stack:
-                            result.insert(i + 1, stack.pop())
-                        return True
-                    if dfs(y, stack + [(x, y)]):
-                        return True
-
+    def euler_walk(self, u: Node, v: Node):
         if u not in self or v not in self:
             raise ValueError("Unrecognized node(s)!")
         if self.euler_walk_exists(u, v):
-            tmp = self.get_shortest_path(u, v)
-            result = [(tmp[i], tmp[i + 1]) for i in range(len(tmp) - 1)]
-            while len(result) < len(self.links):
-                i = -1
-                dfs((n := result[0][0]), [])
-                for i, l in enumerate(result):
-                    dfs((n := l[1]), [])
-                return list(map(lambda _l: _l[0], result)) + [v]
+            path = self.get_shortest_path(u, v)
+            tmp = DirectedGraph.copy(self)
+            for i in range(len(path) - 1):
+                tmp.disconnect(path[i + 1], [path[i]])
+            for i, u in enumerate(path):
+                while tmp.next(u):
+                    curr = tmp.disconnect(v := tmp.next(u)[0], [u]).get_shortest_path(v, u)
+                    for j in range(len(curr) - 1):
+                        tmp.disconnect(curr[j + 1], [curr[j]])
+                    while curr:
+                        path.insert(i + 1, curr.pop())
+            return path
         return []
 
     def stronglyConnectedComponents(self):
