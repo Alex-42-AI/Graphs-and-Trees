@@ -177,7 +177,7 @@ peterson_graph = UndirectedGraph({n0: [n1, n4, n5], n3: [n2, n4, n8], n9: [n4, n
 with open("K_3_3.txt", "a") as file:
     file.write(f"{k_3_3}\n")
     file.write(f"Is full bipartite: {k_3_3.is_full_k_partite()}\n")
-    file.write(f"Chromatic set destruction: {k_3_3.chromaticNumberNodes()}\n")
+    file.write(f"Chromatic node partition: {k_3_3.chromaticNumberNodes()}\n")
     file.write(f"Hamilton tour: {k_3_3.hamiltonTour()}\n")
     file.write(f"Interval sort: {k_3_3.interval_sort()}\n")
     file.write(f"Dominating sets: {k_3_3.dominatingSet()}\n")
@@ -194,7 +194,7 @@ with open("K_5.txt", "a") as file:
 with open("Peterson graph.txt", "a") as file:
     file.write(f"{peterson_graph}\n")
     file.write(f"Is full k-partite: {peterson_graph.is_full_k_partite()}\n")
-    file.write(f"Chromatic set destruction: {peterson_graph.chromaticNumberNodes()}\n")
+    file.write(f"Chromatic node partition: {peterson_graph.chromaticNumberNodes()}\n")
     file.write(f"Hamilton walk: {peterson_graph.hamiltonWalk()}\n")
     file.write(f"Interval sort: {peterson_graph.interval_sort()}\n")
     file.write(f"Dominating sets: {peterson_graph.dominatingSet()}\n")
