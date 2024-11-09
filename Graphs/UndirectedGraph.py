@@ -218,6 +218,31 @@ class UndirectedGraph:
                 return False
         return self.connected()
 
+    def euler_tour(self):
+        if self.euler_tour_exists():
+            tmp = UndirectedGraph.copy(self)
+            return tmp.disconnect(u := tmp.links[0].u, v := tmp.links[0].v).euler_walk(u, v)
+        return []
+
+    def euler_walk(self, u: Node, v: Node):
+        if u not in self or v not in self:
+            raise Exception("Unrecognized node(s)!")
+        if self.euler_walk_exists(u, v):
+            path = self.get_shortest_path(u, v)
+            tmp = UndirectedGraph.copy(self)
+            for i in range(len(path) - 1):
+                tmp.disconnect(path[i], path[i + 1])
+            for i, u in enumerate(path):
+                while tmp.neighboring(u):
+                    curr = tmp.disconnect(u, v := tmp.neighboring(u)[0]).get_shortest_path(v, u)
+                    for j in range(len(curr) - 1):
+                        tmp.disconnect(curr[j], curr[j + 1])
+                    # curr = curr[1:] + [curr[0]]
+                    while curr:
+                        path.insert(i + 1, curr.pop())
+            return path
+        return []
+
     def clique(self, n: Node, *nodes: Node):
         if len(nodes) + 1 == len(self.nodes):
             return self.full()
@@ -401,37 +426,6 @@ class UndirectedGraph:
             if curr := tmp.cliques(k):
                 return curr
 
-    def eulerTour(self):
-        if self.euler_tour_exists():
-            tmp = UndirectedGraph.copy(self)
-            return tmp.disconnect(u := tmp.links[0].u, v := tmp.links[0].v).eulerWalk(u, v)
-        return []
-
-    def eulerWalk(self, u: Node, v: Node):
-        if u not in self or v not in self:
-            raise Exception("Unrecognized node(s)!")
-
-        def dfs(x, stack):
-            for y in filter(lambda _x: Link(x, _x) not in result + stack, self.neighboring(x)):
-                if y == n:
-                    result.insert(i + 1, Link(x, y))
-                    while stack:
-                        result.insert(i + 1, stack.pop())
-                    return True
-                if dfs(y, stack + [Link(x, y)]):
-                    return True
-
-        if self.euler_walk_exists(u, v):
-            tmp = self.get_shortest_path(u, v)
-            result = [Link(tmp[i], tmp[i + 1]) for i in range(len(tmp) - 1)]
-            while len(result) < len(self.links):
-                i = -1
-                dfs(n := result[0].u, [])
-                for i, l in enumerate(result):
-                    dfs(n := l.v, [])
-            return list(map(lambda _l: _l.u, result)) + [v]
-        return []
-
     def hamiltonTourExists(self):
         def dfs(x):
             if tmp.nodes == [x]:
@@ -447,7 +441,8 @@ class UndirectedGraph:
             tmp.add(x, *neighbors)
             return False
 
-        if (k := len(self.nodes)) == 1 or (self.degrees_sum > (k - 1) * (k - 2) + 2 or k > 2 and all(2 * self.degrees(n) >= k for n in self.nodes)):
+        if (k := len(self.nodes)) == 1 or (self.degrees_sum > (k - 1) * (k - 2) + 2
+                                           or k > 2 and all(2 * self.degrees(n) >= k for n in self.nodes)):
             return True
         if any(self.degrees(n) < 2 for n in self.nodes) or not self.connected():
             return False
