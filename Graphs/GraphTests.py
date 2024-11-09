@@ -181,7 +181,7 @@ class TestUndirectedGraph(TestCase):
     def test_euler_walk_and_tour(self):
         tmp = self.g0.component(n0)
         tmp.disconnect(n4, n5), tmp.disconnect(n7, n8)
-        res = tmp.eulerWalk(n2, n9)
+        res = tmp.euler_walk(n2, n9)
         n = len(res)
         self.assertEqual(n, len(tmp.links) + 1)
         u = res[0]
@@ -189,7 +189,7 @@ class TestUndirectedGraph(TestCase):
             self.assertIn(u, tmp.neighboring(res[i]))
             u = res[i]
         tmp.connect(n2, n9)
-        res1 = tmp.eulerTour()
+        res1 = tmp.euler_tour()
         self.assertEqual(len(res1), n)
         u = res1[0]
         for i in range(1, n):
@@ -639,7 +639,7 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
     def test_euler_walk_and_tour(self):
         tmp = self.g0.component(n0)
         tmp.disconnect(n4, n5), tmp.disconnect(n7, n8)
-        res = tmp.eulerWalk(n2, n9)
+        res = tmp.euler_walk(n2, n9)
         n = len(res)
         self.assertEqual(n, len(tmp.links) + 1)
         u = res[0]
@@ -647,7 +647,7 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
             self.assertIn(u, tmp.neighboring(res[i]))
             u = res[i]
         tmp.connect(n2, {n9: 0})
-        res1 = tmp.eulerTour()
+        res1 = tmp.euler_tour()
         self.assertEqual(len(res1), n)
         u = res1[0]
         for i in range(1, n):
@@ -918,7 +918,7 @@ class TestDirectedGraph(TestCase):
     def test_euler_walk_and_tour(self):
         tmp = DirectedGraph.subgraph(self.g0, n0)
         tmp.connect(n0, [n7]), tmp.connect(n5, [n1], [n8]), tmp.disconnect(n4, [n6]), tmp.disconnect(n5, [n7])
-        res = tmp.eulerWalk(n0, n9)
+        res = tmp.euler_walk(n0, n9)
         n = len(res)
         self.assertEqual(n, len(tmp.links) + 1)
         u = res[0]
@@ -926,7 +926,7 @@ class TestDirectedGraph(TestCase):
             self.assertIn(u, tmp.prev(res[i]))
             u = res[i]
         tmp.connect(n0, [n9])
-        res1 = tmp.eulerTour()
+        res1 = tmp.euler_tour()
         self.assertEqual(len(res1), n)
         u = res1[0]
         for i in range(1, n):
@@ -952,12 +952,28 @@ class TestDirectedGraph(TestCase):
 
     def test_isomorphic_function(self):
         pass
+        # tmp = DirectedGraph(n10, n11, n12, n13, n14, n15)
+        # # tmp.connect(n15, n10, n12, n13, n14), tmp.connect(n11, n12, n13, n14), tmp.connect(n10, n12)
+        # self.assertTrue(self.g1.isomorphicFunction(tmp)), tmp.disconnect(n11, n13)
+        # self.assertFalse(self.g1.isomorphicFunction(tmp))
 
     def test_equal(self):
         pass
+        # self.assertNotEqual(self.g1, self.g2)
+        # self.g2.remove(n6), self.g1.disconnect(n5, n2, n3), self.g1.disconnect(n1, n4)
+        # # self.g1.connect(n3, n2, n4), self.g1.connect(n0, n1)
+        # self.assertEqual(self.g1, self.g2)
+        # # self.g2.add(n6, n5), self.g1.connect(n5, n2, n3), self.g1.connect(n1, n4)
+        # self.g1.disconnect(n3, n2, n4), self.g1.disconnect(n0, n1)
 
     def test_add(self):
         pass
+        # tmp = DirectedGraph(n10, n11, n12, n13, n14, n15)
+        # # tmp.connect(n15, n10, n12, n13, n14), tmp.connect(n11, n12, n13, n14), tmp.connect(n10, n12)
+        # res = self.g3 + tmp
+        # helper = DirectedGraph(n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15)
+        # # helper.connect(n1, n0, n3, n4, n5), helper.connect(n2, n0, n6, n7), helper.connect(n3, n8, n9), helper.connect(n5, n10, n11), helper.connect(n11, n12, n13, n14), helper.connect(n10, n12, n15), helper.connect(n15, n12, n13, n14)
+        # self.assertEqual(res, helper)
 
 
 class TestWeightedNodesDirectedGraph(TestDirectedGraph):
