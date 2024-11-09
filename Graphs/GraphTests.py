@@ -113,6 +113,9 @@ class TestUndirectedGraph(TestCase):
                 for v in res[i + 1: i + len(neighbors) + 1]:
                     self.assertIn(v, neighbors), total.insert(v)
 
+    def test_full_k_partite(self):
+        pass
+
     def test_euler_walk_and_tour_exist(self):
         self.g0.connect(n4, n9), self.g0.connect(n5, n7)
         tmp = self.g0.component(n0)
