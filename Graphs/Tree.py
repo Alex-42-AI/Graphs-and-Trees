@@ -124,45 +124,45 @@ class BinTree:
     def inverted(self):
         return ~self.copy()
 
-    def __preorder_print(self):
-        def dfs(tree, traversal):
-            traversal += [tree.root]
-            if tree.left:
-                traversal = dfs(tree.left, traversal)
-            if tree.right:
-                traversal = dfs(tree.right, traversal)
-            return traversal
-
-        return dfs(self, [])
-
-    def __in_order_print(self):
-        def dfs(tree, traversal):
-            if tree.left:
-                traversal = dfs(tree.left, traversal)
-            traversal += [tree.root]
-            if tree.right:
-                traversal = dfs(tree.right, traversal)
-            return traversal
-
-        return dfs(self, [])
-
-    def __post_order_print(self):
-        def dfs(tree, traversal):
-            if tree.left:
-                traversal = dfs(tree.left, traversal)
-            if tree.right:
-                traversal = dfs(tree.right, traversal)
-            return traversal + [tree.root]
-
-        return dfs(self, [])
-
     def print(self, traversal_type: str = "in-order"):
+        def preorder_print():
+            def dfs(tree, traversal):
+                traversal += [tree.root]
+                if tree.left:
+                    traversal = dfs(tree.left, traversal)
+                if tree.right:
+                    traversal = dfs(tree.right, traversal)
+                return traversal
+
+            return dfs(self, [])
+
+        def in_order_print():
+            def dfs(tree, traversal):
+                if tree.left:
+                    traversal = dfs(tree.left, traversal)
+                traversal += [tree.root]
+                if tree.right:
+                    traversal = dfs(tree.right, traversal)
+                return traversal
+
+            return dfs(self, [])
+
+        def post_order_print():
+            def dfs(tree, traversal):
+                if tree.left:
+                    traversal = dfs(tree.left, traversal)
+                if tree.right:
+                    traversal = dfs(tree.right, traversal)
+                return traversal + [tree.root]
+
+            return dfs(self, [])
+
         if traversal_type.lower() == "preorder":
-            print(self.__preorder_print())
+            print(preorder_print())
         elif traversal_type.lower() == "in-order":
-            print(self.__in_order_print())
+            print(in_order_print())
         elif traversal_type.lower() == "post-order":
-            print(self.__post_order_print())
+            print(post_order_print())
         else:
             raise ValueError("Traversal type " + str(traversal_type) + " is not supported!")
 
@@ -192,7 +192,17 @@ class BinTree:
         return False
 
     def __str__(self):
-        return str(self.__in_order_print())
+        def helper(t, i=0):
+            res = str(t.root)
+            if t.left:
+                res += "\n|" + "-" * i + "L" + "-" * 4
+                res += helper(t.left, i + 4)
+            if t.right:
+                res += "\n|" + "-" * i + "R" + "-" * 4
+                res += helper(t.right, i + 4)
+            return res
+
+        return helper(self)
 
     __repr__ = __str__
 
