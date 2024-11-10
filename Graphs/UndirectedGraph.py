@@ -257,14 +257,14 @@ class UndirectedGraph:
         if not self.links:
             return self.nodes.value
         if not self.connected():
-            res = []
-            for comp in self.connection_components():
-                if not (r := comp.interval_sort()):
-                    return []
-                res += r
-            return res
+            interval_sorts = list(map(lambda x: x.interval_sort(), self.connection_components()))
+            if any(not i_s for i_s in interval_sorts):
+                return []
+            return reduce(lambda x, y: x + y, interval_sorts)
         if len(self.nodes) < 3 or self.full():
             return self.nodes.value
+        if self.tree():
+            return []
         res = []
         for n in self.nodes:
             if self.clique(n, *self.neighboring(n)):
@@ -345,10 +345,7 @@ class UndirectedGraph:
         return helper([])
 
     def chromaticNumberLinks(self):
-        return [list(map(lambda x: x.value, s))
-                for s in UndirectedGraph({Node(l0): [Node(l1)
-                                                     for l1 in self.links if (l1.u in l0) ^ (l1.v in l0)]
-                                          for l0 in self.links}, hash).chromaticNumberNodes()]
+        return [list(map(lambda x: x.value, s)) for s in UndirectedGraph({Node(l0): [Node(l1) for l1 in self.links if (l1.u in l0) ^ (l1.v in l0)] for l0 in self.links}, hash).chromaticNumberNodes()]
 
     def pathWithLength(self, u: Node, v: Node, length: int):
         def dfs(x: Node, l: int, stack: [Link]):
