@@ -818,20 +818,28 @@ class TestDirectedGraph(TestCase):
         self.assertEqual(self.g3.component(n4), DirectedGraph({n1: ([n0, n2], [n5]), n2: ([n0, n3], [n4]), n4: ([], [n5])}))
         self.assertEqual(self.g3.component(n10), DirectedGraph({n6: ([], [n7, n8]), n9: ([n7, n8, n10], []), n10: ([], [n11])}))
 
-    def test_SCC(self):
-        for s in self.g0.stronglyConnectedComponents():
+    def test_strongly_connected_components(self):
+        res = self.g0.strongly_connected_components()
+        self.assertEqual(sum(map(len, res)), len(self.g0.nodes))
+        for s in res:
             for u in s:
                 for v in s:
                     self.assertTrue(self.g0.reachable(u, v))
-        for s in self.g1.stronglyConnectedComponents():
+        res = self.g1.strongly_connected_components()
+        self.assertEqual(sum(map(len, res)), len(self.g1.nodes))
+        for s in res:
             for u in s:
                 for v in s:
                     self.assertTrue(self.g1.reachable(u, v))
-        for s in self.g2.stronglyConnectedComponents():
+        res = self.g2.strongly_connected_components()
+        self.assertEqual(sum(map(len, res)), len(self.g2.nodes))
+        for s in res:
             for u in s:
                 for v in s:
                     self.assertTrue(self.g2.reachable(u, v))
-        for s in self.g3.stronglyConnectedComponents():
+        res = self.g3.strongly_connected_components()
+        self.assertEqual(sum(map(len, res)), len(self.g3.nodes))
+        for s in res:
             for u in s:
                 for v in s:
                     self.assertTrue(self.g3.reachable(u, v))
