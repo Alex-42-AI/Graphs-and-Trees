@@ -166,14 +166,15 @@ with open("Morse code.txt", "a") as file:
     file.write(f"Nodes on level 6: {morse_code.nodes_on_level(6)}\n")
     file.write(f"Tree width: {morse_code.width}\n")
     file.write(f"Encoding message 'Testing encode.':\n{morse_code.encode('Testing encode.')}\n")
-print_zig_zag(morse_code)
+print_zig_zag(morse_code), print(morse_code)
 for Type in ('preorder', 'in-order', 'post-order'):
     morse_code.print(Type)
 
-n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, = Node(0), Node(1), Node(2), Node(3), Node(4), Node(5), Node(6), Node(7), Node(8), Node(9)
+n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11 = Node(0), Node(1), Node(2), Node(3), Node(4), Node(5), Node(6), Node(7), Node(8), Node(9), Node(10), Node(11)
 k_3_3 = UndirectedGraph({n0: [n3, n4, n5], n1: [n3, n4, n5], n2: [n3, n4, n5]})
 k_5 = UndirectedGraph({n0: [n1, n2, n3, n4], n1: [n2, n3, n4], n2: [n3, n4], n3: [n4]})
 peterson_graph = UndirectedGraph({n0: [n1, n4, n5], n3: [n2, n4, n8], n9: [n4, n6, n7], n5: [n7, n8], n2: [n1, n7], n6: [n1, n8]})
+tree = Tree(n0, {n1: [n3, n4, n5], n2: [n6, n7], n3: [n8, n9], n5: [n10, n11]})
 with open("K_3_3.txt", "a") as file:
     file.write(f"{k_3_3}\n")
     file.write(f"Is full bipartite: {k_3_3.is_full_k_partite()}\n")
@@ -201,3 +202,14 @@ with open("Peterson graph.txt", "a") as file:
     file.write(f"Vertex covers: {peterson_graph.vertexCover()}\n")
     file.write(f"Independent sets: {peterson_graph.independentSet()}\n")
     file.write(f"Shortest path from (0) to (7): {peterson_graph.get_shortest_path(n0, n7)}\n")
+with open("Tree.txt", "a") as file:
+    file.write(f"{tree}\n")
+    file.write(f"Height: {tree.height}\n")
+    file.write(f"Descendants of 2: {tree.descendants(n2)}\n")
+    file.write(f"Subtree from 1:\n{tree.subtree(n1)}\n")
+    file.write(f"Depth of 5: {tree.node_depth(n5)}\n")
+    file.write(f"Depth of 9: {tree.node_depth(n9)}\n")
+    file.write(f"Path to 11: {tree.path_to(n11)}\n")
+    file.write(f"Vertex covers: {tree.vertex_cover()}\n")
+    file.write(f"Dominating set: {tree.dominating_set()}\n")
+    file.write(f"Independent sets: {tree.independent_set()}\n")
