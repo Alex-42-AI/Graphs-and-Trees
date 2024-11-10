@@ -190,17 +190,17 @@ class DirectedGraph:
     def toposort(self):
         if not self.dag():
             return []
-        layer, colors = self.sources, {n: False for n in self.nodes}
+        layer, total = self.sources, set()
         res = layer.copy()
         while layer:
             new = SortedList(f=self.f)
             for u in layer:
-                colors[u] = True
+                total.add(u)
                 for v in self.next(u):
                     if v not in new:
                         new.insert(v)
             for u in new.copy():
-                if any(not colors[v] for v in self.prev(u)):
+                if any(v not in total for v in self.prev(u)):
                     new.remove(u)
             res, layer = res + new.value, new.copy()
         return res
@@ -263,46 +263,41 @@ class DirectedGraph:
             return path
         return []
 
-    def stronglyConnectedComponents(self):
-        def helper(x, stack):
-            for y in self.next(x):
-                if y not in curr:
-                    helper(y, stack + [y])
-                elif x not in curr and y in curr:
-                    curr_node, new = stack.pop(), []
-                    while curr_node not in curr:
-                        colors[curr_node] = True
-                        curr.insert(curr_node), new.append(curr_node)
-                        if not stack:
-                            break
-                        curr_node = stack.pop()
-                    return
-
+    def strongly_connected_components(self):
         def dfs(x, stack):
-            for y in self.next(x):
+            def helper(_x, _stack):
+                for _y in filter(lambda _z: _z not in helper_safe, self.next(_x)):
+                    if _y not in curr:
+                        helper(_y, _stack + [_y])
+                    elif _x not in curr:
+                        while _stack:
+                            total.add(current_node := _stack.pop()), curr.insert(current_node)
+                        return
+                helper_safe.add(_x)
+
+            for y in filter(lambda z: z not in dfs_safe, self.next(x)):
                 if y not in curr and y not in stack:
                     dfs(y, stack + [y])
                 if y == n:
                     curr_node = stack.pop()
                     while stack and curr_node != n:
-                        curr.insert(curr_node)
-                        curr_node, colors[curr_node] = stack.pop(), True
+                        curr.insert(curr_node), total.add(curr_node)
+                        curr_node = stack.pop()
                     for curr_node in curr:
-                        helper(curr_node, [curr_node])
+                        helper_safe = set()
+                        helper(curr_node, [])
                     return
+            dfs_safe.add(x)
 
         if self.dag():
             return list(map(lambda x: [x], self.nodes))
         if not self.connected():
-            res = []
-            for comp in self.connection_components():
-                res += comp.stronglyConnectedComponents()
-            return res
-        colors, res = {n: False for n in self.nodes}, []
+            return reduce(lambda x, y: x + y.strongly_connected_components(), self.connection_components(), [])
+        total, res = set(), []
         for n in self.nodes:
-            if colors[n]:
-                curr, colors[n] = SortedList(n, f=self.f), True
-                dfs(n, [n]), res.append(curr)
+            if n not in total:
+                dfs_safe, curr = set(), SortedList(n, f=self.f)
+                total.add(n), dfs(n, [n]), res.append(curr.value)
         return res
 
     def pathWithLength(self, u: Node, v: Node, length: int):
