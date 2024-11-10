@@ -78,13 +78,13 @@ class UndirectedGraph:
     def width(self):
         result = 0
         for n in self.nodes:
-            res, colors, queue = 0, {u: u == n for u in self.nodes}, [n]
+            res, total, queue = 0, {n}, [n]
             while queue:
                 new = []
                 while queue:
-                    for v in filter(lambda x: not colors[x], self.neighboring(_ := queue.pop(0))):
+                    for v in filter(lambda x: x not in total, self.neighboring(_ := queue.pop(0))):
                         new.append(v)
-                        colors[v] = True
+                        total.add(v)
                 queue = new.copy()
                 res += bool(new)
             if res > result:
@@ -188,7 +188,7 @@ class UndirectedGraph:
     def get_shortest_path(self, u: Node, v: Node):
         if u not in self or v not in self:
             raise Exception("Unrecognized node(s)!")
-        queue, colors = [u], {n: n == u for n in self.nodes}
+        queue, total = [u], {u}
         previous = {n: None for n in self.nodes}
         previous.pop(u)
         while queue:
@@ -198,9 +198,9 @@ class UndirectedGraph:
                     res.insert(0, previous[curr_node])
                     curr_node = previous[curr_node]
                 return res
-            for m in filter(lambda x: not colors[x], self.neighboring(n)):
-                queue.append(m)
-                previous[m], colors[m] = n, True
+            for m in filter(lambda x: x not in total, self.neighboring(n)):
+                queue.append(m), total.add(m)
+                previous[m] = n
 
     def euler_tour_exists(self):
         for n in self.nodes:
@@ -268,14 +268,14 @@ class UndirectedGraph:
         res = []
         for n in self.nodes:
             if self.clique(n, *self.neighboring(n)):
-                queue, colors, res, continuer = [n], {m: m == n for m in self.nodes}, [n], False
+                queue, total, res, continuer = [n], {n}, [n], False
                 while queue:
                     can_be = True
-                    for v in filter(lambda x: not colors[x], self.neighboring(_ := queue.pop(0))):
+                    for v in filter(lambda x: x not in total, self.neighboring(_ := queue.pop(0))):
                         can_be = False
-                        if self.clique(v, *filter(lambda x: not colors[x], self.neighboring(v))):
-                            can_be, colors[v] = True, True
-                            queue.append(v), res.append(v)
+                        if self.clique(v, *filter(lambda x: x not in total, self.neighboring(v))):
+                            can_be = True
+                            queue.append(v), res.append(v), total.add(v)
                             break
                     if not can_be:
                         res, continuer = [], True
@@ -321,14 +321,13 @@ class UndirectedGraph:
         if self.tree():
             if not self:
                 return [[]]
-            queue, c0, c1, colors = [self.nodes[0]], self.nodes.copy(), [], {n: False for n in self.nodes}
+            queue, c0, c1, total = [self.nodes[0]], self.nodes.copy(), [], set()
             while queue:
                 flag = (u := queue.pop(0)) in c0
-                for v in filter(lambda x: not colors[x], self.neighboring(u)):
+                for v in filter(lambda x: x not in total, self.neighboring(u)):
                     if flag:
                         c1.append(v), c0.remove(v)
-                    queue.append(v)
-                    colors[v] = True
+                    queue.append(v), total.add(v)
             return [c0.value, c1]
         if s := self.interval_sort():
             result = [[s[0]]]
@@ -415,11 +414,10 @@ class UndirectedGraph:
                 return [[]]
             from Graphs.Tree import Tree
             tree = Tree(u := self.nodes[0], f=self.f)
-            queue, colors = [u], {n: n == u for n in self.nodes}
+            queue, total = [u], {u}
             while queue:
-                for n in filter(lambda x: not colors[x], self.neighboring(v := queue.pop(0))):
-                    tree.add(v, n), queue.append(n)
-                    colors[n] = True
+                for n in filter(lambda x: x not in total, self.neighboring(v := queue.pop(0))):
+                    tree.add(v, n), queue.append(n), total.add(n)
             return tree.independent_set()
         tmp = self.complementary()
         for k in range(len(self.nodes), 0, -1):
@@ -661,11 +659,10 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
                 return [[]]
             from Graphs.Tree import WeightedNodesTree
             tree = WeightedNodesTree(((v := self.nodes[0]), self.node_weights(v)), f=self.f)
-            queue, colors = [v], {n: n == v for n in self.nodes}
+            queue, total = [v], {v}
             while queue:
-                for n in filter(lambda x: not colors[x], self.neighboring(v := queue.pop(0))):
-                    tree.add(v, {n: self.node_weights(n)}), queue.append(n)
-                    colors[n] = True
+                for n in filter(lambda x: x not in total, self.neighboring(v := queue.pop(0))):
+                    tree.add(v, {n: self.node_weights(n)}), queue.append(n), total.add(n)
             return tree.weighted_vertex_cover()
         nodes, weights, tmp = self.nodes.copy(), self.total_nodes_weight, WeightedNodesUndirectedGraph.copy(self)
 
@@ -899,23 +896,23 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
             return [comp.minimal_spanning_tree() for comp in self.connection_components()]
         if not self.links:
             return [], 0
-        res_links, colors = [], {n: n == (u := self.nodes[0]) for n in self.nodes}
+        res_links, total = [], {u := self.nodes[0]}
         bridge_links = SortedList(*[Link(u, v) for v in self.neighboring(u)], f=lambda x: self.link_weights(x))
         for _ in range(1, len(self.nodes)):
             res_links.append(l := bridge_links.pop(0))
-            if colors[u := l.u]:
-                colors[v := l.v] = True
+            if (u := l.u) in total:
+                total.add(v := l.v)
                 for _v in self.neighboring(v):
                     l = Link(v, _v)
-                    if colors[_v]:
+                    if _v in total:
                         bridge_links.remove(l)
                     else:
                         bridge_links.insert(l)
             else:
-                colors[u] = True
+                total.add(u)
                 for _u in self.neighboring(u):
                     l = Link(u, _u)
-                    if colors[_u]:
+                    if _u in total:
                         bridge_links.remove(l)
                     else:
                         bridge_links.insert(l)
