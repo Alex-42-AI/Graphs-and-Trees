@@ -263,7 +263,7 @@ class UndirectedGraph:
             return reduce(lambda x, y: x + y, interval_sorts)
         if len(self.nodes) < 3 or self.full():
             return self.nodes.value
-        if self.tree():
+        if self.tree() and any(self.degrees(u) > 2 for u in self.nodes):
             return []
         res = []
         for n in self.nodes:
