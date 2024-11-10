@@ -292,7 +292,7 @@ class DirectedGraph:
         if self.dag():
             return list(map(lambda x: [x], self.nodes))
         if not self.connected():
-            return reduce(lambda x, y: x + y.strongly_connected_components(), self.connection_components(), [])
+            return reduce(lambda x, y: x + y, map(lambda z: z.strongly_connected_components(), self.connection_components()))
         total, res = set(), []
         for n in self.nodes:
             if n not in total:
