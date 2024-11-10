@@ -2,7 +2,7 @@ from functools import reduce
 
 from itertools import permutations, product
 
-from Graphs.General import Node, SortedList
+from Personal.DiscreteMath.Graphs.General import Node, SortedList
 
 
 class BinTree:
@@ -194,12 +194,14 @@ class BinTree:
     def __str__(self):
         def helper(t, i=0):
             res = str(t.root)
-            if t.left:
-                res += "\n|" + "-" * i + "L" + "-" * 4
-                res += helper(t.left, i + 4)
-            if t.right:
-                res += "\n|" + "-" * i + "R" + "-" * 4
-                res += helper(t.right, i + 4)
+            if t.left or t.right:
+                line = "".join([" |"[not j % 4] for j in range(i + 1)])
+                res += f"\n {line}--"
+                if t.left:
+                    res += helper(t.left, i + 4)
+                res += f"\n {line}--"
+                if t.right:
+                    res += helper(t.right, i + 4)
             return res
 
         return helper(self)
@@ -210,8 +212,8 @@ class BinTree:
 class Tree:
     def __init__(self, root: Node, inheritance: dict = {}, f=lambda x: x):
         self.__root, self.__f = root, f
-        self.__hierarchy, self.__parents = {root: SortedList(f=f)}, {}
-        self.__nodes, self.__leaves = SortedList(root, f=f), SortedList(root, f=f)
+        self.__hierarchy, self.__parent = {root: set()}, {}
+        self.__nodes, self.__leaves = SortedList(root, f=f), {root}
         for u, desc in inheritance.items():
             if u not in self:
                 self.add(root, u)
@@ -237,8 +239,8 @@ class Tree:
 
         return helper(self.root)
 
-    def parents(self, u: Node = None):
-        return self.__parents if u is None else self.__parents[u]
+    def parent(self, u: Node = None):
+        return self.__parent if u is None else self.__parent[u]
 
     def hierarchy(self, u: Node = None):
         return self.__hierarchy if u is None else self.__hierarchy[u]
@@ -256,6 +258,8 @@ class Tree:
     def subtree(self, u: Node):
         if u not in self:
             raise ValueError("Unrecognized node!")
+        if u == self.root:
+            return self
         queue, res = [u], Tree(u, {}, self.f)
         while queue:
             for n in self.descendants(v := queue.pop(0)):
@@ -269,10 +273,10 @@ class Tree:
         for v in [u] + [*rest]:
             if v not in self:
                 self.__nodes.insert(v)
-                self.__hierarchy[curr].insert(v)
-                self.__parents[v] = curr
-                self.__leaves.insert(v)
-                self.__hierarchy[v] = SortedList(f=self.f)
+                self.__hierarchy[curr].add(v)
+                self.__parent[v] = curr
+                self.__leaves.add(v)
+                self.__hierarchy[v] = set()
         return self
 
     def add_tree(self, tree):
@@ -293,15 +297,15 @@ class Tree:
             raise ValueError("Unrecognized node!")
         if u == self.root:
             raise ValueError("Can't remove root!")
-        self.__nodes.remove(u), self.__parents.pop(u)
-        v = self.parents(u)
+        self.__nodes.remove(u), self.__parent.pop(u)
+        v = self.parent(u)
         for n in self.descendants(u):
-            self.__parents[n] = v
+            self.__parent[n] = v
         self.__hierarchy[v] += self.hierarchy(u)
         if u in self.leaves:
             self.__leaves.remove(u)
             if not self.hierarchy(v):
-                self.__leaves.insert(v)
+                self.__leaves.add(v)
         self.__hierarchy.pop(u)
         return self
 
@@ -327,7 +331,7 @@ class Tree:
         if u in self:
             d = 0
             while u != self.root:
-                u = self.parents(u)
+                u = self.parent(u)
                 d += 1
             return d
         raise ValueError("Unrecognized node")
@@ -336,8 +340,8 @@ class Tree:
         x, res = u, []
         while x != self.root:
             res = [x] + res
-            x = self.parents(x)
-        return res
+            x = self.parent(x)
+        return [self.root] + res
 
     def vertex_cover(self):
         return [list(filter(lambda x: x not in res, self.nodes)) for res in self.independent_set()]
@@ -440,25 +444,15 @@ class Tree:
 
     def __eq__(self, other):
         if isinstance(other, Tree):
-            for u in self.nodes:
-                if u not in other:
-                    return False
-            if len(self.nodes) != len(other.nodes):
-                return False
-            for u in self.nodes:
-                if len(self.hierarchy(u)) != len(other.hierarchy(u)):
-                    return False
-                for v in self.hierarchy(u):
-                    if v not in other.hierarchy(u):
-                        return False
-            return True
+            return self.hierarchy == other.hierarchy
         return False
 
     def __str__(self):
-        def helper(r, i=4):
+        def helper(r, i=0):
             res = str(r)
+            line = "".join([" |"[not j % 4] for j in range(i + 1)])
             for d in self.descendants(r):
-                res += "\n|" + "-" * i
+                res += f"\n {line}--"
                 res += helper(d, i + 4)
             return res
 
@@ -486,10 +480,13 @@ class WeightedNodesTree(Tree):
         return self
 
     def copy(self):
-        return WeightedNodesTree((self.root, self.weights(self.root)), {u: (self.weights(u),
-                            {v: self.weights(v) for v in self.descendants(u)}) for u in self.nodes}, self.f)
+        return WeightedNodesTree((self.root, self.weights(self.root)), {u: (self.weights(u), {v: self.weights(v) for v in self.descendants(u)}) for u in self.nodes}, self.f)
 
     def subtree(self, u: Node):
+        if u not in self:
+            raise ValueError("Unrecognized node!")
+        if u == self.root:
+            return self
         queue, res = [u], WeightedNodesTree((u, self.weights(u)), {}, self.f)
         while queue:
             for n in self.descendants(v := queue.pop(0)):
@@ -508,7 +505,7 @@ class WeightedNodesTree(Tree):
         super().add_tree(tree)
         queue = [tree.root]
         while queue:
-            self.set_weight((u := queue.pop(0)), tree.weights(u) * isinstance(tree, WeightedNodesTree))
+            self.set_weight((u := queue.pop(0)), tree.weights(u) if isinstance(tree, WeightedNodesTree) else 0)
             queue += self.descendants(u)
         return self
 
@@ -613,10 +610,11 @@ class WeightedNodesTree(Tree):
         return super().__eq__(other)
 
     def __str__(self):
-        def helper(r, i=4):
+        def helper(r, i=0):
             res = f"{r}->{self.weights(r)}"
+            line = "".join([" |"[not j % 4] for j in range(i + 1)])
             for d in self.descendants(r):
-                res += "\n|" + "-" * i
+                res += f"\n {line}--"
                 res += helper(d, i + 4)
             return res
 
