@@ -157,7 +157,7 @@ morse_code = BinTree('',
                                      BinTree('O',
                                              BinTree(left=BinTree('8', ':')),
                                              BinTree(None, '9', '0')))))
-with open("Morse code.txt", "a") as file:
+with open("Morse code.txt", "a", encoding="utf-8") as file:
     file.write(f"{morse_code}\n")
     file.write(f"Morse code of '4': {morse_code.code_in_morse(Node('4'))}\n")
     file.write(f"Total nodes: {morse_code.count_nodes()}\n")
@@ -166,7 +166,7 @@ with open("Morse code.txt", "a") as file:
     file.write(f"Nodes on level 6: {morse_code.nodes_on_level(6)}\n")
     file.write(f"Tree width: {morse_code.width}\n")
     file.write(f"Encoding message 'Testing encode.':\n{morse_code.encode('Testing encode.')}\n")
-print_zig_zag(morse_code), print(morse_code)
+print_zig_zag(morse_code)
 for Type in ('preorder', 'in-order', 'post-order'):
     morse_code.print(Type)
 
@@ -205,7 +205,7 @@ with open("Peterson graph.txt", "a") as file:
     file.write(f"Vertex covers: {peterson_graph.vertexCover()}\n")
     file.write(f"Independent sets: {peterson_graph.independentSet()}\n")
     file.write(f"Shortest path from 0 to 7: {peterson_graph.get_shortest_path(n0, n7)}\n")
-with open("Tree.txt", "a") as file:
+with open("Tree.txt", "a", encoding="utf-8") as file:
     file.write(f"{tree}\n")
     file.write(f"Height: {tree.height}\n")
     file.write(f"Descendants of 2: {tree.descendants(n2)}\n")
