@@ -157,7 +157,7 @@ morse_code = BinTree('',
                                      BinTree('O',
                                              BinTree(left=BinTree('8', ':')),
                                              BinTree(None, '9', '0')))))
-with open("Morse code.txt", "a", encoding="utf-8") as file:
+with open("Morse code.txt", "w", encoding="utf-8") as file:
     file.write(f"{morse_code}\n")
     file.write(f"Morse code of '4': {morse_code.code_in_morse(Node('4'))}\n")
     file.write(f"Total nodes: {morse_code.count_nodes()}\n")
@@ -175,7 +175,7 @@ k_3_3 = UndirectedGraph({n0: [n3, n4, n5], n1: [n3, n4, n5], n2: [n3, n4, n5]})
 k_5 = UndirectedGraph({n0: [n1, n2, n3, n4], n1: [n2, n3, n4], n2: [n3, n4], n3: [n4]})
 peterson_graph = UndirectedGraph({n0: [n1, n4, n5], n3: [n2, n4, n8], n9: [n4, n6, n7], n5: [n7, n8], n2: [n1, n7], n6: [n1, n8]})
 tree = Tree(n0, {n1: [n3, n4, n5], n2: [n6, n7], n3: [n8, n9], n5: [n10, n11]})
-with open("K_3_3.txt", "a") as file:
+with open("K_3_3.txt", "w") as file:
     file.write(f"{k_3_3}\n")
     file.write(f"Is full bipartite: {k_3_3.is_full_k_partite()}\n")
     file.write(f"Chromatic nodes partition: {k_3_3.chromaticNumberNodes()}\n")
@@ -185,7 +185,7 @@ with open("K_3_3.txt", "a") as file:
     file.write(f"Dominating sets: {k_3_3.dominatingSet()}\n")
     file.write(f"Vertex covers: {k_3_3.vertexCover()} \n")
     file.write(f"Independent sets: {k_3_3.independentSet()}\n")
-with open("K_5.txt", "a") as file:
+with open("K_5.txt", "w") as file:
     file.write(f"{k_5}\n")
     file.write(f"Is full: {k_5.full()}\n")
     file.write(f"Chromatic links partition: {k_5.chromaticNumberLinks()}\n")
@@ -194,7 +194,7 @@ with open("K_5.txt", "a") as file:
     file.write(f"Dominating sets: {k_5.dominatingSet()}\n")
     file.write(f"Vertex covers: {k_5.vertexCover()}\n")
     file.write(f"Independent sets: {k_5.independentSet()}\n")
-with open("Peterson graph.txt", "a") as file:
+with open("Peterson graph.txt", "w") as file:
     file.write(f"{peterson_graph}\n")
     file.write(f"Is full k-partite: {peterson_graph.is_full_k_partite()}\n")
     file.write(f"Chromatic nodes partition: {peterson_graph.chromaticNumberNodes()}\n")
@@ -205,7 +205,7 @@ with open("Peterson graph.txt", "a") as file:
     file.write(f"Vertex covers: {peterson_graph.vertexCover()}\n")
     file.write(f"Independent sets: {peterson_graph.independentSet()}\n")
     file.write(f"Shortest path from 0 to 7: {peterson_graph.get_shortest_path(n0, n7)}\n")
-with open("Tree.txt", "a", encoding="utf-8") as file:
+with open("Tree.txt", "w", encoding="utf-8") as file:
     file.write(f"{tree}\n")
     file.write(f"Height: {tree.height}\n")
     file.write(f"Descendants of 2: {tree.descendants(n2)}\n")
