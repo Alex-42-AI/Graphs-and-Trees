@@ -197,11 +197,9 @@ class BinTree:
             if t.left or t.right:
                 line = "".join([" │"[not j % 4 and (flags + (True,))[j // 4]] for j in range(i)])
                 res += f"\n {line}├──"
-                if t.left:
-                    res += helper(t.left, i + 4, flags + (True,))
+                res += helper(t.left, i + 4, flags + (True,)) if t.left else "\\"
                 res += f"\n {line}└──"
-                if t.right:
-                    res += helper(t.right, i + 4, flags + (False,))
+                res += helper(t.right, i + 4, flags + (False,)) if t.right else "\\"
             return res
 
         return helper(self)
