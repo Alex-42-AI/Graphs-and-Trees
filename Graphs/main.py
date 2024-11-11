@@ -159,7 +159,7 @@ morse_code = BinTree('',
                                              BinTree(None, '9', '0')))))
 with open("Morse code.txt", "a") as file:
     file.write(f"{morse_code}\n")
-    file.write(f"Code in morse of '4': {morse_code.code_in_morse(Node('4'))}\n")
+    file.write(f"Morse code of '4': {morse_code.code_in_morse(Node('4'))}\n")
     file.write(f"Total nodes: {morse_code.count_nodes()}\n")
     file.write(f"Total leaves: {morse_code.count_leaves()}\n")
     file.write(f"Tree height: {morse_code.height}\n")
