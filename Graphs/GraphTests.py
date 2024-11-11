@@ -402,7 +402,7 @@ class TestWeightedNodesUndirectedGraph(TestUndirectedGraph):
                                   n11: (8, [n12, n13, n14]), n12: (0, [n10, n15]), n15: (0, [n10, n13, n14])}))
         tmp = WeightedLinksUndirectedGraph({n1: {n2: 5, n3: 2, n4: 4}, n2: {n0: 2, n5: 1}, n5: {n0: 4, n3: 3, n4: 2}})
         self.assertEqual(self.g0 + tmp, WeightedUndirectedGraph({n0: (7, {n1: 0, n2: 2, n5: 4}),
-         n1: (3, {n2, 5, n3, 2, n4, 4}), n2: (5, {n3: 0, n4: 0, n5: 1}), n3: (2, {n5: 3, n6: 0}),
+         n1: (3, {n2: 5, n3: 2, n4: 4}), n2: (5, {n3: 0, n4: 0, n5: 1}), n3: (2, {n5: 3, n6: 0}),
          n4: (8, {n5: 2, n6: 0}), n5: (4, {n8: 0}), n6: (6, {n7: 0, n8: 0}), n7: (2, {n8: 0, n9: 0}), n9: (5, {}),
          n10: (4, {n11: 0}), n11: (2, {n12: 0, n13: 0}), n12: (1, {n13: 0}), n13: (3, {}), n14: (6, {})}))
 
