@@ -83,7 +83,7 @@
  |   |   |   |--(None)
  |   |   |   |   |--(9)
  |   |   |   |   |--(0)
-Code in morse of '4': . . . . -
+Morse code of '4': . . . . -
 Total nodes: 55
 Total leaves: 24
 Tree height: 7
