@@ -2,7 +2,7 @@ from functools import reduce
 
 from itertools import permutations, product
 
-from Personal.DiscreteMath.Graphs.General import Node, SortedList
+from Graphs.General import Node, SortedList
 
 
 class BinTree:
@@ -192,16 +192,16 @@ class BinTree:
         return False
 
     def __str__(self):
-        def helper(t, i=0):
+        def helper(t, i=0, flags=()):
             res = str(t.root)
             if t.left or t.right:
-                line = "".join([" |"[not j % 4] for j in range(i + 1)])
+                line = "".join([" |"[not j % 4 and (flags + (True,))[j // 4]] for j in range(i + 1)])
                 res += f"\n {line}--"
                 if t.left:
-                    res += helper(t.left, i + 4)
+                    res += helper(t.left, i + 4, flags + (True,))
                 res += f"\n {line}--"
                 if t.right:
-                    res += helper(t.right, i + 4)
+                    res += helper(t.right, i + 4, flags + (False,))
             return res
 
         return helper(self)
@@ -448,12 +448,12 @@ class Tree:
         return False
 
     def __str__(self):
-        def helper(r, i=0):
-            res = str(r)
-            line = "".join([" |"[not j % 4] for j in range(i + 1)])
-            for d in self.descendants(r):
+        def helper(r, i=0, flags=()):
+            res, total_descendants = str(r), len(self.descendants(r))
+            line = "".join([" |"[not j % 4 and (flags + (True,))[j // 4]] for j in range(i + 1)])
+            for j, d in enumerate(self.descendants(r)):
                 res += f"\n {line}--"
-                res += helper(d, i + 4)
+                res += helper(d, i + 4, flags + (j + 1 < total_descendants,))
             return res
 
         return helper(self.root)
@@ -610,12 +610,12 @@ class WeightedNodesTree(Tree):
         return super().__eq__(other)
 
     def __str__(self):
-        def helper(r, i=0):
-            res = f"{r}->{self.weights(r)}"
-            line = "".join([" |"[not j % 4] for j in range(i + 1)])
-            for d in self.descendants(r):
+        def helper(r, i=0, flags=()):
+            res, total_descendants = f"{r}->{self.weights(r)}", len(self.descendants(r))
+            line = "".join([" |"[not j % 4 and (flags + (True,))[j // 4]] for j in range(i + 1)])
+            for j, d in enumerate(self.descendants(r)):
                 res += f"\n {line}--"
-                res += helper(d, i + 4)
+                res += helper(d, i + 4, flags + (j + 1 < total_descendants,))
             return res
 
         return helper(self.root)
