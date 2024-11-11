@@ -195,11 +195,11 @@ class BinTree:
         def helper(t, i=0, flags=()):
             res = str(t.root)
             if t.left or t.right:
-                line = "".join([" |"[not j % 4 and (flags + (True,))[j // 4]] for j in range(i)])
-                res += f"\n {line}├--"
+                line = "".join([" │"[not j % 4 and (flags + (True,))[j // 4]] for j in range(i)])
+                res += f"\n {line}├──"
                 if t.left:
                     res += helper(t.left, i + 4, flags + (True,))
-                res += f"\n {line}└--"
+                res += f"\n {line}└──"
                 if t.right:
                     res += helper(t.right, i + 4, flags + (False,))
             return res
@@ -450,9 +450,9 @@ class Tree:
     def __str__(self):
         def helper(r, i=0, flags=()):
             res, total_descendants = str(r), len(self.descendants(r))
-            line = "".join([" |"[not j % 4 and (flags + (True,))[j // 4]] for j in range(i)])
+            line = "".join([" │"[not j % 4 and (flags + (True,))[j // 4]] for j in range(i)])
             for j, d in enumerate(self.descendants(r)):
-                res += f"\n {line + "├└"[j + 1 == total_descendants]}--"
+                res += f"\n {line + "├└"[j + 1 == total_descendants]}──"
                 res += helper(d, i + 4, flags + (j + 1 < total_descendants,))
             return res
 
@@ -612,9 +612,9 @@ class WeightedNodesTree(Tree):
     def __str__(self):
         def helper(r, i=0, flags=()):
             res, total_descendants = f"{r}->{self.weights(r)}", len(self.descendants(r))
-            line = "".join([" |"[not j % 4 and (flags + (True,))[j // 4]] for j in range(i + 1)])
+            line = "".join([" │"[not j % 4 and (flags + (True,))[j // 4]] for j in range(i + 1)])
             for j, d in enumerate(self.descendants(r)):
-                res += f"\n {line + "├└"[j + 1 == total_descendants]}--"
+                res += f"\n {line + "├└"[j + 1 == total_descendants]}──"
                 res += helper(d, i + 4, flags + (j + 1 < total_descendants,))
             return res
 
