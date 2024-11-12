@@ -346,6 +346,8 @@ class DirectedGraph:
 
         if len(self.links) > (len(self.nodes) - 1) ** 2 + 1:
             return True
+        if self.sources or self.sinks:
+            return False
         tmp = DirectedGraph.copy(self)
         can_end_in = tmp.prev(u := self.nodes[0]).copy()
         return dfs(u)
@@ -397,7 +399,11 @@ class DirectedGraph:
         if u is None:
             if v is not None and v not in self:
                 raise Exception("Unrecognized node.")
-            for _u in sorted(self.nodes, key=lambda _x: self.degrees(_x)[1]):
+            if self.dag() and (v is None or v in self.sinks):
+                if len(self.sources + self.sinks) > 2 or any(self.degrees(n)[0] > 1 or self.degrees(n)[1] > 1 for n in self.nodes):
+                    return []
+                return self.toposort()
+            for _u in self.nodes:
                 if result := dfs(_u, [_u]):
                     return result
             return []
