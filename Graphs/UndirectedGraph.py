@@ -259,9 +259,7 @@ class UndirectedGraph:
             for n in can_follow_from:
                 if tmp.clique(n, *(neighbors := tmp.neighboring(n).copy())):
                     tmp.remove(n)
-                    if rec := dfs(neighbors, res + [n]):
-                        return rec
-                    tmp.add(n, *neighbors)
+                    return dfs(neighbors, res + [n])
             return []
 
         if not self.links:
