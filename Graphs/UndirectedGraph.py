@@ -262,15 +262,13 @@ class UndirectedGraph:
                     return dfs(neighbors, res + [n])
             return []
 
-        if not self.links:
+        if not self.links or self.full():
             return self.nodes.value
         if not self.connected():
             interval_sorts = list(map(lambda x: x.interval_sort(), self.connection_components()))
             if any(not i_s for i_s in interval_sorts):
                 return []
             return reduce(lambda x, y: x + y, interval_sorts)
-        if len(self.nodes) < 3 or self.full():
-            return self.nodes.value
         if self.tree() and any(self.degrees(u) > 2 for u in self.nodes):
             return []
         tmp = UndirectedGraph.copy(self)
