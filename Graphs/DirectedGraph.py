@@ -641,8 +641,8 @@ class WeightedNodesDirectedGraph(DirectedGraph):
             return other + self
         if isinstance(other, WeightedLinksDirectedGraph):
             return WeightedDirectedGraph({}, self.f) + self + other
-        res = self.copy()
         if isinstance(other, WeightedNodesDirectedGraph):
+            res = self.copy()
             for n in other.nodes:
                 if n in res:
                     res.set_weight(n, res.node_weights(n) + other.node_weights(n))
@@ -652,13 +652,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
                 if v not in res.next(u):
                     res.connect(v, [u])
             return res
-        for n in other.nodes:
-            if n not in res:
-                res.add((n, 0))
-        for u, v in other.links:
-            if v not in res.next(u):
-                res.connect(v, [u])
-        return res
+        return self + WeightedNodesDirectedGraph({n: (0, (other.prev(n), other.next(n))) for n in other.nodes}, other.f)
 
     def __eq__(self, other):
         if isinstance(other, WeightedNodesDirectedGraph):
@@ -843,8 +837,8 @@ class WeightedLinksDirectedGraph(DirectedGraph):
             raise ValueError("Node sorting functions don't match!")
         if isinstance(other, WeightedNodesDirectedGraph):
             return other + self
-        res = self.copy()
         if isinstance(other, WeightedLinksDirectedGraph):
+            res = self.copy()
             for n in other.nodes:
                 if n not in res:
                     res.add(n)
@@ -854,12 +848,8 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                 else:
                     res.connect(v, {u: other.link_weights((u, v))})
             return res
-        for n in other.nodes:
-            if n not in res:
-                res.add(n)
-        for u, v in other.links:
-            res.connect(v, {u: self.link_weights((u, v))})
-        return res
+        neighborhood = {u: ({v: 0 for v in other.prev(u)}, {v: 0 for v in other.next(u)}) for u in other.nodes}
+        return WeightedLinksDirectedGraph(neighborhood, other.f)
 
     def __eq__(self, other):
         if isinstance(other, WeightedLinksDirectedGraph):
@@ -1057,8 +1047,8 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
             raise TypeError(f"Addition not defined between class DirectedGraph and type {type(other).__name__}!")
         if any(self(n) != other(n) for n in self.nodes.value + other.nodes.value):
             raise ValueError("Node sorting functions don't match!")
-        res = self.copy()
         if isinstance(other, WeightedDirectedGraph):
+            res = self.copy()
             for n in other.nodes:
                 if n in res:
                     res.set_weight(n, res.node_weights(n) + other.node_weights(n))
@@ -1069,32 +1059,15 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
                     res.set_weight((u, v), res.link_weights(u, v) + other.link_weights(u, v))
                 else:
                     res.connect(v, {u: other.link_weights(u, v)})
-        elif isinstance(other, WeightedNodesDirectedGraph):
-            for n in other.nodes:
-                if n in res:
-                    res.set_weight(n, res.node_weights(n) + other.node_weights(n))
-                else:
-                    res.add((n, other.node_weights(n)))
-            for (u, v) in other.links:
-                if v not in res.next(u):
-                    res.connect(v, {u: 0})
-        elif isinstance(other, WeightedLinksDirectedGraph):
-            for n in other.nodes:
-                if n not in res:
-                    res.add((n, 0))
-            for u, v in other.links:
-                if v in res.next(u):
-                    res.set_weight((u, v), res.link_weights(u, v) + other.link_weights(u, v))
-                else:
-                    res.connect(v, {u: other.link_weights(u, v)})
-        else:
-            for n in other.nodes:
-                if n not in res:
-                    res.add((n, 0))
-            for (u, v) in other.links:
-                if v not in res.next(u):
-                    res.connect(v, {u: 0})
-        return res
+            return res
+        if isinstance(other, WeightedNodesDirectedGraph):
+            neighborhood = {u: (other.node_weights(u), ({v: 0 for v in other.prev(u)}, {v: 0 for v in other.next(u)})) for u in other.nodes}
+            return self + WeightedDirectedGraph(neighborhood, other.f)
+        if isinstance(other, WeightedLinksDirectedGraph):
+            neighborhood = {u: (0, ({v: other.link_weights(v, u) for v in other.prev(u)}, other.link_weights(u))) for u in other.nodes}
+            return self + WeightedDirectedGraph(neighborhood, other.f)
+        neighborhood = {u: (0, ({v: 0 for v in other.prev(u)}, {v: 0 for v in other.next(u)})) for u in other.nodes}
+        return self + WeightedDirectedGraph(neighborhood, other.f)
 
     def __eq__(self, other):
         if isinstance(other, WeightedDirectedGraph):
