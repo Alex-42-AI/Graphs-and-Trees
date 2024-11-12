@@ -2,6 +2,8 @@ from functools import reduce
 
 from itertools import permutations, combinations, product
 
+from Graphs.Tree import Tree, WeightedNodesTree
+
 from Graphs.General import Node, Link, SortedList
 
 
@@ -114,11 +116,20 @@ class UndirectedGraph:
             return True
         return len(self.connection_components()) == 1
 
-    def tree(self):
+    def is_tree(self):
         for comp in self.connection_components():
             if len(comp.nodes) != len(comp.links) + 1:
                 return False
         return True
+
+    def tree(self, u: Node):
+        if self.is_tree():
+            tree = Tree(u, f=self.f)
+            queue, total = [u], {u}
+            while queue:
+                for n in filter(lambda x: x not in total, self.neighboring(v := queue.pop(0))):
+                    tree.add(v, n), queue.append(n), total.add(n)
+            return tree
 
     def reachable(self, u: Node, v: Node):
         if u not in self or v not in self:
@@ -269,7 +280,7 @@ class UndirectedGraph:
             if any(not i_s for i_s in interval_sorts):
                 return []
             return reduce(lambda x, y: x + y, interval_sorts)
-        if self.tree() and any(self.degrees(u) > 2 for u in self.nodes):
+        if self.is_tree() and any(self.degrees(u) > 2 for u in self.nodes):
             return []
         tmp = UndirectedGraph.copy(self)
         return dfs(tmp.nodes.value)
@@ -308,7 +319,7 @@ class UndirectedGraph:
                     for i in range(len(final), len(c)):
                         final.append(c[i])
             return final
-        if self.tree():
+        if self.is_tree():
             if not self:
                 return [[]]
             queue, c0, c1, total = [self.nodes[0]], self.nodes.copy(), [], set()
@@ -396,16 +407,10 @@ class UndirectedGraph:
             for i_s in r[1:]:
                 result = [a + b for a in result for b in i_s]
             return result
-        if self.tree():
+        if self.is_tree():
             if not self:
                 return [[]]
-            from Graphs.Tree import Tree
-            tree = Tree(u := self.nodes[0], f=self.f)
-            queue, total = [u], {u}
-            while queue:
-                for n in filter(lambda x: x not in total, self.neighboring(v := queue.pop(0))):
-                    tree.add(v, n), queue.append(n), total.add(n)
-            return tree.independent_set()
+            return self.tree(self.nodes[0]).independent_set()
         tmp = self.complementary()
         for k in range(len(self.nodes), 0, -1):
             if curr := tmp.cliques(k):
@@ -428,7 +433,7 @@ class UndirectedGraph:
 
         if (k := len(self.nodes)) == 1 or (self.degrees_sum > (k - 1) * (k - 2) + 2 or k > 2 and all(2 * self.degrees(n) >= k for n in self.nodes)):
             return True
-        if any(self.degrees(n) < 2 for n in self.nodes) or self.tree() and any(self.degrees(n) > 2 for n in self.nodes) or not self.connected() or self.interval_sort():
+        if any(self.degrees(n) < 2 for n in self.nodes) or self.is_tree() and any(self.degrees(n) > 2 for n in self.nodes) or not self.connected() or self.interval_sort():
             return False
         tmp = UndirectedGraph.copy(self)
         can_end_in = tmp.neighboring(u := self.nodes[0]).copy()
@@ -621,6 +626,15 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
     def copy(self):
         return WeightedNodesUndirectedGraph({n: (self.node_weights(n), self.neighboring(n)) for n in self.nodes}, self.f)
 
+    def tree(self, u: Node):
+        if self.is_tree():
+            tree = WeightedNodesTree((u, self.node_weights(u)), f=self.f)
+            queue, total = [u], {u}
+            while queue:
+                for n in filter(lambda x: x not in total, self.neighboring(v := queue.pop(0))):
+                    tree.add(v, {n: self.node_weights(n)}), queue.append(n), total.add(n)
+            return tree
+
     def component(self, n: Node):
         if n not in self:
             raise ValueError("Unrecognized node!")
@@ -644,16 +658,10 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
             for i_s in r[1:]:
                 final = [a + b for a in final for b in i_s]
             return final
-        if self.tree():
+        if self.is_tree():
             if not self:
                 return [[]]
-            from Graphs.Tree import WeightedNodesTree
-            tree = WeightedNodesTree(((v := self.nodes[0]), self.node_weights(v)), f=self.f)
-            queue, total = [v], {v}
-            while queue:
-                for n in filter(lambda x: x not in total, self.neighboring(v := queue.pop(0))):
-                    tree.add(v, {n: self.node_weights(n)}), queue.append(n), total.add(n)
-            return tree.weighted_vertex_cover()
+            return self.tree(self.nodes[0]).weighted_vertex_cover()
         nodes, weights, tmp = self.nodes.copy(), self.total_nodes_weight, WeightedNodesUndirectedGraph.copy(self)
 
         def helper(curr, res_sum=0, i=0):
@@ -875,7 +883,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         return res
 
     def minimal_spanning_tree(self):
-        if self.tree():
+        if self.is_tree():
             return self.links, self.total_links_weight
         if not self.connected():
             return [comp.minimal_spanning_tree() for comp in self.connection_components()]
