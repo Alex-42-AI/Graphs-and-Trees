@@ -159,6 +159,8 @@ morse_code = BinTree('',
                                              BinTree(None, '9', '0')))))
 with open("Morse code.txt", "w", encoding="utf-8") as file:
     file.write(f"{morse_code}\n")
+    for traversal in ('preorder', 'in-order', 'post-order'):
+        file.write(f"Traversal type {traversal}: {morse_code.print(traversal)}\n")
     file.write(f"Morse code of '4': {morse_code.code_in_morse(Node('4'))}\n")
     file.write(f"Total nodes: {morse_code.count_nodes()}\n")
     file.write(f"Total leaves: {morse_code.count_leaves()}\n")
@@ -167,8 +169,6 @@ with open("Morse code.txt", "w", encoding="utf-8") as file:
     file.write(f"Tree width: {morse_code.width}\n")
     file.write(f"Encoding message 'Testing encode.':\n{morse_code.encode('Testing encode.')}\n")
 print_zig_zag(morse_code)
-for Type in ('preorder', 'in-order', 'post-order'):
-    morse_code.print(Type)
 
 n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15 = Node(0), Node(1), Node(2), Node(3), Node(4), Node(5), Node(6), Node(7), Node(8), Node(9), Node(10), Node(11), Node(12), Node(13), Node(14), Node(15)
 k_3_3 = UndirectedGraph({n0: [n3, n4, n5], n1: [n3, n4, n5], n2: [n3, n4, n5]})
