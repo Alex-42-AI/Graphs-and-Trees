@@ -1,7 +1,7 @@
 from unittest import TestCase, main
-from Graphs.UndirectedGraph import *
-from Graphs.DirectedGraph import *
-from Graphs.Tree import *
+from Personal.DiscreteMath.Graphs.UndirectedGraph import *
+from Personal.DiscreteMath.Graphs.DirectedGraph import *
+from Personal.DiscreteMath.Graphs.Tree import *
 
 n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15 = Node(0), Node(1), Node(2), Node(3), Node(4), Node(5), Node(6), Node(7), Node(8), Node(9), Node(10), Node(11), Node(12), Node(13), Node(14), Node(15)
 
@@ -40,9 +40,9 @@ class TestUndirectedGraph(TestCase):
         self.assertFalse(self.g0.connected())
         self.assertTrue(self.g1.connected())
 
-    def test_tree(self):
-        self.assertFalse(self.g0.tree())
-        self.assertTrue(self.g3.tree())
+    def test_is_tree(self):
+        self.assertFalse(self.g0.is_tree())
+        self.assertTrue(self.g3.is_tree())
 
     def test_reachable(self):
         for u in [n0, n1, n2, n3, n4, n5, n6, n7, n8, n9]:
@@ -478,7 +478,7 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
                         g.add(l.v, l.u)
                     else:
                         g.connect(l.u, l.v)
-            self.assertTrue(g.tree())
+            self.assertTrue(g.is_tree())
         res = self.g1.minimal_spanning_tree()
         self.assertEqual(res[1], 10)
         g = UndirectedGraph()
@@ -491,7 +491,7 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
                     g.add(l.v, l.u)
                 else:
                     g.connect(l.u, l.v)
-        self.assertTrue(g.tree())
+        self.assertTrue(g.is_tree())
         res = self.g2.minimal_spanning_tree()
         self.assertEqual(res[1], 1)
         g = UndirectedGraph()
@@ -504,7 +504,7 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
                     g.add(l.v, l.u)
                 else:
                     g.connect(l.u, l.v)
-        self.assertTrue(g.tree())
+        self.assertTrue(g.is_tree())
         res = self.g3.minimal_spanning_tree()
         self.assertEqual(res[1], 30)
         g = UndirectedGraph()
@@ -517,7 +517,7 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
                     g.add(l.v, l.u)
                 else:
                     g.connect(l.u, l.v)
-        self.assertTrue(g.tree())
+        self.assertTrue(g.is_tree())
 
     def test_min_path_links(self):
         res = self.g0.minimalPathLinks(n0, n8)
