@@ -213,7 +213,7 @@ with open("Peterson graph.txt", "w") as file:
 with open("Undirected graphs.txt", "w") as file:
     file.write(f"Graph 1: {ug0}\nGraph 2: {ug1}\n")
     file.write(f"Graph 2 width: {ug1.width()}\n")
-    file.write(f"Is graph 1 a tree: {ug0.tree}\nIs graph 2 a tree: {ug1.tree}\n")
+    file.write(f"Is graph 1 a tree: {ug0.tree()}\nIs graph 2 a tree: {ug1.tree()}\n")
     file.write(f"Graph 2 cut nodes: {ug1.cut_nodes()}\nGraph 2 bridge links: {ug1.bridge_links()}\n")
     file.write(f"Euler walk from 2 to 1 in graph 1: {ug0.euler_walk(n2, n1)}\n")
     file.write(f"Shortest path from 10 to 3 in graph 2: {ug1.get_shortest_path(n10, n3)}\n")
