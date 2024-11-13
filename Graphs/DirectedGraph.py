@@ -121,7 +121,11 @@ class DirectedGraph:
             return False
         if m > (n - 1) * (n - 2) or n < 2:
             return True
-        return len(self.connection_components()) == 1
+        queue, total = [u := self.nodes[0]], {u}
+        while queue:
+            for v in filter(lambda x: x not in total, self.next(u := queue.pop(0)) + self.prev(u)):
+                total.add(v), queue.append(v)
+        return len(total) == len(self.nodes)
 
     def reachable(self, u: Node, v: Node):
         if u not in self or v not in self:
