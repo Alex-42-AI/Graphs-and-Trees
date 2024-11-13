@@ -114,13 +114,14 @@ class UndirectedGraph:
             return False
         if self.degrees_sum > (n - 1) * (n - 2) or n < 2:
             return True
-        return len(self.connection_components()) == 1
+        queue, total = [u := self.nodes[0]], {u}
+        while queue:
+            for v in filter(lambda x: x not in total, self.neighboring(queue.pop(0))):
+                total.add(v), queue.append(v)
+        return len(total) == len(self.nodes)
 
     def is_tree(self):
-        for comp in self.connection_components():
-            if len(comp.nodes) != len(comp.links) + 1:
-                return False
-        return True
+        return len(self.nodes) == len(self.links) + 1 and self.connected()
 
     def tree(self, u: Node):
         if self.is_tree():
