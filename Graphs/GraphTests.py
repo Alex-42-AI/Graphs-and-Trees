@@ -39,6 +39,8 @@ class TestUndirectedGraph(TestCase):
     def test_connected(self):
         self.assertFalse(self.g0.connected())
         self.assertTrue(self.g1.connected())
+        self.assertTrue(self.g2.connected())
+        self.assertTrue(self.g3.connected())
 
     def test_is_tree(self):
         self.assertFalse(self.g0.is_tree())
