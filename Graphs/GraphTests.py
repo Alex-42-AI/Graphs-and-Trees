@@ -237,7 +237,7 @@ class TestUndirectedGraph(TestCase):
         tmp = self.g0.component(n0)
         tmp.disconnect(n2, n3), tmp.disconnect(n5, n8), tmp.connect(n3, n7, n8)
         tmp_copy, g0, g3 = tmp.copy(), self.g0.copy(), self.g3.copy()
-        res = tmp.chromaticNumberNodes()
+        res = tmp.chromaticNodesPartition()
         self.assertEqual(len(res), 4)
         self.assertEqual(sum(map(len, res)), len(tmp.nodes))
         for c in res:
@@ -251,7 +251,7 @@ class TestUndirectedGraph(TestCase):
             tmp_sum += c
         for n in tmp.nodes:
             self.assertIn(n, tmp_sum)
-        res = self.g3.chromaticNumberNodes()
+        res = self.g3.chromaticNodesPartition()
         self.assertEqual(len(res), 2)
         self.assertEqual(sum(map(len, res)), len(self.g3.nodes))
         for c in res:
@@ -265,7 +265,7 @@ class TestUndirectedGraph(TestCase):
             tmp_sum += c
         for n in self.g3.nodes:
             self.assertIn(n, tmp_sum)
-        res = self.g0.chromaticNumberNodes()
+        res = self.g0.chromaticNodesPartition()
         self.assertEqual(len(res), 3)
         self.assertEqual(sum(map(len, res)), len(self.g0.nodes))
         for c in res:
@@ -283,7 +283,7 @@ class TestUndirectedGraph(TestCase):
 
     def test_chromatic_number_links(self):
         g1 = self.g1.copy()
-        res = self.g1.chromaticNumberLinks()
+        res = self.g1.chromaticLinksPartition()
         self.assertEqual(len(res), 4)
         self.assertEqual(sum(map(len, res)), len(self.g1.links))
         for c in res:
@@ -583,7 +583,7 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
     def test_chromatic_number_nodes(self):
         tmp = self.g0.component(n0)
         tmp.disconnect(n2, n3), tmp.disconnect(n5, n8), tmp.connect(n3, {n7: 0, n8: 0})
-        res = tmp.chromaticNumberNodes()
+        res = tmp.chromaticNodesPartition()
         self.assertEqual(len(res), 4)
         self.assertEqual(sum(map(len, res)), len(tmp.nodes))
         for c in res:
@@ -597,7 +597,7 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
             tmp_sum += c
         for n in tmp.nodes:
             self.assertIn(n, tmp_sum)
-        res = self.g3.chromaticNumberNodes()
+        res = self.g3.chromaticNodesPartition()
         self.assertEqual(len(res), 2)
         self.assertEqual(sum(map(len, res)), len(self.g3.nodes))
         for c in res:
@@ -611,7 +611,7 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
             tmp_sum += c
         for n in self.g3.nodes:
             self.assertIn(n, tmp_sum)
-        res = self.g0.chromaticNumberNodes()
+        res = self.g0.chromaticNodesPartition()
         self.assertEqual(len(res), 3)
         self.assertEqual(sum(map(len, res)), len(self.g0.nodes))
         for c in res:
