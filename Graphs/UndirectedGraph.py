@@ -292,7 +292,7 @@ class UndirectedGraph:
     def cliques(self, k: int):
         return [list(p) for p in combinations(self.nodes, abs(k)) if self.clique(*p)]
 
-    def chromaticNumberNodes(self):
+    def chromaticNodesPartition(self):
         def helper(curr):
             if not tmp.nodes:
                 return curr
@@ -311,7 +311,7 @@ class UndirectedGraph:
             return _result
 
         if not self.connected():
-            r = [comp.chromaticNumberNodes() for comp in self.connection_components()]
+            r = [comp.chromaticNodesPartition() for comp in self.connection_components()]
             final = r[0]
             for c in r[1:]:
                 for i in range(min(len(c), len(final))):
@@ -331,6 +331,8 @@ class UndirectedGraph:
                         c1.append(v), c0.remove(v)
                     queue.append(v), total.add(v)
             return [c0.value, c1]
+        if self.is_full_k_partite():
+            return [comp.nodes for comp in self.complementary().connection_components()]
         if s := self.interval_sort():
             result = [[s[0]]]
             for u in s[1:]:
@@ -346,8 +348,8 @@ class UndirectedGraph:
         max_nodes, tmp = self.nodes.value.copy(), UndirectedGraph.copy(self)
         return helper([])
 
-    def chromaticNumberLinks(self):
-        return [list(map(lambda x: x.value, s)) for s in UndirectedGraph({Node(l0): [Node(l1) for l1 in self.links if (l1.u in l0) ^ (l1.v in l0)] for l0 in self.links}, hash).chromaticNumberNodes()]
+    def chromaticLinksPartition(self):
+        return [list(map(lambda x: x.value, s)) for s in UndirectedGraph({Node(l0): [Node(l1) for l1 in self.links if (l1.u in l0) ^ (l1.v in l0)] for l0 in self.links}, hash).chromaticNodesPartition()]
 
     def pathWithLength(self, u: Node, v: Node, length: int):
         def dfs(x: Node, l: int, stack: [Link]):
