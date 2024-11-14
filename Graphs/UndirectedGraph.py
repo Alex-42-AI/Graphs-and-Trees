@@ -1058,30 +1058,54 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
         return res
 
     def minimalPath(self, u: Node, v: Node):
-        def dfs(x, curr_path, curr_w, total_negative, res_path=None, res_w=0):
+        def dfs(x, current_path, current_weight, total_negative, res_path=None, res_weight=0):
+            def dijkstra(s, curr_path, curr_weight):
+                curr_tmp = tmp.copy()
+                for l in curr_path:
+                    curr_tmp.disconnect(l.u, l.v)
+                paths = {n: {m: [] for m in curr_tmp.nodes} for n in curr_tmp.nodes}
+                weights_from_to = {n: {m: curr_tmp.total_weight for m in curr_tmp.nodes} for n in curr_tmp.nodes}
+                for n in curr_tmp.nodes:
+                    weights_from_to[n][n] = 0
+                    for m in curr_tmp.neighboring(n):
+                        weights_from_to[n][m] = curr_tmp.link_weights(n, m) + curr_tmp.node_weights(m)
+                        paths[n][m] = [Link(n, m)]
+                for x1 in curr_tmp.nodes:
+                    for x2 in curr_tmp.nodes:
+                        for x3 in curr_tmp.nodes:
+                            if (new_weight := weights_from_to[x1][x2] + weights_from_to[x2][x3]) < weights_from_to[x1][x3]:
+                                weights_from_to[x1][x3] = new_weight
+                                paths[x1][x3] = paths[x1][x2] + paths[x2][x3]
+                return curr_path + paths[s][v], curr_weight + weights_from_to[s][v]
+
             if res_path is None:
                 res_path = []
-            for y in filter(lambda _y: Link(x, _y) not in curr_path, self.neighboring(x)):
-                new_curr_w = curr_w + self.link_weights(x, y) + self.node_weights(y)
-                new_total_negative = total_negative
-                if (n_w := self.node_weights(y)) < 0:
-                    new_total_negative -= n_w
-                if (l_w := self.link_weights(x, y)) < 0:
-                    new_total_negative -= l_w
-                if new_curr_w + new_total_negative >= res_w and res_path:
-                    continue
-                if y == v and (new_curr_w < res_w or not res_path):
-                    res_path, res_w = curr_path + [Link(x, y)], curr_w + self.link_weights(x, y) + self.node_weights(y)
-                curr = dfs(y, curr_path + [Link(x, y)], new_curr_w, new_total_negative, res_path, res_w)
-                if curr[1] < res_w or not res_path:
-                    res_path, res_w = curr
-            return res_path, res_w
+            if total_negative:
+                for y in filter(lambda _y: Link(x, _y) not in current_path, tmp.neighboring(x)):
+                    new_curr_w = current_weight + (l_w := tmp.link_weights(x, y)) + (n_w := tmp.node_weights(y))
+                    new_total_negative = total_negative
+                    if n_w < 0:
+                        new_total_negative -= n_w
+                    if l_w < 0:
+                        new_total_negative -= l_w
+                    if new_curr_w + new_total_negative >= res_weight and res_path:
+                        continue
+                    if y == v and (new_curr_w < res_weight or not res_path):
+                        res_path, res_weight = current_path + [Link(x, y)], current_weight + l_w + n_w
+                    curr = dfs(y, current_path + [Link(x, y)], new_curr_w, new_total_negative, res_path, res_weight)
+                    if curr[1] < res_weight or not res_path:
+                        res_path, res_weight = curr
+            else:
+                curr = dijkstra(x, current_path, current_weight)
+                if curr[1] < res_weight or not res_path:
+                    res_path, res_weight = curr
+            return res_path, res_weight
 
-        if u in self and v in self:
-            if self.reachable(u, v):
-                nodes_negative_weights = sum(self.node_weights(n) for n in self.nodes if self.node_weights(n) < 0)
-                links_negative_weights = sum(self.link_weights(l) for l in self.links if self.link_weights(l) < 0)
-                res = dfs(u, [], self.node_weights(u), nodes_negative_weights + links_negative_weights)
+        if v in self:
+            if v in (tmp := self.component(u)):
+                nodes_negative_weights = sum(tmp.node_weights(n) for n in tmp.nodes if tmp.node_weights(n) < 0)
+                links_negative_weights = sum(tmp.link_weights(l) for l in tmp.links if tmp.link_weights(l) < 0)
+                res = dfs(u, [], tmp.node_weights(u), nodes_negative_weights + links_negative_weights)
                 return [l.u for l in res[0]] + [res[0][-1].v], res[1]
             return [], 0
         raise ValueError('Unrecognized node(s)!')
