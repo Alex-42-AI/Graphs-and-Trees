@@ -268,30 +268,31 @@ class DirectedGraph:
         return []
 
     def strongly_connected_components(self):
-        def dfs(x, stack):
-            def helper(_x, _stack):
-                for _y in filter(lambda _z: _z not in helper_safe, self.next(_x)):
-                    if _y not in curr:
-                        helper(_y, _stack + [_y])
-                    elif _x not in curr:
-                        while _stack:
-                            total.add(current_node := _stack.pop()), curr.insert(current_node)
-                        return
-                helper_safe.add(_x)
+        def helper(x):
+            def bfs(s):
+                previous = {_n: None for _n in self.nodes}
+                previous.pop(s)
+                queue, so_far = [s], {s}
+                while queue:
+                    for t in filter(lambda _t: _t not in so_far, self.next(_s := queue.pop(0))):
+                        previous[t] = _s
+                        if t in tmp:
+                            node = t
+                            while node != s:
+                                tmp.append(previous[node])
+                                node = previous[node]
+                            return
+                        queue.append(t), so_far.add(t)
 
-            for y in filter(lambda z: z not in dfs_safe, self.next(x)):
-                if y not in curr and y not in stack:
-                    dfs(y, stack + [y])
-                if y == n:
-                    curr_node = stack.pop()
-                    while stack and curr_node != n:
-                        curr.insert(curr_node), total.add(curr_node)
-                        curr_node = stack.pop()
-                    for curr_node in curr:
-                        helper_safe = set()
-                        helper(curr_node, [])
+            for y in filter(lambda _y: _y not in total, self.prev(x)):
+                if tmp := self.get_shortest_path(x, y):
+                    for u in tmp:
+                        curr.append(u), total.add(u)
+                        for v in self.next(u):
+                            if v not in total and v not in tmp:
+                                bfs(v)
                     return
-            dfs_safe.add(x)
+            curr.append(x)
 
         if self.dag():
             return list(map(lambda x: [x], self.nodes))
@@ -302,8 +303,8 @@ class DirectedGraph:
         total, res = set(), []
         for n in self.nodes:
             if n not in total:
-                dfs_safe, curr = set(), SortedList(n, f=self.f)
-                total.add(n), dfs(n, [n]), res.append(curr.value)
+                curr = []
+                total.add(n), helper(n), res.append(curr)
         return res
 
     def pathWithLength(self, u: Node, v: Node, length: int):
