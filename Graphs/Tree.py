@@ -64,7 +64,7 @@ class BinTree:
     def width(self):
         res = len(self.nodes_on_level(self.height))
         for i in range(self.height - 1, -1, -1):
-            if (curr := len(self.nodes_on_level(i))) <= res and res >= 2 ** i:
+            if (curr := len(self.nodes_on_level(i))) <= res and res >= 2 ** (i - 1):
                 return res
             res = max(res, curr)
 
@@ -97,26 +97,27 @@ class BinTree:
 
         return dfs(self)
 
-    def code_in_morse(self, u: Node):
+    def code_in_morse(self, x):
         def dfs(tree):
             if not tree:
                 return
-            if tree.left and tree.left.root == u:
+            if (l := tree.left) and l.root == u:
                 return "."
-            if res := dfs(tree.left):
+            if res := dfs(l):
                 return ". " + res
-            if tree.right and tree.right.root == u:
+            if (r := tree.right) and r.root == u:
                 return "-"
-            if res := dfs(tree.right):
+            if res := dfs(r):
                 return "- " + res
 
+        u = Node(x)
         return dfs(self)
 
     def encode(self, message: str):
         res = ""
-        for c in message.upper():
+        for c in message:
             if Node(c) in self:
-                res += self.code_in_morse(Node(c)) + "   "
+                res += self.code_in_morse(c) + "   "
             else:
                 res += c + "  "
         return res[:-2]
@@ -124,7 +125,7 @@ class BinTree:
     def inverted(self):
         return ~self.copy()
 
-    def print(self, traversal_type: str = "in-order"):
+    def traverse(self, traversal_type: str = "in-order"):
         def preorder_print():
             def dfs(tree, traversal):
                 traversal += [tree.root]
@@ -158,11 +159,11 @@ class BinTree:
             return dfs(self, [])
 
         if traversal_type.lower() == "preorder":
-            print(preorder_print())
+            return preorder_print()
         elif traversal_type.lower() == "in-order":
-            print(in_order_print())
+            return in_order_print()
         elif traversal_type.lower() == "post-order":
-            print(post_order_print())
+            return post_order_print()
         else:
             raise ValueError("Traversal type " + str(traversal_type) + " is not supported!")
 
@@ -204,7 +205,7 @@ class BinTree:
 
         return helper(self)
 
-    __repr__ = __str__
+    __repr__ = traverse
 
 
 class Tree:
@@ -285,16 +286,18 @@ class Tree:
         queue = [tree.root]
         while queue:
             if res := list(filter(lambda x: x not in self, tree.descendants(u := queue.pop(0)))):
-                if res:
-                    self.add(u, *res)
+                self.add(u, *res)
                 queue += res
         return self
 
-    def remove(self, u: Node):
+    def remove(self, u: Node, subtree=False):
         if u not in self:
             raise ValueError("Unrecognized node!")
         if u == self.root:
             raise ValueError("Can't remove root!")
+        if subtree:
+            for d in self.descendants(u):
+                self.remove(d, True)
         self.__nodes.remove(u), self.__parent.pop(u)
         v = self.parent(u)
         for n in self.descendants(u):
@@ -307,22 +310,13 @@ class Tree:
         self.__hierarchy.pop(u)
         return self
 
-    def remove_tree(self, u: Node):
-        if u not in self:
-            raise ValueError("Unrecognized node!")
-        if u == self.root:
-            raise ValueError("Can't remove root!")
-        for v in self.descendants(u):
-            self.remove_tree(v)
-        self.remove(u)
-        return self
-
-    def move_node(self, u: Node, at_new: Node):
+    def move_node(self, u: Node, at_new: Node, subtree=False):
         if u in self:
-            tmp = self.subtree(u)
-            self.remove(u)
-            self.add(at_new, {u: tmp.weights(u)} if isinstance(tmp, WeightedNodesTree) else u)
-            self.add_tree(tmp)
+            tmp = self.subtree(u) if subtree else None
+            self.remove(u, subtree)
+            self.add(at_new, {u: self.weights(u)} if isinstance(self, WeightedNodesTree) else u)
+            if subtree:
+                self.add_tree(tmp)
         return self
 
     def node_depth(self, u: Node):
@@ -456,7 +450,10 @@ class Tree:
 
         return helper(self.root)
 
-    __repr__ = __str__
+    def __repr__(self):
+        inheritance = self.hierarchy().copy()
+        inheritance.pop(self.root)
+        return f"Tree({self.root}, {inheritance})"
 
 
 class WeightedNodesTree(Tree):
@@ -478,7 +475,8 @@ class WeightedNodesTree(Tree):
         return self
 
     def copy(self):
-        return WeightedNodesTree((self.root, self.weights(self.root)), {u: (self.weights(u), {v: self.weights(v) for v in self.descendants(u)}) for u in self.nodes}, self.f)
+        inheritance = {u: (self.weights(u), {v: self.weights(v) for v in self.descendants(u)}) for u in self.nodes}
+        return WeightedNodesTree((self.root, self.weights(self.root)), inheritance, self.f)
 
     def subtree(self, u: Node):
         if u not in self:
@@ -507,14 +505,17 @@ class WeightedNodesTree(Tree):
             queue += self.descendants(u)
         return self
 
-    def remove(self, u: Node):
+    def remove(self, u: Node, subtree=False):
+        if subtree:
+            for d in self.descendants(u):
+                self.remove(d, True)
         self.__weights.pop(u)
         return super().remove(u)
 
     def weighted_vertex_cover(self):
         dp = {n: [[[n]], [[]]] for n in self.nodes}
 
-        def dfs(x: Node):
+        def dfs(x):
             for y in self.descendants(x):
                 dfs(y)
                 optimal = dp[y][0] + dp[y][1]
@@ -545,8 +546,9 @@ class WeightedNodesTree(Tree):
             for d in self.descendants(r):
                 if d not in self.leaves:
                     dfs(d)
-                    dp[r][0] += dp[d][0] if sum(map(self.weights, dp[d][0])) < sum(map(self.weights, dp[d][1])) else dp[d][1]
-                    if min_no_root is None or sum(map(self.weights, dp[d][0])) < sum(map(self.weights, dp[min_no_root][0])):
+                    dp[r][0] += dp[d][0] if ((d_weights_sum := sum(map(self.weights, dp[d][0])))
+                                             < sum(map(self.weights, dp[d][1]))) else dp[d][1]
+                    if min_no_root is None or d_weights_sum < sum(map(self.weights, dp[min_no_root][0])):
                         min_no_root = d
             for d in self.descendants(r):
                 dp[r][1] += dp[d][1] if sum(map(self.weights, dp[d][1])) < sum(map(self.weights, dp[d][0])) and d != min_no_root else dp[d][0]
@@ -603,9 +605,8 @@ class WeightedNodesTree(Tree):
 
     def __eq__(self, other):
         if isinstance(other, WeightedNodesTree):
-            if self.weights() != other.weights():
-                return False
-        return super().__eq__(other)
+            return self.weights() == other.weights() and super().__eq__(other)
+        return False
 
     def __str__(self):
         def helper(r, i=0, flags=()):
@@ -617,3 +618,8 @@ class WeightedNodesTree(Tree):
             return res
 
         return helper(self.root)
+
+    def __repr__(self):
+        inheritance = {k: (self.weights(k), v) for k, v in self.hierarchy().items()}
+        inheritance.pop(self.root)
+        return f"WeightedNodesTree({(self.root, self.weights(self.root))}, {inheritance})"
