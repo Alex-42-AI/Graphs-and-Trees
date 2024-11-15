@@ -46,6 +46,9 @@ class TestUndirectedGraph(TestCase):
         self.assertFalse(self.g0.is_tree())
         self.assertTrue(self.g3.is_tree())
 
+    def test_tree(self):
+        pass
+
     def test_reachable(self):
         for u in [n0, n1, n2, n3, n4, n5, n6, n7, n8, n9]:
             for v in [n10, n11, n12, n13, n14]:
@@ -336,6 +339,9 @@ class TestWeightedNodesUndirectedGraph(TestUndirectedGraph):
 
     def test_total_node_weights(self):
         self.assertEqual(self.g0.total_nodes_weight, 58)
+
+    def test_weighted_tree(self):
+        pass
 
     def test_connection_components(self):
         res = self.g0.connection_components()
@@ -822,24 +828,28 @@ class TestDirectedGraph(TestCase):
 
     def test_strongly_connected_components(self):
         res = self.g0.strongly_connected_components()
+        self.assertEqual(len(res), 8)
         self.assertEqual(sum(map(len, res)), len(self.g0.nodes))
         for s in res:
             for u in s:
                 for v in s:
                     self.assertTrue(self.g0.reachable(u, v))
         res = self.g1.strongly_connected_components()
+        self.assertEqual(len(res), 3)
         self.assertEqual(sum(map(len, res)), len(self.g1.nodes))
         for s in res:
             for u in s:
                 for v in s:
                     self.assertTrue(self.g1.reachable(u, v))
         res = self.g2.strongly_connected_components()
+        self.assertEqual(len(res), 7)
         self.assertEqual(sum(map(len, res)), len(self.g2.nodes))
         for s in res:
             for u in s:
                 for v in s:
                     self.assertTrue(self.g2.reachable(u, v))
         res = self.g3.strongly_connected_components()
+        self.assertEqual(len(res), 12)
         self.assertEqual(sum(map(len, res)), len(self.g3.nodes))
         for s in res:
             for u in s:
