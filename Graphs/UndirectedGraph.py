@@ -123,14 +123,13 @@ class UndirectedGraph:
     def is_tree(self):
         return len(self.nodes) == len(self.links) + 1 and self.connected()
 
-    def tree(self, u: Node):
-        if self.is_tree():
-            tree = Tree(u, f=self.f)
-            queue, total = [u], {u}
-            while queue:
-                for n in filter(lambda x: x not in total, self.neighboring(v := queue.pop(0))):
-                    tree.add(v, n), queue.append(n), total.add(n)
-            return tree
+    def tree(self, n: Node):
+        tree = Tree(n, f=self.f)
+        queue, total = [n], {n}
+        while queue:
+            for v in filter(lambda x: x not in total, self.neighboring(u := queue.pop(0))):
+                tree.add(u, v), queue.append(v), total.add(v)
+        return tree
 
     def reachable(self, u: Node, v: Node):
         if u not in self or v not in self:
@@ -452,7 +451,7 @@ class UndirectedGraph:
         return UndirectedGraph.copy(self).connect(u, v).hamiltonTourExists()
 
     def hamiltonTour(self):
-        if any(self.degrees(n) < 2 for n in self.nodes) or not self.connected():
+        if any(self.degrees(n) < 2 for n in self.nodes) or not self or not self.connected():
             return []
         for v in self.neighboring(u := self.nodes[0]):
             if res := self.hamiltonWalk(u, v):
@@ -629,14 +628,13 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
     def copy(self):
         return WeightedNodesUndirectedGraph({n: (self.node_weights(n), self.neighboring(n)) for n in self.nodes}, self.f)
 
-    def tree(self, u: Node):
-        if self.is_tree():
-            tree = WeightedNodesTree((u, self.node_weights(u)), f=self.f)
-            queue, total = [u], {u}
-            while queue:
-                for n in filter(lambda x: x not in total, self.neighboring(v := queue.pop(0))):
-                    tree.add(v, {n: self.node_weights(n)}), queue.append(n), total.add(n)
-            return tree
+    def weighted_tree(self, n: Node):
+        tree = WeightedNodesTree((n, self.node_weights(n)), f=self.f)
+        queue, total = [n], {n}
+        while queue:
+            for v in filter(lambda x: x not in total, self.neighboring(u := queue.pop(0))):
+                tree.add(u, {v: self.node_weights(v)}), queue.append(v), total.add(v)
+        return tree
 
     def component(self, n: Node):
         if n not in self:
@@ -664,7 +662,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         if self.is_tree():
             if not self:
                 return [[]]
-            return self.tree(self.nodes[0]).weighted_vertex_cover()
+            return self.weighted_tree(self.nodes[0]).weighted_vertex_cover()
         nodes, weights, tmp = self.nodes.copy(), self.total_nodes_weight, WeightedNodesUndirectedGraph.copy(self)
 
         def helper(curr, res_sum=0, i=0):
