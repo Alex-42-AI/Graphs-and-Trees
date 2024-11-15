@@ -161,13 +161,13 @@ with open("Morse code.txt", "w", encoding="utf-8") as file:
     file.write(f"{morse_code}\n")
     for traversal in ('preorder', 'in-order', 'post-order'):
         file.write(f"Traversal type {traversal}: {morse_code.traverse(traversal)}\n")
-    file.write(f"Morse code of '4': {morse_code.code_in_morse(Node('4'))}\n")
+    file.write(f"Morse code of '4': {morse_code.code_in_morse('4')}\n")
     file.write(f"Total nodes: {morse_code.count_nodes()}\n")
     file.write(f"Total leaves: {morse_code.count_leaves()}\n")
     file.write(f"Tree height: {morse_code.height}\n")
     file.write(f"Nodes on level 6: {morse_code.nodes_on_level(6)}\n")
     file.write(f"Tree width: {morse_code.width}\n")
-    file.write(f"Encoding message 'Testing encode.':\n{morse_code.encode('Testing encode.')}\n")
+    file.write(f"Encoding message 'Testing encode.':\n{morse_code.encode('Testing encode.'.upper())}\n")
 print_zig_zag(morse_code)
 
 n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15 = Node(0), Node(1), Node(2), Node(3), Node(4), Node(5), Node(6), Node(7), Node(8), Node(9), Node(10), Node(11), Node(12), Node(13), Node(14), Node(15)
@@ -215,6 +215,7 @@ with open("Undirected graphs.txt", "w", encoding="utf-8") as file:
     file.write(f"Graph 1: {ug0}\nGraph 2: {ug1}\n")
     file.write(f"Graph 2 width: {ug1.width()}\n")
     file.write(f"Is graph 1 a tree: {ug0.is_tree()}\nIs graph 2 a tree: {ug1.is_tree()}\n")
+    file.write(f"Graph 1 tree with root 2:\n{ug0.tree(n2)}\n")
     file.write(f"Graph 2 tree with root 0:\n{ug1.tree(n0)}\n")
     file.write(f"Graph 2 cut nodes: {ug1.cut_nodes()}\nGraph 2 bridge links: {ug1.bridge_links()}\n")
     file.write(f"Euler walk from 2 to 1 in graph 1: {ug0.euler_walk(n2, n1)}\n")
