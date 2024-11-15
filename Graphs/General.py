@@ -74,14 +74,8 @@ class SortedList:
 
     def merge(self, other):
         res = self.copy()
-        if isinstance(other, SortedList):
-            if any([self.f(el) != other.f(el) for el in self.value + other.value]):
-                raise ValueError("Sorting functions of both lists are different!")
-            for el in other.value:
-                res.insert(el)
-        else:
-            for x in other:
-                res.insert(x)
+        for x in other:
+            res.insert(x)
         return res
 
     def __call__(self, x):
@@ -137,7 +131,7 @@ class SortedList:
         if isinstance(other, SortedList):
             try:
                 if any(self.f(x) != other.f(x) for x in self.value + other.value):
-                    return self.value == SortedList(*other.value, f=self.f).value
+                    return {x: self.value.count(x) for x in self} == {x: other.value.count(x) for x in other}
                 return self.value == other.value
             except (ValueError, TypeError):
                 return False
@@ -213,7 +207,7 @@ class Link:
         return item in {self.u, self.v}
 
     def __hash__(self):
-        return hash(frozenset((self.u, self.v)))
+        return hash(frozenset({self.u, self.v}))
 
     def __eq__(self, other):
         if isinstance(other, Link):
