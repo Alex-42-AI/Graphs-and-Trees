@@ -94,7 +94,7 @@ class DirectedGraph:
         return self
 
     def copy(self):
-        return DirectedGraph({n: (self.prev(n), self.next(n)) for n in self.nodes}, self.f)
+        return DirectedGraph({n: ([], self.next(n)) for n in self.nodes}, self.f)
 
     def complementary(self):
         res = DirectedGraph({n: ([], []) for n in self.nodes}, self.f)
@@ -105,7 +105,7 @@ class DirectedGraph:
         return res
 
     def transposed(self):
-        return DirectedGraph({u: (self.next(u), self.prev(u)) for u in self.nodes}, self.f)
+        return DirectedGraph({u: (self.next(u), []) for u in self.nodes}, self.f)
 
     def connection_components(self):
         components, rest = [], self.nodes.copy()
@@ -364,11 +364,10 @@ class DirectedGraph:
             raise Exception("Unrecognized node(s).")
         if u in self.next(v):
             return True if all(n in {u, v} for n in self.nodes) else self.hamiltonTourExists()
-        tmp = DirectedGraph.copy(self)
-        return tmp.connect(u, [v]).hamiltonTourExists()
+        return DirectedGraph.copy(self).connect(u, [v]).hamiltonTourExists()
 
     def hamiltonTour(self):
-        if self.sources or self.sinks:
+        if self.sources or self.sinks or not self:
             return []
         for v in self.prev(u := self.nodes[0]):
             if result := self.hamiltonWalk(u, v):
@@ -385,21 +384,21 @@ class DirectedGraph:
                     if too_many:
                         return []
                     too_many = True
-            tmp0, tmp1 = tmp.prev(x).copy(), tmp.next(x).copy()
+            prev_x, next_x = tmp.prev(x).copy(), tmp.next(x).copy()
             tmp.remove(x)
             if not tmp.nodes:
-                tmp.add(x, tmp0, tmp1)
+                tmp.add(x, prev_x, next_x)
                 return stack
-            for y in tmp1:
+            for y in next_x:
                 if y == v:
                     if tmp.nodes == [v]:
-                        tmp.add(x, tmp0, tmp1)
+                        tmp.add(x, prev_x, next_x)
                         return stack + [v]
                     continue
                 if res := dfs(y, stack + [y]):
-                    tmp.add(x, tmp0, tmp1)
+                    tmp.add(x, prev_x, next_x)
                     return res
-            tmp.add(x, tmp0, tmp1)
+            tmp.add(x, prev_x, next_x)
             return []
 
         tmp = DirectedGraph.copy(self)
@@ -493,7 +492,7 @@ class DirectedGraph:
             if len(self.links) != len(other.links) or self.nodes != other.nodes:
                 return False
             for l in self.links:
-                if l not in other.links:
+                if l[1] not in other.next(l[0]):
                     return False
             return True
         return False
@@ -508,15 +507,15 @@ class WeightedNodesDirectedGraph(DirectedGraph):
     def __init__(self, neighborhood: dict = {}, f=lambda x: x):
         super().__init__({}, f=f)
         self.__node_weights = {}
-        for n, p in neighborhood.items():
-            self.add((n, p[0]))
-        for u, p in neighborhood.items():
-            for v in p[1][0]:
+        for n, (w, _) in neighborhood.items():
+            self.add((n, w))
+        for u, (_, (prev_u, next_u)) in neighborhood.items():
+            for v in prev_u:
                 if v in self:
                     self.connect(u, [v])
                 else:
                     self.add((v, 0), points_to=[u])
-            for v in p[1][1]:
+            for v in next_u:
                 if v in self:
                     self.connect(v, [u])
                 else:
@@ -530,7 +529,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
         return sum(self.node_weights().values())
 
     def copy(self):
-        return WeightedNodesDirectedGraph({n: (self.node_weights(n), (self.prev(n), self.next(n))) for n in self.nodes}, self.f)
+        return WeightedNodesDirectedGraph({n: (self.node_weights(n), ([], self.next(n))) for n in self.nodes}, self.f)
 
     def add(self, n_w: (Node, float), pointed_by: [Node] = (), points_to: [Node] = ()):
         super().add(n_w[0], pointed_by, points_to)
@@ -549,7 +548,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
         return self
 
     def transposed(self):
-        return WeightedNodesDirectedGraph({u: (self.node_weights(u), (self.next(u), self.prev(u))) for u in self.nodes}, self.f)
+        return WeightedNodesDirectedGraph({u: (self.node_weights(u), (self.next(u), [])) for u in self.nodes}, self.f)
 
     def component(self, u: Node):
         if u not in self:
@@ -647,7 +646,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
         if isinstance(other, WeightedDirectedGraph):
             return other + self
         if isinstance(other, WeightedLinksDirectedGraph):
-            return WeightedDirectedGraph({}, self.f) + self + other
+            return WeightedDirectedGraph(f=self.f) + self + other
         if isinstance(other, WeightedNodesDirectedGraph):
             res = self.copy()
             for n in other.nodes:
@@ -659,14 +658,14 @@ class WeightedNodesDirectedGraph(DirectedGraph):
                 if v not in res.next(u):
                     res.connect(v, [u])
             return res
-        return self + WeightedNodesDirectedGraph({n: (0, (other.prev(n), other.next(n))) for n in other.nodes}, other.f)
+        return self + WeightedNodesDirectedGraph({n: (0, ([], other.next(n))) for n in other.nodes}, other.f)
 
     def __eq__(self, other):
         if isinstance(other, WeightedNodesDirectedGraph):
             if len(self.links) != len(other.links) or self.node_weights() != other.node_weights():
                 return False
             for l in self.links:
-                if l not in other.links:
+                if l[1] not in other.next(l[0]):
                     return False
             return True
         return False
@@ -746,12 +745,10 @@ class WeightedLinksDirectedGraph(DirectedGraph):
         return self
 
     def transposed(self):
-        neighborhood = {u: (self.link_weights(u), {v: self.link_weights(v, u) for v in self.prev(u)}) for u in self.nodes}
-        return WeightedLinksDirectedGraph(neighborhood, self.f)
+        return WeightedLinksDirectedGraph({u: (self.link_weights(u), {}) for u in self.nodes}, self.f)
 
     def copy(self):
-        neighborhood = {u: ({v: self.link_weights(v, u) for v in self.prev(u)}, self.link_weights(u)) for u in self.nodes}
-        return WeightedLinksDirectedGraph(neighborhood, self.f)
+        return WeightedLinksDirectedGraph({u: ({}, self.link_weights(u)) for u in self.nodes}, self.f)
 
     def component(self, u: Node):
         if u not in self:
@@ -855,8 +852,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                 else:
                     res.connect(v, {u: other.link_weights((u, v))})
             return res
-        neighborhood = {u: ({v: 0 for v in other.prev(u)}, {v: 0 for v in other.next(u)}) for u in other.nodes}
-        return WeightedLinksDirectedGraph(neighborhood, other.f)
+        return self + WeightedLinksDirectedGraph({u: ({}, {v: 0 for v in other.next(u)}) for u in other.nodes}, other.f)
 
     def __eq__(self, other):
         if isinstance(other, WeightedLinksDirectedGraph):
@@ -871,16 +867,15 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
     def __init__(self, neighborhood: dict = {}, f=lambda x: x):
         WeightedNodesDirectedGraph.__init__(self, {}, f)
         WeightedLinksDirectedGraph.__init__(self, {}, f)
-        for n, p in neighborhood.items():
-            self.add((n, p[0]))
-        for u, p in neighborhood.items():
-            for v, w in p[1][0].items():
+        for n, (w, _) in neighborhood.items():
+            self.add((n, w))
+        for u, (_, (prev_u, next_u)) in neighborhood.items():
+            for v, w in prev_u.items():
                 if v in self:
                     self.connect(u, {v: w})
                 else:
                     self.add((v, 0), points_to_weights={u: w})
-        for u, p in neighborhood.items():
-            for v, w in p[1][1].items():
+            for v, w in next_u.items():
                 if v in self:
                     self.connect(v, {u: w})
                 else:
@@ -915,11 +910,11 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
         return self
 
     def transposed(self):
-        neighborhood = {u: (self.node_weights(u), (self.link_weights(u), {v: self.link_weights(v, u) for v in self.prev(u)})) for u in self.nodes}
+        neighborhood = {u: (self.node_weights(u), (self.link_weights(u), {})) for u in self.nodes}
         return WeightedDirectedGraph(neighborhood, self.f)
 
     def copy(self):
-        neighborhood = {u: (self.node_weights(u), ({v: self.link_weights(v, u) for v in self.prev(u)}, self.link_weights(u))) for u in self.nodes}
+        neighborhood = {u: (self.node_weights(u), ({}, self.link_weights(u))) for u in self.nodes}
         return WeightedDirectedGraph(neighborhood, self.f)
 
     def component(self, u: Node):
@@ -1092,13 +1087,11 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
                     res.connect(v, {u: other.link_weights(u, v)})
             return res
         if isinstance(other, WeightedNodesDirectedGraph):
-            neighborhood = {u: (other.node_weights(u), ({v: 0 for v in other.prev(u)}, {v: 0 for v in other.next(u)})) for u in other.nodes}
+            neighborhood = {u: (other.node_weights(u), ({}, {v: 0 for v in other.next(u)})) for u in other.nodes}
             return self + WeightedDirectedGraph(neighborhood, other.f)
         if isinstance(other, WeightedLinksDirectedGraph):
-            neighborhood = {u: (0, ({v: other.link_weights(v, u) for v in other.prev(u)}, other.link_weights(u))) for u in other.nodes}
-            return self + WeightedDirectedGraph(neighborhood, other.f)
-        neighborhood = {u: (0, ({v: 0 for v in other.prev(u)}, {v: 0 for v in other.next(u)})) for u in other.nodes}
-        return self + WeightedDirectedGraph(neighborhood, other.f)
+            return self + WeightedDirectedGraph({u: (0, ({}, other.link_weights(u))) for u in other.nodes}, other.f)
+        return self + WeightedDirectedGraph({u: (0, ({}, {v: 0 for v in other.next(u)})) for u in other.nodes}, other.f)
 
     def __eq__(self, other):
         if isinstance(other, WeightedDirectedGraph):
