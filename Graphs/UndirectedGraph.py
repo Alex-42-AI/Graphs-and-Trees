@@ -264,14 +264,69 @@ class UndirectedGraph:
         return self.clique(*res)
 
     def interval_sort(self):
-        def dfs(can_follow_from, res=[]):
-            if not tmp:
-                return res
-            for n in can_follow_from:
-                if tmp.clique(n, *(neighbors := tmp.neighboring(n).copy())):
-                    tmp.remove(n)
-                    return dfs(neighbors, res + [n])
-            return []
+        def cliques_graph(given):
+            result, start, opposite = UndirectedGraph(f=hash), given.nodes[0], given.nodes[0]
+            for n in given.nodes:
+                if given.clique(n, *(neighbors := given.neighboring(n))):
+                    cont, only_one = None, True
+                    for m in neighbors:
+                        if any(x != n and x not in neighbors for x in given.neighboring(m)):
+                            if cont is not None:
+                                only_one = False
+                                break
+                            cont = m
+                    if only_one:
+                        start, opposite = n, cont
+                        break
+            if start == opposite:
+                return []
+            result.add(Node(frozenset([start, *(neighbors := given.neighboring(start))])))
+            given.remove(start, *neighbors.remove(opposite))
+            while given:
+                start = opposite
+                if given.clique(start, *(neighbors := given.neighboring(start))):
+                    cont, only_one = None, True
+                    for v in neighbors:
+                        if any(x != start and x not in neighbors for x in given.neighboring(v)):
+                            if cont is not None:
+                                only_one = False
+                                break
+                            cont = v
+                    if only_one:
+                        opposite = cont
+                        break
+                if start == opposite:
+                    return []
+                result.add(Node(frozenset([start, *(neighbors := given.neighboring(start))])))
+                given.remove(start, *neighbors.remove(opposite))
+            for u in result.nodes:
+                for v in result.nodes:
+                    if u != v and u.value.intersection(v.value):
+                        result.connect(u, v)
+            return result
+
+        def get_path(given):
+            cont = None
+            if given[1:]:
+                for u in (c := given[0].value):
+                    if u in given[1].value:
+                        cont = u
+                        break
+                nodes = list(c)
+                nodes.remove(cont)
+                result = nodes + [cont]
+            else:
+                result = given[0].value
+            for i, c in enumerate(map(lambda x: list(x.value), given[1:])):
+                start = cont
+                c.remove(start)
+                try:
+                    cont = [x for x in c if x in given[i + 1]][0]
+                    c.remove(cont)
+                    result += c + [cont]
+                except IndexError:
+                    result += c
+            return result
 
         if not self.links or self.full():
             return self.nodes.value
@@ -280,10 +335,12 @@ class UndirectedGraph:
             if any(not i_s for i_s in interval_sorts):
                 return []
             return reduce(lambda x, y: x + y, interval_sorts)
-        if self.is_tree() and any(self.degrees(u) > 2 for u in self.nodes):
+        final_graph = cliques_graph(cliques_graph(UndirectedGraph.copy(self)))
+        if any(final_graph.degrees(u) > 2 for u in final_graph.nodes):
             return []
-        tmp = UndirectedGraph.copy(self)
-        return dfs(tmp.nodes.value)
+        if len([u for u in final_graph.nodes if final_graph.degrees(u) == 1]) != 2:
+            return []
+        return get_path(get_path(final_graph.hamiltonWalk()))
 
     def is_full_k_partite(self):
         return all(comp.full() for comp in self.complementary().connection_components())
