@@ -28,8 +28,8 @@ class UndirectedGraph:
     def links(self):
         return self.__links
 
-    def neighboring(self, u: Node = None):
-        return self.__neighboring if u is None else self.__neighboring[u]
+    def neighboring(self, u: Node = None) -> dict | SortedList:
+        return (self.__neighboring if u is None else self.__neighboring[u]).copy()
 
     def degrees(self, u: Node = None):
         return self.__degrees if u is None else self.__degrees[u]
@@ -263,48 +263,33 @@ class UndirectedGraph:
             return False
         return self.clique(*res)
 
-    def interval_sort(self):
-        def cliques_graph(given):
-            result, start, opposite = UndirectedGraph(f=hash), given.nodes[0], given.nodes[0]
-            for n in given.nodes:
-                if given.clique(n, *(neighbors := given.neighboring(n))):
-                    cont, only_one = None, True
-                    for m in neighbors:
-                        if any(x != n and x not in neighbors for x in given.neighboring(m)):
-                            if cont is not None:
-                                only_one = False
+    def max_cliques(self, u: Node):
+        if u not in self:
+            raise ValueError("Unrecognized node(s)!")
+        if (tmp := self.component(u)).full():
+            return [set(tmp.nodes)]
+        cliques = [{u, v} for v in tmp.neighboring(u)]
+        while True:
+            cont, new = False, []
+            for i, cl1 in enumerate(cliques):
+                for cl2 in cliques[i + 1:]:
+                    compatible = True
+                    for x in cl1 - {u}:
+                        for y in cl2 - {u}:
+                            if x != y and y not in tmp.neighboring(x):
+                                compatible = False
                                 break
-                            cont = m
-                    if only_one:
-                        start, opposite = n, cont
-                        break
-            if start == opposite:
-                return []
-            result.add(Node(frozenset([start, *(neighbors := given.neighboring(start))])))
-            given.remove(start, *neighbors.remove(opposite))
-            while given:
-                start = opposite
-                if given.clique(start, *(neighbors := given.neighboring(start))):
-                    cont, only_one = None, True
-                    for v in neighbors:
-                        if any(x != start and x not in neighbors for x in given.neighboring(v)):
-                            if cont is not None:
-                                only_one = False
-                                break
-                            cont = v
-                    if only_one:
-                        opposite = cont
-                        break
-                if start == opposite:
-                    return []
-                result.add(Node(frozenset([start, *(neighbors := given.neighboring(start))])))
-                given.remove(start, *neighbors.remove(opposite))
-            for u in result.nodes:
-                for v in result.nodes:
-                    if u != v and u.value.intersection(v.value):
-                        result.connect(u, v)
-            return result
+                        if not compatible:
+                            break
+                    if compatible:
+                        new.append(cl1.union(cl2))
+                        cont = True
+            if not cont:
+                max_length = max(map(len, cliques))
+                return [cl for cl in cliques if len(cl) == max_length]
+            cliques = new.copy()
 
+    def interval_sort(self):
         def get_path(given):
             cont = None
             if given[1:]:
@@ -335,7 +320,8 @@ class UndirectedGraph:
             if any(not i_s for i_s in interval_sorts):
                 return []
             return reduce(lambda x, y: x + y, interval_sorts)
-        final_graph = cliques_graph(cliques_graph(UndirectedGraph.copy(self)))
+        tmp = self.cliques_graph()
+        final_graph = tmp.cliques_graph()
         if any(final_graph.degrees(u) > 2 for u in final_graph.nodes):
             return []
         if len([u for u in final_graph.nodes if final_graph.degrees(u) == 1]) != 2:
@@ -348,6 +334,34 @@ class UndirectedGraph:
     def cliques(self, k: int):
         return [list(p) for p in combinations(self.nodes, abs(k)) if self.clique(*p)]
 
+    def all_max_cliques(self):
+        result = [set()]
+        for n in self.nodes:
+            if len((curr := self.max_cliques(n))[0]) > len(result[0]):
+                result = curr
+            elif len(curr[0]) == len(result[0]):
+                result += curr
+        return result
+
+    def cliques_graph(self):
+        tmp, result = UndirectedGraph.copy(self), UndirectedGraph(f=hash)
+        while tmp:
+            cliques, external = tmp.max_cliques(start := tmp.nodes[0]), []
+            for clique in cliques:
+                for v in clique:
+                    if any(x not in clique for x in tmp.neighboring(v)):
+                        external.append(v)
+                result.add(Node(frozenset(clique)))
+                for ex in external:
+                    clique.remove(ex), tmp.disconnect(ex, *external)
+                if clique:
+                    tmp.remove(*clique)
+        for i, u in enumerate(result.nodes):
+            for v in result.nodes[i + 1:]:
+                if u != v and u.value.intersection(v.value):
+                    result.connect(u, v)
+        return result
+
     def chromaticNodesPartition(self):
         def helper(curr):
             if not tmp.nodes:
@@ -356,7 +370,7 @@ class UndirectedGraph:
                 return curr + list(map(lambda x: [x], tmp.nodes))
             _result = max_nodes
             for anti_clique in tmp.independentSet():
-                neighbors = {n: tmp.neighboring(n).copy() for n in anti_clique}
+                neighbors = {n: tmp.neighboring(n) for n in anti_clique}
                 for n in anti_clique:
                     tmp.remove(n)
                 res = helper(curr + [anti_clique])
@@ -481,7 +495,7 @@ class UndirectedGraph:
                 return x in can_end_in
             if all(y not in tmp for y in can_end_in):
                 return False
-            neighbors = tmp.neighboring(x).copy()
+            neighbors = tmp.neighboring(x)
             tmp.remove(x)
             for y in neighbors:
                 if dfs(y):
@@ -495,7 +509,7 @@ class UndirectedGraph:
         if any(self.degrees(n) < 2 for n in self.nodes) or self.is_tree() and any(self.degrees(n) > 2 for n in self.nodes) or not self.connected() or self.interval_sort():
             return False
         tmp = UndirectedGraph.copy(self)
-        can_end_in = tmp.neighboring(u := self.nodes[0]).copy()
+        can_end_in = tmp.neighboring(u := self.nodes[0])
         return dfs(u)
 
     def hamiltonWalkExists(self, u: Node, v: Node):
@@ -527,7 +541,7 @@ class UndirectedGraph:
                     too_many = True
             if not tmp.nodes:
                 return stack
-            neighbors = tmp.neighboring(x).copy()
+            neighbors = tmp.neighboring(x)
             tmp.remove(x)
             if v is None and len(tmp.nodes) == 1 and tmp.nodes == neighbors:
                 tmp.add(x, neighbors[0])
@@ -727,7 +741,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
                 return [curr.copy()], res_sum
             result, result_sum = [nodes.copy()], weights
             for j, u in enumerate(nodes[i:]):
-                neighbors, w = tmp.neighboring(u).copy(), tmp.node_weights(u)
+                neighbors, w = tmp.neighboring(u), tmp.node_weights(u)
                 if neighbors:
                     tmp.remove(u)
                     cover, weight = helper(curr + [u], res_sum + w, i + j + 1)
