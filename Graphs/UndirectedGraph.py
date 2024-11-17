@@ -484,10 +484,7 @@ class UndirectedGraph:
             if not self:
                 return [[]]
             return self.tree(self.nodes[0]).independent_set()
-        tmp = self.complementary()
-        for k in range(len(self.nodes), 0, -1):
-            if curr := tmp.cliques(k):
-                return curr
+        return self.complementary().all_max_cliques()
 
     def hamiltonTourExists(self):
         def dfs(x):
