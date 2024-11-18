@@ -1,6 +1,9 @@
 from unittest import TestCase, main
+
 from Graphs.UndirectedGraph import *
+
 from Graphs.DirectedGraph import *
+
 from Graphs.Tree import *
 
 n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15 = Node(0), Node(1), Node(2), Node(3), Node(4), Node(5), Node(6), Node(7), Node(8), Node(9), Node(10), Node(11), Node(12), Node(13), Node(14), Node(15)
@@ -101,6 +104,15 @@ class TestUndirectedGraph(TestCase):
         self.assertEqual(self.g0.component(n0).width(), 5)
         self.assertEqual(self.g1.width(), 2)
         self.assertEqual(self.g2.width(), 3)
+
+    def test_links_graph(self):
+        pass
+
+    def test_max_cliques(self):
+        pass
+
+    def test_cliques_graph(self):
+        pass
 
     def test_interval_sort(self):
         tmp = self.g0.copy()
@@ -360,6 +372,9 @@ class TestWeightedNodesUndirectedGraph(TestUndirectedGraph):
         self.assertEqual(res[1], 9)
         self.assertListEqual(res[0], [n0, n2, n1])
 
+    def test_links_graph(self):
+        pass
+
     def test_weighted_vertex_cover(self):
         g0 = self.g0.copy()
         res = self.g0.weightedVertexCover()
@@ -526,6 +541,9 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
                 else:
                     g.connect(l.u, l.v)
         self.assertTrue(g.is_tree())
+
+    def test_links_graph(self):
+        pass
 
     def test_min_path_links(self):
         res = self.g0.minimalPathLinks(n0, n8)
@@ -739,6 +757,9 @@ class TestWeightedUndirectedGraph(TestWeightedNodesUndirectedGraph, TestWeighted
         self.assertEqual(self.g1.component(n0), self.g1)
         self.assertEqual(self.g2.component(n0), self.g2)
         self.assertEqual(self.g3.component(n0), self.g3)
+
+    def test_links_graph(self):
+        pass
 
     def test_minimal_path(self):
         self.assertEqual(self.g0.minimalPath(n13, n11), ([n13, n11], 9))
