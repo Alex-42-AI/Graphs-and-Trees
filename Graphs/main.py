@@ -1,6 +1,37 @@
 from Graphs.UndirectedGraph import *
+
 from Graphs.DirectedGraph import *
+
 from Graphs.Tree import *
+
+
+def clique_to_SAT(cnf: list[tuple[tuple[str, bool]]]):
+    def compatible(var1, var2):
+        return var1[0] != var2[0] or var1[1] == var2[1]
+
+    def independent_set(x: Node):
+        for i_s in independent_sets:
+            if x.value in i_s:
+                return i_s
+
+    graph, values, i, independent_sets = UndirectedGraph(), {}, 0, []
+    for clause in cnf:
+        j = i
+        for var in clause:
+            values[i] = var
+            graph.add(Node(i))
+            i += 1
+        i += 1
+        independent_sets.append({*range(j, i)})
+    for u in graph.nodes:
+        for v in graph.nodes:
+            if u != v and compatible(values[u], values[v]) and v.value not in independent_set(u.value):
+                graph.connect(u, v)
+    cliques = graph.max_cliques()
+    if len(cliques[0]) < len(cnf):
+        return []
+    return [list(map(lambda x: values[x.value], clique)) for clique in cliques]
+
 
 def make_undirected_from_directed(graph: DirectedGraph):
     if isinstance(graph, WeightedDirectedGraph):
