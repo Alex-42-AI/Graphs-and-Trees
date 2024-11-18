@@ -18,7 +18,7 @@ def clique_to_SAT(cnf: list[tuple[tuple[str, bool]]]):
     for clause in cnf:
         j = i
         for var in clause:
-            values[i] = var
+            values[Node(i)] = var
             graph.add(Node(i))
             i += 1
         i += 1
@@ -30,7 +30,7 @@ def clique_to_SAT(cnf: list[tuple[tuple[str, bool]]]):
     cliques = graph.max_cliques()
     if len(cliques[0]) < len(cnf):
         return []
-    return [set(map(lambda x: values[x.value], clique)) for clique in cliques]
+    return [set(map(lambda x: values[x], clique)) for clique in cliques]
 
 
 def make_undirected_from_directed(graph: DirectedGraph):
