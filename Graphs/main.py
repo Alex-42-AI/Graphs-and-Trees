@@ -30,7 +30,7 @@ def clique_to_SAT(cnf: list[tuple[tuple[str, bool]]]):
     cliques = graph.max_cliques()
     if len(cliques[0]) < len(cnf):
         return []
-    return [list(map(lambda x: values[x.value], clique)) for clique in cliques]
+    return [set(map(lambda x: values[x.value], clique)) for clique in cliques]
 
 
 def make_undirected_from_directed(graph: DirectedGraph):
