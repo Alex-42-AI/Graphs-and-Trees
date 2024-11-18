@@ -339,7 +339,7 @@ class UndirectedGraph:
             if len((curr := self.max_cliques_node(n))[0]) > len(result[0]):
                 result = curr
             elif len(curr[0]) == len(result[0]):
-                result += curr
+                result = list(set(result).union(curr))
         return result
 
     def cliques_graph(self):
