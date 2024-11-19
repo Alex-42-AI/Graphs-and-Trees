@@ -2,9 +2,9 @@ from functools import reduce
 
 from itertools import permutations, combinations, product
 
-from Graphs.Tree import Tree, WeightedNodesTree
+from Personal.DiscreteMath.Graphs.Tree import Tree, WeightedNodesTree
 
-from Graphs.General import Node, Link, SortedList
+from Personal.DiscreteMath.Graphs.General import Node, Link, SortedList
 
 
 class UndirectedGraph:
@@ -253,6 +253,10 @@ class UndirectedGraph:
             return path
         return []
 
+    def links_graph(self):
+        neighborhood = {Node(l0): [Node(l1) for l1 in self.links if (l1.u in l0) ^ (l1.v in l0)] for l0 in self.links}
+        return UndirectedGraph(neighborhood, hash)
+
     def interval_sort(self):
         def get_path(given):
             cont = None
@@ -284,8 +288,8 @@ class UndirectedGraph:
             if any(not i_s for i_s in interval_sorts):
                 return []
             return reduce(lambda x, y: x + y, interval_sorts)
-        tmp = self.cliques_graph()
-        final_graph = tmp.cliques_graph()
+        tmp = self.cliquesGraph()
+        final_graph = tmp.cliquesGraph()
         if any(final_graph.degrees(u) > 2 for u in final_graph.nodes):
             return []
         if len([u for u in final_graph.nodes if final_graph.degrees(u) == 1]) != 2:
@@ -308,7 +312,7 @@ class UndirectedGraph:
     def cliques(self, k: int):
         return [list(p) for p in combinations(self.nodes, abs(k)) if self.clique(*p)]
 
-    def max_cliques_node(self, u: Node):
+    def maxCliquesNode(self, u: Node):
         if u not in self:
             raise ValueError("Unrecognized node(s)!")
         if (tmp := self.component(u)).full():
@@ -320,7 +324,7 @@ class UndirectedGraph:
                 for cl2 in cliques[i + 1:]:
                     compatible = True
                     for x in cl1 - {u}:
-                        for y in cl2 - {u}:
+                        for y in cl2 - cl1:
                             if x != y and y not in tmp.neighboring(x):
                                 compatible = False
                                 break
@@ -331,21 +335,27 @@ class UndirectedGraph:
             if not new:
                 max_length = max(map(len, cliques))
                 return [cl for cl in cliques if len(cl) == max_length]
-            cliques = new.copy()
+            newer = new.copy()
+            for cl1 in new:
+                for cl2 in new:
+                    if cl1 != cl2 and cl1.issubset(cl2):
+                        newer.remove(cl1)
+                        break
+            cliques = newer.copy()
 
-    def max_cliques(self):
+    def maxCliques(self):
         result = [set()]
         for n in self.nodes:
-            if len((curr := self.max_cliques_node(n))[0]) > len(result[0]):
+            if len((curr := self.maxCliquesNode(n))[0]) > len(result[0]):
                 result = curr
             elif len(curr[0]) == len(result[0]):
                 result = list(set(result).union(curr))
         return result
 
-    def cliques_graph(self):
+    def cliquesGraph(self):
         tmp, result = UndirectedGraph.copy(self), UndirectedGraph(f=hash)
         while tmp:
-            cliques, external = tmp.max_cliques_node(start := tmp.nodes[0]), []
+            cliques, external = tmp.maxCliquesNode(start := tmp.nodes[0]), []
             for clique in cliques:
                 for v in clique:
                     if any(x not in clique for x in tmp.neighboring(v)):
@@ -361,10 +371,6 @@ class UndirectedGraph:
                     result.connect(u, v)
         return result
 
-    def links_graph(self):
-        neighborhood = {Node(l0): [Node(l1) for l1 in self.links if (l1.u in l0) ^ (l1.v in l0)] for l0 in self.links}
-        return UndirectedGraph(neighborhood, hash)
-
     def independentSet(self):
         if not self.connected():
             r = [comp.independentSet() for comp in self.connection_components()]
@@ -376,7 +382,7 @@ class UndirectedGraph:
             if not self:
                 return [[]]
             return self.tree(self.nodes[0]).independent_set()
-        return self.complementary().max_cliques()
+        return self.complementary().maxCliques()
 
     def chromaticNodesPartition(self):
         def helper(curr):
