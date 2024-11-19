@@ -2,9 +2,9 @@ from functools import reduce
 
 from itertools import permutations, combinations, product
 
-from Personal.DiscreteMath.Graphs.Tree import Tree, WeightedNodesTree
+from Graphs.Tree import Tree, WeightedNodesTree
 
-from Personal.DiscreteMath.Graphs.General import Node, Link, SortedList
+from Graphs.General import Node, Link, SortedList
 
 
 class UndirectedGraph:
