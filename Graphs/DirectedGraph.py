@@ -307,6 +307,19 @@ class DirectedGraph:
                 total.add(n), helper(n), res.append(curr)
         return res
 
+    def scc_dag(self):
+        result = DirectedGraph(f=hash)
+        scc = self.strongly_connected_components()
+        for s in scc:
+            result.add(Node(frozenset(s)))
+        for u in result.nodes:
+            for v in result.nodes:
+                if u != v:
+                    for x in u.value:
+                        if any(y in v.value for y in self.next(x)):
+                            result.connect(v, [u])
+        return result
+
     def pathWithLength(self, u: Node, v: Node, length: int):
         def dfs(x: Node, l: int, stack):
             if not l:
