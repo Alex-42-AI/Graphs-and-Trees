@@ -222,7 +222,6 @@ with open("K_3_3.txt", "w") as file:
     file.write(f"Dominating sets: {k_3_3.dominatingSet()}\n")
     file.write(f"Vertex covers: {k_3_3.vertexCover()} \n")
     file.write(f"Independent sets: {k_3_3.independentSet()}\n")
-    file.close()
 with open("K_5.txt", "w") as file:
     file.write(f"{k_5}\n")
     file.write(f"Is full: {k_5.full()}\n")
@@ -233,7 +232,6 @@ with open("K_5.txt", "w") as file:
     file.write(f"Dominating sets: {k_5.dominatingSet()}\n")
     file.write(f"Vertex covers: {k_5.vertexCover()}\n")
     file.write(f"Independent sets: {k_5.independentSet()}\n")
-    file.close()
 with open("Petersen graph.txt", "w") as file:
     file.write(f"{petersen_graph}\n")
     file.write(f"Is full k-partite: {petersen_graph.is_full_k_partite()}\n")
@@ -245,7 +243,6 @@ with open("Petersen graph.txt", "w") as file:
     file.write(f"Vertex covers: {petersen_graph.vertexCover()}\n")
     file.write(f"Independent sets: {petersen_graph.independentSet()}\n")
     file.write(f"Shortest path from 0 to 7: {petersen_graph.get_shortest_path(n0, n7)}\n")
-    file.close()
 with open("Undirected graphs.txt", "w", encoding="utf-8") as file:
     file.write(f"Graph 1: {ug0}\nGraph 2: {ug1}\n")
     file.write(f"Graph 2 width: {ug1.width()}\n")
@@ -283,7 +280,6 @@ with open("Tree.txt", "w", encoding="utf-8") as file:
     file.write(f"Vertex covers: {tree.vertex_cover()}\n")
     file.write(f"Dominating set: {tree.dominating_set()}\n")
     file.write(f"Independent sets: {tree.independent_set()}\n")
-    file.close()
 with open("Directed graphs.txt", "w") as file:
     file.write(f"Graph 1: {dg0}\nGraph 2: {dg1}\n")
     file.write(f"Graph 1:\nsources: {dg0.sources}\nsinks: {dg0.sinks}\n")
@@ -294,4 +290,3 @@ with open("Directed graphs.txt", "w") as file:
     file.write(f"Is graph 2 a dag: {dg1.dag()}\n")
     file.write(f"Graph 2 toposort: {dg1.toposort()}\n")
     file.write(f"Graph 1 hamilton walk: {dg0.hamiltonWalk()}\n")
-    file.close()
