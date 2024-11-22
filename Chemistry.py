@@ -56,6 +56,11 @@ class Atom(Node):
     def artificially_acquired(self):
         return (p := self.protons) in {43, 61} or p > 92
 
+    def similar(self, other):
+        if isinstance(other, Atom):
+            return (self.protons, self.neutrons, self.electrons) == (other.protons, other.neutrons, other.electrons)
+        return False
+
     def __gt__(self, other):
         if isinstance(other, Atom):
             return self.protons > other.protons
@@ -74,11 +79,6 @@ class Atom(Node):
     def __le__(self, other):
         if isinstance(other, Atom):
             return self.protons <= other.protons
-        return False
-
-    def __eq__(self, other):
-        if isinstance(other, Atom):
-            return (self.protons, self.neutrons, self.electrons) == (other.protons, other.neutrons, other.electrons)
         return False
 
     def __str__(self):
