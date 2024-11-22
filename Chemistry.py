@@ -9,12 +9,20 @@ atoms = ["H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al",
          "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Uub", "Uut", "Uuq", "Uup", "Uuh"]
 
 class Atom(Node):
+    ID = 0
+
     def __init__(self, protons: int, neutrons: int, electrons: int):
+        super().__init__(Atom.ID)
+        Atom.ID += 1
         self.__protons = (protons - 1) % 116 + 1
+        self.__name = atoms[self.protons - 1]
         self.__neutrons = abs(neutrons)
         self.__electrons = abs(electrons)
         self.__electronic_configuration = None
-        super().__init__(atoms[self.protons - 1])
+
+    @property
+    def name(self):
+        return self.__name
 
     @property
     def protons(self):
@@ -74,7 +82,7 @@ class Atom(Node):
         return False
 
     def __str__(self):
-        return str(super()) + str(self.charge)
+        return self.name + str(self.charge)
 
     __repr__ = __str__
 
