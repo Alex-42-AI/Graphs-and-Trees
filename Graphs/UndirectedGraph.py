@@ -330,8 +330,35 @@ class UndirectedGraph:
         return [list(p) for p in combinations(self.nodes, abs(k)) if self.clique(*p)]
 
     def maxCliquesNode(self, u: Node):
-        max_card = max(map(len, (cliques := self.allMaximalCliquesNode(u))))
-        return [cl for cl in cliques if len(cl) == max_card]
+        if u not in self:
+            raise ValueError("Unrecognized node(s)!")
+        if (tmp := self.component(u)).full():
+            return [set(tmp.nodes)]
+        cliques = [{u, v} for v in tmp.neighboring(u)]
+        while True:
+            new = []
+            for i, cl1 in enumerate(cliques):
+                for cl2 in cliques[i + 1:]:
+                    compatible = True
+                    for x in cl1 - {u}:
+                        for y in cl2 - cl1:
+                            if x != y and y not in tmp.neighboring(x):
+                                compatible = False
+                                break
+                        if not compatible:
+                            break
+                    if compatible:
+                        new.append(cl1.union(cl2))
+            if not new:
+                max_card = max(map(len, (cliques := self.allMaximalCliquesNode(u))))
+                return [cl for cl in cliques if len(cl) == max_card]
+            newer = new.copy()
+            for cl1 in new:
+                for cl2 in new:
+                    if len(cl1) < len(cl2):
+                        newer.remove(cl1)
+                        break
+            cliques = newer.copy()
 
     def maxCliques(self):
         result, low, high = [set()], 1, len(self.nodes)
