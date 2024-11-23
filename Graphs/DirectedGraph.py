@@ -29,7 +29,7 @@ class DirectedGraph:
         return self.__links.copy()
 
     def degrees(self, u: Node = None):
-        return self.__degrees if u is None else self.__degrees[u]
+        return self.__degrees.copy() if u is None else self.__degrees[u]
 
     def next(self, u: Node = None) -> dict | set:
         return self.__next if u is None else self.__next[u].copy()
