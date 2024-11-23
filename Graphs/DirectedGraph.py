@@ -33,10 +33,10 @@ class DirectedGraph:
     def degrees(self, u: Node = None):
         return self.__degrees if u is None else self.__degrees[u]
 
-    def next(self, u: Node = None):
+    def next(self, u: Node = None) -> dict | SortedList:
         return self.__next if u is None else self.__next[u]
 
-    def prev(self, u: Node = None):
+    def prev(self, u: Node = None) -> dict | SortedList:
         return self.__prev if u is None else self.__prev[u]
 
     @property
@@ -51,7 +51,7 @@ class DirectedGraph:
     def f(self):
         return self.__f
 
-    def add(self, u: Node, pointed_by: [Node] = (), points_to: [Node] = ()):
+    def add(self, u: Node, pointed_by: list[Node] = (), points_to: list[Node] = ()):
         if u not in self:
             self.__nodes.insert(u)
             self.__degrees[u], self.__next[u], self.__prev[u] = [0, 0], SortedList(f=self.f), SortedList(f=self.f)
@@ -65,7 +65,7 @@ class DirectedGraph:
                 self.__nodes.remove(n), self.__degrees.pop(n), self.__prev.pop(n), self.__next.pop(n)
         return self
 
-    def connect(self, u: Node, pointed_by: [Node] = (), points_to: [Node] = ()):
+    def connect(self, u: Node, pointed_by: list[Node] = (), points_to: list[Node] = ()):
         if u in self:
             for v in pointed_by:
                 if u != v and v not in self.prev(u) and v in self:
@@ -79,7 +79,7 @@ class DirectedGraph:
                     self.__degrees[v][0] += 1
         return self
 
-    def disconnect(self, u: Node, pointed_by: [Node] = (), points_to: [Node] = ()):
+    def disconnect(self, u: Node, pointed_by: list[Node] = (), points_to: list[Node] = ()):
         if u in self:
             for v in pointed_by:
                 if v in self.prev(u):
@@ -164,7 +164,7 @@ class DirectedGraph:
         return res
 
     def has_loop(self):
-        sources, total, stack = self.sources, SortedList(f=self.f), SortedList(f=self.f)
+        sources, total, stack = self.sources, set(), set()
         if not sources or not self.sinks:
             return True
 
@@ -174,15 +174,15 @@ class DirectedGraph:
                     continue
                 if v in stack:
                     return True
-                stack.insert(v)
+                stack.add(v)
                 if dfs(v):
                     return True
                 stack.remove(v)
-            total.insert(u)
+            total.add(u)
             return False
 
         for n in sources:
-            stack.insert(n)
+            stack.add(n)
             if dfs(n):
                 return True
             stack.remove(n)
@@ -197,33 +197,31 @@ class DirectedGraph:
         layer, total = self.sources, set()
         res = layer.copy()
         while layer:
-            new = SortedList(f=self.f)
+            new = set()
             for u in layer:
                 total.add(u)
                 for v in self.next(u):
                     if v not in new:
-                        new.insert(v)
+                        new.add(v)
             for u in new.copy():
                 if any(v not in total for v in self.prev(u)):
                     new.remove(u)
-            res, layer = res + new.value, new.copy()
+            res, layer = res + list(new), new.copy()
         return res
 
     def get_shortest_path(self, u: Node, v: Node):
         if u not in self or v not in self:
             raise Exception("Unrecognized node(s)!")
-        previous = {n: None for n in self.nodes}
-        queue, total = [u], SortedList(u, f=self.f)
-        previous.pop(u)
+        previous, queue, total = {}, [u], {u}
         while queue:
             if (n := queue.pop(0)) == v:
-                res, curr_node = [n], n
+                result, curr_node = [n], n
                 while curr_node != u:
-                    res.insert(0, previous[curr_node])
+                    result.insert(0, previous[curr_node])
                     curr_node = previous[curr_node]
-                return res
+                return result
             for y in filter(lambda _x: _x not in total, self.next(n)):
-                queue.append(y), total.insert(y)
+                queue.append(y), total.add(y)
                 previous[y] = n
 
     def euler_tour_exists(self):
@@ -295,7 +293,7 @@ class DirectedGraph:
             curr.append(x)
 
         if self.dag():
-            return list(map(lambda x: [x], self.nodes))
+            return list(map(lambda x: [x], self.nodes.value))
         if not self.connected():
             return reduce(lambda x, y: x + y, map(lambda z: z.strongly_connected_components(), self.connection_components()))
         if not self.sources and not self.sinks:
@@ -543,7 +541,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
     def copy(self):
         return WeightedNodesDirectedGraph({n: (self.node_weights(n), ([], self.next(n))) for n in self.nodes}, self.f)
 
-    def add(self, n_w: (Node, float), pointed_by: [Node] = (), points_to: [Node] = ()):
+    def add(self, n_w: (Node, float), pointed_by: list[Node] = (), points_to: list[Node] = ()):
         super().add(n_w[0], pointed_by, points_to)
         if n_w[0] not in self.node_weights():
             self.set_weight(*n_w)
@@ -742,7 +740,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                     self.set_weight((u, v), w)
         return self
 
-    def disconnect(self, u: Node, pointed_by: [Node] = (), points_to: [Node] = ()):
+    def disconnect(self, u: Node, pointed_by: list[Node] = (), points_to: list[Node] = ()):
         if u in self:
             for v in pointed_by:
                 self.__link_weights.pop((v, u))
@@ -911,7 +909,7 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
     def connect(self, u: Node, pointed_by_weights: dict = {}, points_to_weights: dict = {}):
         return WeightedLinksDirectedGraph.connect(self, u, pointed_by_weights, points_to_weights)
 
-    def disconnect(self, u: Node, pointed_by: [Node] = (), points_to: [Node] = ()):
+    def disconnect(self, u: Node, pointed_by: list[Node] = (), points_to: list[Node] = ()):
         return WeightedLinksDirectedGraph.disconnect(self, u, pointed_by, points_to)
 
     def set_weight(self, el: Node | tuple, w: float):
