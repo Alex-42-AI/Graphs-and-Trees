@@ -1,5 +1,3 @@
-from functools import reduce
-
 from itertools import permutations, product
 
 from Graphs.General import Node
@@ -413,8 +411,8 @@ class Tree:
             this_nodes_descendants = list(sorted(this_nodes_descendants.values(), key=lambda x: len(x)))
             other_nodes_descendants = list(sorted(other_nodes_descendants.values(), key=lambda x: len(x)))
             for possibility in product(*map(permutations, this_nodes_descendants)):
-                flatten_self = reduce(lambda x, y: x + list(y), possibility, [])
-                flatten_other = reduce(lambda x, y: x + y, other_nodes_descendants, [])
+                flatten_self = sum(map(list, possibility), [])
+                flatten_other = sum(other_nodes_descendants, [])
                 map_dict = dict(zip(flatten_self, flatten_other))
                 possible = True
                 for n, u in map_dict.items():
@@ -585,8 +583,8 @@ class WeightedNodesTree(Tree):
             this_nodes_descendants = list(sorted(this_nodes_descendants.values(), key=lambda x: len(x)))
             other_nodes_descendants = list(sorted(other_nodes_descendants.values(), key=lambda x: len(x)))
             for possibility in product(*map(permutations, this_nodes_descendants)):
-                flatten_self = reduce(lambda x, y: x + list(y), possibility, [])
-                flatten_other = reduce(lambda x, y: x + y, other_nodes_descendants, [])
+                flatten_self = sum(map(list, possibility), [])
+                flatten_other = sum(other_nodes_descendants, [])
                 map_dict = dict(zip(flatten_self, flatten_other))
                 possible = True
                 for n, u in map_dict.items():
