@@ -32,13 +32,13 @@ def clique_to_SAT(cnf: list[tuple[tuple[str, bool]]]):
     result = []
     for u in list(map(var_nodes.__getitem__, cnf[0])):
         if len((curr := graph.maxCliquesNode(u))[0]) == n:
-            result += curr
+            result += [set(map(node_vars.__getitem__, clique)) for clique in curr]
     return result
 
 
 def make_undirected_from_directed(graph: DirectedGraph):
     if isinstance(graph, WeightedDirectedGraph):
-        res = WeightedUndirectedGraph(f=graph.f)
+        res = WeightedUndirectedGraph()
         for u in graph.nodes:
             if u not in res:
                 res.add((u, graph.node_weights(u)))
@@ -57,7 +57,7 @@ def make_undirected_from_directed(graph: DirectedGraph):
                 else:
                     res.connect(u, {v: graph.link_weights(v, u)})
     elif isinstance(graph, WeightedLinksDirectedGraph):
-        res = WeightedLinksUndirectedGraph(f=graph.f)
+        res = WeightedLinksUndirectedGraph()
         for u in graph.nodes:
             if u not in res:
                 res.add(u)
@@ -76,7 +76,7 @@ def make_undirected_from_directed(graph: DirectedGraph):
                 else:
                     res.connect(u, {v: graph.link_weights(v, u)})
     elif isinstance(graph, WeightedNodesDirectedGraph):
-        res = WeightedNodesUndirectedGraph(f=graph.f)
+        res = WeightedNodesUndirectedGraph()
         for u in graph.nodes:
             if u not in res:
                 res.add((u, graph.node_weights(u)))
@@ -90,7 +90,7 @@ def make_undirected_from_directed(graph: DirectedGraph):
                     res.add((v, graph.node_weights(v)))
                 if v not in res.neighboring(u):
                     res.connect(u, v)
-    res = UndirectedGraph(f=graph.f)
+    res = UndirectedGraph()
     for u in graph.nodes:
         if u not in res:
             res.add(u)
@@ -107,7 +107,7 @@ def make_undirected_from_directed(graph: DirectedGraph):
     return res
 
 
-def heapify(ll: [int], l: int, h: int, i: int, f=max):
+def heapify(ll: list[int], l: int, h: int, i: int, f=max):
     left, right = 2 * i - l, 2 * i - l + 1
     res = i
     if left <= h and (el := ll[i - 1]) != f(ll[left - 1], el):
@@ -119,7 +119,7 @@ def heapify(ll: [int], l: int, h: int, i: int, f=max):
         heapify(ll, res - l - 1, h, res, f)
 
 
-def build_heap(ll: [int], h: int = 0):
+def build_heap(ll: list[int], h: int = 0):
     if not h:
         h = len(ll)
     for i in range(h // 2, 0, -1):
