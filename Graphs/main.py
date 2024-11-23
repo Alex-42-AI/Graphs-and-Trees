@@ -202,7 +202,6 @@ with open("Morse code.txt", "w", encoding="utf-8") as file:
     file.write(f"Nodes on level 6: {morse_code.nodes_on_level(6)}\n")
     file.write(f"Tree width: {morse_code.width}\n")
     file.write(f"Encoding message 'Testing encode.':\n{morse_code.encode('Testing encode.'.upper())}\n")
-    file.close()
 print_zig_zag(morse_code)
 
 n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15 = Node(0), Node(1), Node(2), Node(3), Node(4), Node(5), Node(6), Node(7), Node(8), Node(9), Node(10), Node(11), Node(12), Node(13), Node(14), Node(15)
@@ -271,7 +270,6 @@ with open("Undirected graphs.txt", "w", encoding="utf-8") as file:
     file.write(f"Graph 1 Hamilton walk: {ug0.hamiltonWalk()}\n")
     file.write(f"Helper: {tmp}\n")
     file.write(f"Isomorphic function between graph 1 and helper: {ug0.isomorphicFunction(tmp)}\n")
-    file.close()
 with open("Tree.txt", "w", encoding="utf-8") as file:
     file.write(f"{tree}\n")
     file.write(f"Height: {tree.height}\n")
