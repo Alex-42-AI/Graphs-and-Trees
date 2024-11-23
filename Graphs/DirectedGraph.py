@@ -475,8 +475,7 @@ class DirectedGraph:
     def __bool__(self):
         return bool(self.nodes)
 
-    def __call__(self, x):
-        return self.f(x)
+    __call__ = f
 
     def __reversed__(self):
         return self.complementary()
