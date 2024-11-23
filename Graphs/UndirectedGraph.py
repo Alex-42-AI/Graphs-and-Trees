@@ -313,6 +313,21 @@ class UndirectedGraph:
         return [list(p) for p in combinations(self.nodes, abs(k)) if self.clique(*p)]
 
     def maxCliquesNode(self, u: Node):
+        max_card = max(map(len, (cliques := self.allMaximalCliquesNode(u))))
+        return [cl for cl in cliques if len(cl) == max_card]
+
+    def maxCliques(self):
+        result, low, high = [set()], 1, len(self.nodes)
+        while low < high:
+            if not (curr := self.cliques(mid := (low + high) // 2)):
+                high = mid - 1
+            else:
+                low = mid + 1
+                if len(curr[0]) > len(result[0]):
+                    result = curr
+        return result
+
+    def allMaximalCliquesNode(self, u: Node):
         if u not in self:
             raise ValueError("Unrecognized node(s)!")
         if (tmp := self.component(u)).full():
@@ -333,8 +348,7 @@ class UndirectedGraph:
                     if compatible:
                         new.append(cl1.union(cl2))
             if not new:
-                max_length = max(map(len, cliques))
-                return [cl for cl in cliques if len(cl) == max_length]
+                return cliques
             newer = new.copy()
             for cl1 in new:
                 for cl2 in new:
@@ -343,31 +357,15 @@ class UndirectedGraph:
                         break
             cliques = newer.copy()
 
-    def maxCliques(self):
-        result = [set()]
-        for n in self.nodes:
-            if len((curr := self.maxCliquesNode(n))[0]) > len(result[0]):
-                result = curr
-            elif len(curr[0]) == len(result[0]):
-                result = list(set(result).union(curr))
-        return result
-
     def cliquesGraph(self):
-        tmp, result = UndirectedGraph.copy(self), UndirectedGraph(f=hash)
-        while tmp:
-            cliques, external = tmp.maxCliquesNode(start := tmp.nodes[0]), []
-            for clique in cliques:
-                for v in clique:
-                    if any(x not in clique for x in tmp.neighboring(v)):
-                        external.append(v)
+        result, total = UndirectedGraph(f=hash), set()
+        for n in filter(lambda x: x not in total, self.nodes):
+            total.update(*(curr := self.allMaximalCliquesNode(n)))
+            for clique in curr:
                 result.add(Node(frozenset(clique)))
-                for ex in external:
-                    clique.remove(ex), tmp.disconnect(ex, *external)
-                if clique:
-                    tmp.remove(*clique)
         for i, u in enumerate(result.nodes):
             for v in result.nodes[i + 1:]:
-                if u != v and u.value.intersection(v.value):
+                if u.value.intersection(v.value):
                     result.connect(u, v)
         return result
 
@@ -468,7 +466,7 @@ class UndirectedGraph:
         return helper(isolated.value, isolated)
 
     def pathWithLength(self, u: Node, v: Node, length: int):
-        def dfs(x: Node, l: int, stack: [Link]):
+        def dfs(x: Node, l: int, stack: list[Link]):
             if not l:
                 return list(map(lambda link: link.u, stack)) + [v] if [x == v] else []
             for y in filter(lambda _x: Link(x, _x) not in stack, self.neighboring(x)):
