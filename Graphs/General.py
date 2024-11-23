@@ -46,20 +46,19 @@ class Node:
     __repr__ = __str__
 
 
-def heapify(ll: list[int], l: int, h: int, i: int, f=max):
-    left, right = 2 * i - l, 2 * i - l + 1
-    res = i
-    if left <= h and (el := ll[i - 1]) != f(ll[left - 1], el):
-        res = left
-    if right <= h and (el := ll[res - 1]) != f(ll[right - 1], el):
-        res = right
-    if res != i:
-        ll[i - 1], ll[res - 1] = ll[res - 1], ll[i - 1]
-        heapify(ll, res - l - 1, h, res, f)
-
-
 def build_heap(ll: list[int], h: int = 0):
+    def heapify(low: int, high: int, ind: int, f=max):
+        left, right = 2 * ind - low, 2 * ind - low + 1
+        res = ind
+        if left <= high and (el := ll[ind - 1]) != f(ll[left - 1], el):
+            res = left
+        if right <= high and (el := ll[res - 1]) != f(ll[right - 1], el):
+            res = right
+        if res != ind:
+            ll[ind - 1], ll[res - 1] = ll[res - 1], ll[ind - 1]
+            heapify(res - low - 1, high, res, f)
+
     if not h:
         h = len(ll)
     for i in range(h // 2, 0, -1):
-        heapify(ll, 0, h, i)
+        heapify(0, h, i)
