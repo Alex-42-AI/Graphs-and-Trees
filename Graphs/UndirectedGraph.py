@@ -463,7 +463,7 @@ class UndirectedGraph:
             if total == set(self.nodes):
                 return [curr.copy()]
             result = [list(self.nodes)]
-            for j, u in enumerate(nodes[i:]):
+            for j, u in enumerate(list(nodes)[i:]):
                 new = set()
                 if u not in total:
                     new.add(u)
@@ -755,7 +755,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
             if not tmp.links:
                 return [curr.copy()], res_sum
             result, result_sum = [nodes.copy()], weights
-            for j, u in enumerate(nodes[i:]):
+            for j, u in enumerate(list(nodes)[i:]):
                 neighbors, w = tmp.neighboring(u), tmp.node_weights(u)
                 if neighbors:
                     tmp.remove(u)
@@ -778,7 +778,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
             if total == self.nodes:
                 return [curr.copy()], total_weight
             result, result_sum = [self.nodes], self.total_nodes_weight
-            for j, u in enumerate(nodes[i:]):
+            for j, u in enumerate(list(nodes)[i:]):
                 new = set()
                 if u not in total:
                     new.add(u)
