@@ -37,6 +37,14 @@ class BinTree:
             return
         return BinTree(self.root, self.left.copy(), self.right.copy())
 
+    def rotate_left(self):
+        self.__root, self.__left, self.__right = self.right.root, BinTree(self.root, self.left, self.right.left), self.right.right
+        return self
+
+    def rotate_right(self):
+        self.__root, self.__left, self.__right = self.left.root, self.left.left, BinTree(self.root, self.left.right, self.right)
+        return self
+
     def subtree(self, u: Node):
         def dfs(tree):
             if not tree:
@@ -175,6 +183,7 @@ class BinTree:
             tree.__left, tree.__right = tree.right, tree.left
 
         dfs(self)
+        return self
 
     def __contains__(self, item):
         if self.root == item:
@@ -428,8 +437,7 @@ class Tree:
     def __bool__(self):
         return bool(self.nodes)
 
-    def __call__(self, x):
-        return self.f(x)
+    __call__ = f
 
     def __contains__(self, item):
         return item in self.nodes
