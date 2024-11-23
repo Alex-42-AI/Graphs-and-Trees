@@ -1,13 +1,11 @@
-from functools import reduce
-
 from itertools import permutations, product
 
-from Graphs.General import Node, SortedList
+from Graphs.General import Node
 
 
 class DirectedGraph:
-    def __init__(self, neighborhood: dict = {}, f=lambda x: x):
-        self.__nodes, self.__f, self.__links = SortedList(f=f), f, []
+    def __init__(self, neighborhood: dict[Node, tuple[list[Node] | set[Node], list[Node] | set[Node]]] = {}):
+        self.__nodes, self.__links = set(), set()
         self.__prev, self.__next, self.__degrees = {}, {}, {}
         for u, (prev_nodes, next_nodes) in neighborhood.items():
             self.add(u)
@@ -24,20 +22,20 @@ class DirectedGraph:
 
     @property
     def nodes(self):
-        return self.__nodes
+        return self.__nodes.copy()
 
     @property
     def links(self):
-        return self.__links
+        return self.__links.copy()
 
     def degrees(self, u: Node = None):
         return self.__degrees if u is None else self.__degrees[u]
 
-    def next(self, u: Node = None) -> dict | SortedList:
-        return self.__next if u is None else self.__next[u]
+    def next(self, u: Node = None) -> dict | set:
+        return self.__next if u is None else self.__next[u].copy()
 
-    def prev(self, u: Node = None) -> dict | SortedList:
-        return self.__prev if u is None else self.__prev[u]
+    def prev(self, u: Node = None) -> dict | set:
+        return self.__prev if u is None else self.__prev[u].copy()
 
     @property
     def sources(self):
@@ -47,39 +45,35 @@ class DirectedGraph:
     def sinks(self):
         return [v for v in self.nodes if not self.degrees(v)[1]]
 
-    @property
-    def f(self):
-        return self.__f
-
-    def add(self, u: Node, pointed_by: list[Node] = (), points_to: list[Node] = ()):
+    def add(self, u: Node, pointed_by: list[Node] | set[Node] = (), points_to: list[Node] | set[Node] = ()):
         if u not in self:
-            self.__nodes.insert(u)
-            self.__degrees[u], self.__next[u], self.__prev[u] = [0, 0], SortedList(f=self.f), SortedList(f=self.f)
+            self.__nodes.add(u)
+            self.__degrees[u], self.__next[u], self.__prev[u] = [0, 0], set(), set()
             DirectedGraph.connect(self, u, pointed_by, points_to)
         return self
 
     def remove(self, u: Node, *rest: Node):
         for n in (u,) + rest:
             if n in self:
-                DirectedGraph.disconnect(self, n, self.prev(n).copy(), self.next(n).copy())
+                DirectedGraph.disconnect(self, n, list(self.prev(n)), list(self.next(n)))
                 self.__nodes.remove(n), self.__degrees.pop(n), self.__prev.pop(n), self.__next.pop(n)
         return self
 
-    def connect(self, u: Node, pointed_by: list[Node] = (), points_to: list[Node] = ()):
+    def connect(self, u: Node, pointed_by: list[Node] | set[Node] = (), points_to: list[Node] | set[Node] = ()):
         if u in self:
             for v in pointed_by:
                 if u != v and v not in self.prev(u) and v in self:
-                    self.__links.append((v, u)), self.__prev[u].insert(v), self.__next[v].insert(u)
+                    self.__links.add((v, u)), self.__prev[u].add(v), self.__next[v].add(u)
                     self.__degrees[u][0] += 1
                     self.__degrees[v][1] += 1
             for v in points_to:
                 if u != v and v not in self.next(u) and v in self:
-                    self.__links.append((u, v)), self.__prev[v].insert(u), self.__next[u].insert(v)
+                    self.__links.add((u, v)), self.__prev[v].add(u), self.__next[u].add(v)
                     self.__degrees[u][1] += 1
                     self.__degrees[v][0] += 1
         return self
 
-    def disconnect(self, u: Node, pointed_by: list[Node] = (), points_to: list[Node] = ()):
+    def disconnect(self, u: Node, pointed_by: list[Node] | set[Node] = (), points_to: list[Node] | set[Node] = ()):
         if u in self:
             for v in pointed_by:
                 if v in self.prev(u):
@@ -94,26 +88,22 @@ class DirectedGraph:
         return self
 
     def copy(self):
-        return DirectedGraph({n: ([], self.next(n)) for n in self.nodes}, self.f)
+        return DirectedGraph({n: ([], self.next(n)) for n in self.nodes})
 
     def complementary(self):
-        res = DirectedGraph({n: ([], []) for n in self.nodes}, self.f)
-        for i, n in enumerate(self.nodes):
-            for m in self.nodes[i + 1:]:
-                if m not in self.next(n):
-                    res.connect(m, [n])
+        res = DirectedGraph({n: ([], [self.nodes]) for n in self.nodes})
+        for l in self.links:
+            res.disconnect(l[0], l[1])
         return res
 
     def transposed(self):
-        return DirectedGraph({u: (self.next(u), []) for u in self.nodes}, self.f)
+        return DirectedGraph({u: (self.next(u), []) for u in self.nodes})
 
     def connection_components(self):
-        components, rest = [], self.nodes.copy()
+        components, rest = [], self.nodes
         while rest:
-            curr = self.component(rest[0])
-            components.append(curr)
-            for n in curr.nodes:
-                rest.remove(n)
+            components.append(curr := self.component(list(rest)[0]))
+            rest -= curr.nodes
         return components
 
     def connected(self):
@@ -121,9 +111,9 @@ class DirectedGraph:
             return False
         if m > (n - 1) * (n - 2) or n < 2:
             return True
-        queue, total = [u := self.nodes[0]], {u}
+        queue, total = [u := list(self.nodes)[0]], {u}
         while queue:
-            for v in filter(lambda x: x not in total, self.next(u := queue.pop(0)) + self.prev(u)):
+            for v in filter(lambda x: x not in total, self.next(u := queue.pop(0)).union(self.prev(u))):
                 total.add(v), queue.append(v)
         return len(total) == len(self.nodes)
 
@@ -137,7 +127,7 @@ class DirectedGraph:
     def component(self, u: Node):
         if u not in self:
             raise ValueError("Unrecognized node!")
-        queue, res = [u], DirectedGraph({u: ([], [])}, self.f)
+        queue, res = [u], DirectedGraph({u: ([], [])})
         while queue:
             for n in self.next(v := queue.pop(0)):
                 if n in res:
@@ -154,7 +144,7 @@ class DirectedGraph:
     def subgraph(self, u: Node):
         if u not in self:
             raise ValueError("Unrecognized node!")
-        queue, res = [u], DirectedGraph({u: ([], [])}, self.f)
+        queue, res = [u], DirectedGraph({u: ([], [])})
         while queue:
             for n in self.next(v := queue.pop(0)):
                 if n in res:
@@ -164,10 +154,6 @@ class DirectedGraph:
         return res
 
     def has_loop(self):
-        sources, total, stack = self.sources, set(), set()
-        if not sources or not self.sinks:
-            return True
-
         def dfs(u):
             for v in self.next(u):
                 if v in total:
@@ -181,6 +167,9 @@ class DirectedGraph:
             total.add(u)
             return False
 
+        sources, total, stack = self.sources, set(), set()
+        if not sources or not self.sinks:
+            return True
         for n in sources:
             stack.add(n)
             if dfs(n):
@@ -243,8 +232,7 @@ class DirectedGraph:
     def euler_tour(self):
         if self.euler_tour_exists():
             tmp = DirectedGraph.copy(self)
-            v, u = self.links[0]
-            return tmp.disconnect(u, [v]).euler_walk(u, v)
+            return tmp.disconnect(u := (l := list(tmp.links)[0])[0], [v := l[1]]).euler_walk(u, v)
         return []
 
     def euler_walk(self, u: Node, v: Node):
@@ -257,7 +245,7 @@ class DirectedGraph:
                 tmp.disconnect(path[i + 1], [path[i]])
             for i, u in enumerate(path):
                 while tmp.next(u):
-                    curr = tmp.disconnect(v := tmp.next(u)[0], [u]).get_shortest_path(v, u)
+                    curr = tmp.disconnect(v := list(tmp.next(u))[0], [u]).get_shortest_path(v, u)
                     for j in range(len(curr) - 1):
                         tmp.disconnect(curr[j + 1], [curr[j]])
                     while curr:
@@ -268,9 +256,7 @@ class DirectedGraph:
     def strongly_connected_components(self):
         def helper(x):
             def bfs(s):
-                previous = {_n: None for _n in self.nodes}
-                previous.pop(s)
-                queue, so_far = [s], {s}
+                previous, queue, so_far = {}, [s], {s}
                 while queue:
                     for t in filter(lambda _t: _t not in so_far, self.next(_s := queue.pop(0))):
                         previous[t] = _s
@@ -293,11 +279,11 @@ class DirectedGraph:
             curr.append(x)
 
         if self.dag():
-            return list(map(lambda x: [x], self.nodes.value))
+            return list(map(lambda x: [x], self.nodes))
         if not self.connected():
-            return reduce(lambda x, y: x + y, map(lambda z: z.strongly_connected_components(), self.connection_components()))
+            return sum(map(lambda z: z.strongly_connected_components(), self.connection_components()), [])
         if not self.sources and not self.sinks:
-            return [self.nodes.value]
+            return [list(self.nodes)]
         total, res = set(), []
         for n in self.nodes:
             if n not in total:
@@ -306,7 +292,7 @@ class DirectedGraph:
         return res
 
     def scc_dag(self):
-        result = DirectedGraph(f=hash)
+        result = DirectedGraph()
         scc = self.strongly_connected_components()
         for s in scc:
             result.add(Node(frozenset(s)))
@@ -353,7 +339,7 @@ class DirectedGraph:
                 return x in can_end_in
             if all(y not in tmp for y in can_end_in):
                 return False
-            tmp0, tmp1 = tmp.prev(x).copy(), tmp.next(x).copy()
+            tmp0, tmp1 = tmp.prev(x), tmp.next(x)
             tmp.remove(x)
             for y in tmp1:
                 if dfs(y):
@@ -367,7 +353,7 @@ class DirectedGraph:
         if self.sources or self.sinks:
             return False
         tmp = DirectedGraph.copy(self)
-        can_end_in = tmp.prev(u := self.nodes[0]).copy()
+        can_end_in = tmp.prev(u := list(self.nodes)[0])
         return dfs(u)
 
     def hamiltonWalkExists(self, u: Node, v: Node):
@@ -380,7 +366,7 @@ class DirectedGraph:
     def hamiltonTour(self):
         if self.sources or self.sinks or not self:
             return []
-        for v in self.prev(u := self.nodes[0]):
+        for v in self.prev(u := list(self.nodes)[0]):
             if result := self.hamiltonWalk(u, v):
                 return result
         return []
@@ -395,7 +381,7 @@ class DirectedGraph:
                     if too_many:
                         return []
                     too_many = True
-            prev_x, next_x = tmp.prev(x).copy(), tmp.next(x).copy()
+            prev_x, next_x = tmp.prev(x), tmp.next(x)
             tmp.remove(x)
             if not tmp.nodes:
                 tmp.add(x, prev_x, next_x)
@@ -417,7 +403,7 @@ class DirectedGraph:
             if v is not None and v not in self:
                 raise Exception("Unrecognized node.")
             if self.dag() and (v is None or v in self.sinks):
-                if len(self.sources + self.sinks) > 2 or any(self.degrees(n)[0] > 1 or self.degrees(n)[1] > 1 for n in self.nodes):
+                if any(self.degrees(n)[0] > 1 or self.degrees(n)[1] > 1 for n in self.nodes):
                     return []
                 return self.toposort()
             for _u in self.nodes:
@@ -454,8 +440,8 @@ class DirectedGraph:
             this_nodes_degrees = list(sorted(this_nodes_degrees.values(), key=lambda _p: len(_p)))
             other_nodes_degrees = list(sorted(other_nodes_degrees.values(), key=lambda _p: len(_p)))
             for possibility in product(*map(permutations, this_nodes_degrees)):
-                flatten_self = reduce(lambda x, y: x + list(y), possibility, [])
-                flatten_other = reduce(lambda x, y: x + y, other_nodes_degrees, [])
+                flatten_self = sum(map(list, possibility), [])
+                flatten_other = sum(other_nodes_degrees, [])
                 map_dict = dict(zip(flatten_self, flatten_other))
                 possible = True
                 for n, u in map_dict.items():
@@ -473,8 +459,6 @@ class DirectedGraph:
     def __bool__(self):
         return bool(self.nodes)
 
-    __call__ = f
-
     def __reversed__(self):
         return self.complementary()
 
@@ -484,27 +468,20 @@ class DirectedGraph:
     def __add__(self, other):
         if not isinstance(other, DirectedGraph):
             raise TypeError(f"Addition not defined between class DirectedGraph and type {type(other).__name__}!")
-        if any(self(n) != other(n) for n in self.nodes.value + other.nodes.value):
-            raise ValueError("Node sorting functions don't match!")
         if isinstance(other, (WeightedNodesDirectedGraph, WeightedLinksDirectedGraph)):
             return other + self
         res = self.copy()
         for n in other.nodes:
             if n not in res:
                 res.add(n)
-        for (u, v) in other.links:
-            if v not in res.next(u):
-                res.connect(v, [u])
+        for l in other.links:
+            if l not in res.links:
+                res.connect(l[1], [l[0]])
         return res
 
     def __eq__(self, other):
         if isinstance(other, DirectedGraph):
-            if len(self.links) != len(other.links) or self.nodes != other.nodes:
-                return False
-            for l in self.links:
-                if l[1] not in other.next(l[0]):
-                    return False
-            return True
+            return (self.nodes, self.links) == (other.nodes, other.links)
         return False
 
     def __str__(self):
@@ -514,8 +491,8 @@ class DirectedGraph:
 
 
 class WeightedNodesDirectedGraph(DirectedGraph):
-    def __init__(self, neighborhood: dict = {}, f=lambda x: x):
-        super().__init__({}, f=f)
+    def __init__(self, neighborhood: dict[Node, tuple[float, tuple[list[Node] | set[Node], list[Node] | set[Node]]]] = {}):
+        super().__init__()
         self.__node_weights = {}
         for n, (w, _) in neighborhood.items():
             self.add((n, w))
@@ -532,16 +509,16 @@ class WeightedNodesDirectedGraph(DirectedGraph):
                     self.add((v, 0), [u])
 
     def node_weights(self, n: Node = None):
-        return self.__node_weights if n is None else self.__node_weights.get(n)
+        return self.__node_weights.copy() if n is None else self.__node_weights.get(n)
 
     @property
     def total_nodes_weight(self):
         return sum(self.node_weights().values())
 
     def copy(self):
-        return WeightedNodesDirectedGraph({n: (self.node_weights(n), ([], self.next(n))) for n in self.nodes}, self.f)
+        return WeightedNodesDirectedGraph({n: (self.node_weights(n), ([], self.next(n))) for n in self.nodes})
 
-    def add(self, n_w: (Node, float), pointed_by: list[Node] = (), points_to: list[Node] = ()):
+    def add(self, n_w: tuple[Node, float], pointed_by: list[Node] | set[Node] = (), points_to: list[Node] | set[Node] = ()):
         super().add(n_w[0], pointed_by, points_to)
         if n_w[0] not in self.node_weights():
             self.set_weight(*n_w)
@@ -558,12 +535,12 @@ class WeightedNodesDirectedGraph(DirectedGraph):
         return self
 
     def transposed(self):
-        return WeightedNodesDirectedGraph({u: (self.node_weights(u), (self.next(u), [])) for u in self.nodes}, self.f)
+        return WeightedNodesDirectedGraph({u: (self.node_weights(u), (self.next(u), [])) for u in self.nodes})
 
     def component(self, u: Node):
         if u not in self:
             raise ValueError("Unrecognized node!")
-        queue, res = [u], WeightedNodesDirectedGraph({u: (self.node_weights(u), ([], []))}, self.f)
+        queue, res = [u], WeightedNodesDirectedGraph({u: (self.node_weights(u), ([], []))})
         while queue:
             for n in self.next(v := queue.pop(0)):
                 if n in res:
@@ -580,7 +557,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
     def subgraph(self, u: Node):
         if u not in self:
             raise ValueError("Unrecognized node!")
-        queue, res = [u], WeightedNodesDirectedGraph({u: (self.node_weights(u), ([], []))}, self.f)
+        queue, res = [u], WeightedNodesDirectedGraph({u: (self.node_weights(u), ([], []))})
         while queue:
             for n in self.next(v := queue.pop(0)):
                 if n in res:
@@ -591,7 +568,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
 
     def minimalPathNodes(self, u: Node, v: Node):
         neighborhood = {n: (self.node_weights(n), ({}, {m: 0 for m in self.next(n)})) for n in self.nodes}
-        return WeightedDirectedGraph(neighborhood, self.f).minimalPath(u, v)
+        return WeightedDirectedGraph(neighborhood).minimalPath(u, v)
 
     def isomorphicFunction(self, other):
         if isinstance(other, WeightedNodesDirectedGraph):
@@ -629,8 +606,8 @@ class WeightedNodesDirectedGraph(DirectedGraph):
             this_nodes_degrees = list(sorted(this_nodes_degrees.values(), key=lambda _p: len(_p)))
             other_nodes_degrees = list(sorted(other_nodes_degrees.values(), key=lambda _p: len(_p)))
             for possibility in product(*map(permutations, this_nodes_degrees)):
-                flatten_self = reduce(lambda x, y: x + list(y), possibility, [])
-                flatten_other = reduce(lambda x, y: x + y, other_nodes_degrees, [])
+                flatten_self = sum(map(list, possibility), [])
+                flatten_other = sum(other_nodes_degrees, [])
                 map_dict = dict(zip(flatten_self, flatten_other))
                 possible = True
                 for n, u in map_dict.items():
@@ -651,12 +628,10 @@ class WeightedNodesDirectedGraph(DirectedGraph):
     def __add__(self, other):
         if not isinstance(other, DirectedGraph):
             raise TypeError(f"Addition not defined between class DirectedGraph and type {type(other).__name__}!")
-        if any(self(n) != other(n) for n in self.nodes.value + other.nodes.value):
-            raise ValueError("Node sorting functions don't match!")
         if isinstance(other, WeightedDirectedGraph):
             return other + self
         if isinstance(other, WeightedLinksDirectedGraph):
-            return WeightedDirectedGraph(f=self.f) + self + other
+            return WeightedDirectedGraph() + self + other
         if isinstance(other, WeightedNodesDirectedGraph):
             res = self.copy()
             for n in other.nodes:
@@ -668,16 +643,11 @@ class WeightedNodesDirectedGraph(DirectedGraph):
                 if v not in res.next(u):
                     res.connect(v, [u])
             return res
-        return self + WeightedNodesDirectedGraph({n: (0, ([], other.next(n))) for n in other.nodes}, other.f)
+        return self + WeightedNodesDirectedGraph({n: (0, ([], other.next(n))) for n in other.nodes})
 
     def __eq__(self, other):
         if isinstance(other, WeightedNodesDirectedGraph):
-            if len(self.links) != len(other.links) or self.node_weights() != other.node_weights():
-                return False
-            for l in self.links:
-                if l[1] not in other.next(l[0]):
-                    return False
-            return True
+            return (self.node_weights, self.links) == (other.node_weights, other.links)
         return False
 
     def __str__(self):
@@ -685,8 +655,8 @@ class WeightedNodesDirectedGraph(DirectedGraph):
 
 
 class WeightedLinksDirectedGraph(DirectedGraph):
-    def __init__(self, neighborhood: dict = {}, f=lambda x: x):
-        super().__init__({}, f=f)
+    def __init__(self, neighborhood: dict[Node, tuple[dict[Node, float], dict[Node, float]]] = {}):
+        super().__init__()
         self.__link_weights = {}
         for u, (prev_pairs, next_pairs) in neighborhood.items():
             if u not in self:
@@ -716,7 +686,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
     def total_links_weight(self):
         return sum(self.link_weights().values())
 
-    def add(self, u: Node, pointed_by_weights: dict = {}, points_to_weights: dict = {}):
+    def add(self, u: Node, pointed_by_weights: dict[Node, float] = {}, points_to_weights: dict[Node, float] = {}):
         if u not in self:
             super().add(u), self.connect(u, pointed_by_weights, points_to_weights)
         return self
@@ -729,7 +699,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                 self.__link_weights.pop((v, u))
         return super().remove(n, *rest)
 
-    def connect(self, u: Node, pointed_by_weights: dict = {}, points_to_weights: dict = {}):
+    def connect(self, u: Node, pointed_by_weights: dict[Node, float] = {}, points_to_weights: dict[Node, float] = {}):
         if u in self:
             super().connect(u, pointed_by_weights.keys(), points_to_weights.keys())
             for v, w in pointed_by_weights.items():
@@ -740,7 +710,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                     self.set_weight((u, v), w)
         return self
 
-    def disconnect(self, u: Node, pointed_by: list[Node] = (), points_to: list[Node] = ()):
+    def disconnect(self, u: Node, pointed_by: list[Node] | set[Node] = (), points_to: list[Node] | set[Node] = ()):
         if u in self:
             for v in pointed_by:
                 self.__link_weights.pop((v, u))
@@ -755,15 +725,15 @@ class WeightedLinksDirectedGraph(DirectedGraph):
         return self
 
     def transposed(self):
-        return WeightedLinksDirectedGraph({u: (self.link_weights(u), {}) for u in self.nodes}, self.f)
+        return WeightedLinksDirectedGraph({u: (self.link_weights(u), {}) for u in self.nodes})
 
     def copy(self):
-        return WeightedLinksDirectedGraph({u: ({}, self.link_weights(u)) for u in self.nodes}, self.f)
+        return WeightedLinksDirectedGraph({u: ({}, self.link_weights(u)) for u in self.nodes})
 
     def component(self, u: Node):
         if u not in self:
             raise ValueError("Unrecognized node!")
-        queue, res = [u], WeightedLinksDirectedGraph({u: ({}, {})}, self.f)
+        queue, res = [u], WeightedLinksDirectedGraph({u: ({}, {})})
         while queue:
             for n in self.next(v := queue.pop(0)):
                 if n in res:
@@ -780,7 +750,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
     def subgraph(self, u: Node):
         if u not in self:
             raise ValueError("Unrecognized node!")
-        queue, res = [u], WeightedLinksDirectedGraph({u: ({}, {})}, self.f)
+        queue, res = [u], WeightedLinksDirectedGraph({u: ({}, {})})
         while queue:
             for n in self.next(v := queue.pop(0)):
                 if n in res:
@@ -790,7 +760,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
         return res
 
     def minimalPathLinks(self, u: Node, v: Node):
-        return WeightedDirectedGraph({n: (0, ({}, self.link_weights(n))) for n in self.nodes}, self.f).minimalPath(u, v)
+        return WeightedDirectedGraph({n: (0, ({}, self.link_weights(n))) for n in self.nodes}).minimalPath(u, v)
 
     def isomorphicFunction(self, other):
         if isinstance(other, WeightedLinksDirectedGraph):
@@ -828,8 +798,8 @@ class WeightedLinksDirectedGraph(DirectedGraph):
             this_nodes_degrees = list(sorted(this_nodes_degrees.values(), key=lambda _p: len(_p)))
             other_nodes_degrees = list(sorted(other_nodes_degrees.values(), key=lambda _p: len(_p)))
             for possibility in product(*map(permutations, this_nodes_degrees)):
-                flatten_self = reduce(lambda x, y: x + list(y), possibility, [])
-                flatten_other = reduce(lambda x, y: x + y, other_nodes_degrees, [])
+                flatten_self = sum(map(list, possibility), [])
+                flatten_other = sum(other_nodes_degrees, [])
                 map_dict = dict(zip(flatten_self, flatten_other))
                 possible = True
                 for n, u in map_dict.items():
@@ -847,8 +817,6 @@ class WeightedLinksDirectedGraph(DirectedGraph):
     def __add__(self, other):
         if not isinstance(other, DirectedGraph):
             raise TypeError(f"Addition not defined between class DirectedGraph and type {type(other).__name__}!")
-        if any(self(n) != other(n) for n in self.nodes.value + other.nodes.value):
-            raise ValueError("Node sorting functions don't match!")
         if isinstance(other, WeightedNodesDirectedGraph):
             return other + self
         if isinstance(other, WeightedLinksDirectedGraph):
@@ -862,11 +830,11 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                 else:
                     res.connect(v, {u: other.link_weights((u, v))})
             return res
-        return self + WeightedLinksDirectedGraph({u: ({}, {v: 0 for v in other.next(u)}) for u in other.nodes}, other.f)
+        return self + WeightedLinksDirectedGraph({u: ({}, {v: 0 for v in other.next(u)}) for u in other.nodes})
 
     def __eq__(self, other):
         if isinstance(other, WeightedLinksDirectedGraph):
-            return self.nodes == other.nodes and self.link_weights() == other.link_weights()
+            return (self.nodes, self.link_weights()) == (other.nodes, other.link_weights())
         return False
 
     def __str__(self):
@@ -874,9 +842,9 @@ class WeightedLinksDirectedGraph(DirectedGraph):
 
 
 class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGraph):
-    def __init__(self, neighborhood: dict = {}, f=lambda x: x):
-        WeightedNodesDirectedGraph.__init__(self, {}, f)
-        WeightedLinksDirectedGraph.__init__(self, {}, f)
+    def __init__(self, neighborhood: dict[Node, tuple[float, tuple[dict[Node, float], dict[Node, float]]]] = {}):
+        WeightedNodesDirectedGraph.__init__(self)
+        WeightedLinksDirectedGraph.__init__(self)
         for n, (w, _) in neighborhood.items():
             self.add((n, w))
         for u, (_, (prev_u, next_u)) in neighborhood.items():
@@ -895,7 +863,7 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
     def total_weight(self):
         return self.total_nodes_weight + self.total_links_weight
 
-    def add(self, n_w: (Node, float), pointed_by_weights: dict = {}, points_to_weights: dict = {}):
+    def add(self, n_w: tuple[Node, float], pointed_by_weights: dict[Node, float] = {}, points_to_weights: dict[Node, float] = {}):
         WeightedLinksDirectedGraph.add(self, n_w[0], pointed_by_weights, points_to_weights)
         if n_w[0] not in self.node_weights():
             self.set_weight(*n_w)
@@ -906,7 +874,7 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
             WeightedLinksDirectedGraph.disconnect(self, n, self.prev(n), self.next(n)), super().remove(n)
         return self
 
-    def connect(self, u: Node, pointed_by_weights: dict = {}, points_to_weights: dict = {}):
+    def connect(self, u: Node, pointed_by_weights: dict[Node, float] = {}, points_to_weights: dict[Node, float] = {}):
         return WeightedLinksDirectedGraph.connect(self, u, pointed_by_weights, points_to_weights)
 
     def disconnect(self, u: Node, pointed_by: list[Node] = (), points_to: list[Node] = ()):
@@ -921,16 +889,16 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
 
     def transposed(self):
         neighborhood = {u: (self.node_weights(u), (self.link_weights(u), {})) for u in self.nodes}
-        return WeightedDirectedGraph(neighborhood, self.f)
+        return WeightedDirectedGraph(neighborhood)
 
     def copy(self):
         neighborhood = {u: (self.node_weights(u), ({}, self.link_weights(u))) for u in self.nodes}
-        return WeightedDirectedGraph(neighborhood, self.f)
+        return WeightedDirectedGraph(neighborhood)
 
     def component(self, u: Node):
         if u not in self:
             raise ValueError("Unrecognized node!")
-        queue, res = [u], WeightedDirectedGraph({u: (self.node_weights(u), ({}, {}))}, self.f)
+        queue, res = [u], WeightedDirectedGraph({u: (self.node_weights(u), ({}, {}))})
         while queue:
             for n in self.next(v := queue.pop(0)):
                 if n in res:
@@ -947,7 +915,7 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
     def subgraph(self, u: Node):
         if u not in self:
             raise ValueError("Unrecognized node!")
-        queue, res = [u], WeightedDirectedGraph({u: (self.node_weights(u), ({}, {}))}, self.f)
+        queue, res = [u], WeightedDirectedGraph({u: (self.node_weights(u), ({}, {}))})
         while queue:
             for n in self.next(v := queue.pop(0)):
                 if n in res:
@@ -1057,8 +1025,8 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
             this_nodes_degrees = list(sorted(this_nodes_degrees.values(), key=lambda _p: len(_p)))
             other_nodes_degrees = list(sorted(other_nodes_degrees.values(), key=lambda _p: len(_p)))
             for possibility in product(*map(permutations, this_nodes_degrees)):
-                flatten_self = reduce(lambda x, y: x + list(y), possibility, [])
-                flatten_other = reduce(lambda x, y: x + y, other_nodes_degrees, [])
+                flatten_self = sum(map(list, possibility), [])
+                flatten_other = sum(other_nodes_degrees, [])
                 map_dict = dict(zip(flatten_self, flatten_other))
                 possible = True
                 for n, u in map_dict.items():
@@ -1081,8 +1049,6 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
     def __add__(self, other):
         if not isinstance(other, DirectedGraph):
             raise TypeError(f"Addition not defined between class DirectedGraph and type {type(other).__name__}!")
-        if any(self(n) != other(n) for n in self.nodes.value + other.nodes.value):
-            raise ValueError("Node sorting functions don't match!")
         if isinstance(other, WeightedDirectedGraph):
             res = self.copy()
             for n in other.nodes:
@@ -1098,10 +1064,10 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
             return res
         if isinstance(other, WeightedNodesDirectedGraph):
             neighborhood = {u: (other.node_weights(u), ({}, {v: 0 for v in other.next(u)})) for u in other.nodes}
-            return self + WeightedDirectedGraph(neighborhood, other.f)
+            return self + WeightedDirectedGraph(neighborhood)
         if isinstance(other, WeightedLinksDirectedGraph):
-            return self + WeightedDirectedGraph({u: (0, ({}, other.link_weights(u))) for u in other.nodes}, other.f)
-        return self + WeightedDirectedGraph({u: (0, ({}, {v: 0 for v in other.next(u)})) for u in other.nodes}, other.f)
+            return self + WeightedDirectedGraph({u: (0, ({}, other.link_weights(u))) for u in other.nodes})
+        return self + WeightedDirectedGraph({u: (0, ({}, {v: 0 for v in other.next(u)})) for u in other.nodes})
 
     def __eq__(self, other):
         if isinstance(other, WeightedDirectedGraph):
