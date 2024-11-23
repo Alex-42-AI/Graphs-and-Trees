@@ -78,8 +78,7 @@ class SortedList:
             res.insert(x)
         return res
 
-    def __call__(self, x):
-        return self.f(x)
+    __call__ = f
 
     def __len__(self):
         return len(self.value)
@@ -129,12 +128,7 @@ class SortedList:
 
     def __eq__(self, other):
         if isinstance(other, SortedList):
-            try:
-                if any(self.f(x) != other.f(x) for x in self.value + other.value):
-                    return {x: self.value.count(x) for x in self} == {x: other.value.count(x) for x in other}
-                return self.value == other.value
-            except (ValueError, TypeError):
-                return False
+            return {x: self.value.count(x) for x in self} == {x: other.value.count(x) for x in other}
         return self.__value == other
 
     def __str__(self):
