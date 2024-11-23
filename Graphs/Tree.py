@@ -2,7 +2,7 @@ from functools import reduce
 
 from itertools import permutations, product
 
-from Graphs.General import Node, SortedList
+from Graphs.General import Node
 
 
 class BinTree:
@@ -33,9 +33,8 @@ class BinTree:
         return self.__right
 
     def copy(self):
-        if not self:
-            return
-        return BinTree(self.root, self.left.copy(), self.right.copy())
+        if self:
+            return BinTree(self.root, self.left.copy(), self.right.copy())
 
     def rotate_left(self):
         self.__root, self.__left, self.__right = self.right.root, BinTree(self.root, self.left, self.right.left), self.right.right
@@ -218,10 +217,10 @@ class BinTree:
 
 
 class Tree:
-    def __init__(self, root: Node, inheritance: dict = {}, f=lambda x: x):
-        self.__root, self.__f = root, f
+    def __init__(self, root: Node, inheritance: dict = {}):
+        self.__root = root
         self.__hierarchy, self.__parent = {root: set()}, {}
-        self.__nodes, self.__leaves = SortedList(root, f=f), {root}
+        self.__nodes, self.__leaves = {root}, {root}
         for u, desc in inheritance.items():
             if u not in self:
                 self.add(root, u)
@@ -256,19 +255,15 @@ class Tree:
     def descendants(self, n: Node):
         return self.hierarchy(n)
 
-    @property
-    def f(self):
-        return self.__f
-
     def copy(self):
-        return Tree(self.root, {u: self.descendants(u) for u in self.nodes if u != self.root}, self.f)
+        return Tree(self.root, {u: self.descendants(u) for u in self.nodes if u != self.root})
 
     def subtree(self, u: Node):
         if u not in self:
             raise ValueError("Unrecognized node!")
         if u == self.root:
             return self
-        queue, res = [u], Tree(u, {}, self.f)
+        queue, res = [u], Tree(u)
         while queue:
             for n in self.descendants(v := queue.pop(0)):
                 res.add(v, n), queue.append(n)
@@ -280,7 +275,7 @@ class Tree:
         if curr in self.leaves: self.__leaves.remove(curr)
         for v in [u] + [*rest]:
             if v not in self:
-                self.__nodes.insert(v)
+                self.__nodes.add(v)
                 self.__hierarchy[curr].add(v)
                 self.__parent[v] = curr
                 self.__leaves.add(v)
@@ -437,8 +432,6 @@ class Tree:
     def __bool__(self):
         return bool(self.nodes)
 
-    __call__ = f
-
     def __contains__(self, item):
         return item in self.nodes
 
@@ -465,8 +458,8 @@ class Tree:
 
 
 class WeightedNodesTree(Tree):
-    def __init__(self, root_and_weight: (Node, float), inheritance: dict = {}, f=lambda x: x):
-        super().__init__(root_and_weight[0], {}, f)
+    def __init__(self, root_and_weight: (Node, float), inheritance: dict = {}):
+        super().__init__(root_and_weight[0])
         self.__weights = dict([root_and_weight])
         for u, (w, desc) in inheritance.items():
             if u not in self:
@@ -484,14 +477,14 @@ class WeightedNodesTree(Tree):
 
     def copy(self):
         inheritance = {u: (self.weights(u), {v: self.weights(v) for v in self.descendants(u)}) for u in self.nodes}
-        return WeightedNodesTree((self.root, self.weights(self.root)), inheritance, self.f)
+        return WeightedNodesTree((self.root, self.weights(self.root)), inheritance)
 
     def subtree(self, u: Node):
         if u not in self:
             raise ValueError("Unrecognized node!")
         if u == self.root:
             return self
-        queue, res = [u], WeightedNodesTree((u, self.weights(u)), {}, self.f)
+        queue, res = [u], WeightedNodesTree((u, self.weights(u)))
         while queue:
             for n in self.descendants(v := queue.pop(0)):
                 res.add(v, {n: self.weights(n)}), queue.append(n)
