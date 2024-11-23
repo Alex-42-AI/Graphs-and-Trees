@@ -1,6 +1,6 @@
 from itertools import permutations, product
 
-from Graphs.General import Node
+from Graphs.General import *
 
 
 class BinTree:
