@@ -277,8 +277,24 @@ class UndirectedGraph:
         neighborhood = {Node(l0): [Node(l1) for l1 in self.links if (l1.u in l0) ^ (l1.v in l0)] for l0 in self.links}
         return UndirectedGraph(neighborhood)
 
-    def interval_sort(self) -> list[Node]:
-        pass
+    def interval_sort(self, key=0) -> list[Node]:
+        def swap(i, j):
+            matrix[i], matrix[j] = matrix[j], matrix[i]
+            order[i], order[j] = order[j], order[i]
+            for k in range(len(matrix)):
+                matrix[k][i], matrix[k][j] = matrix[k][j], matrix[k][i]
+
+        order = list(self.nodes)
+        matrix = [[v == u or Link(u, v) in self.links for v in self.nodes] for u in self.nodes]
+        if key:
+            for r in range(len(self.nodes)):
+                for c in range(len(self.nodes)):
+                    pass
+        else:
+            for r in range(len(self.nodes)):
+                for c in range(len(self.nodes)):
+                    pass
+        return order
 
     def is_full_k_partite(self) -> bool:
         return all(comp.full() for comp in self.complementary().connection_components())
@@ -433,18 +449,29 @@ class UndirectedGraph:
                         c1.add(v), c0.remove(v)
                     queue.append(v), total.add(v)
             return [c0, c1]
-        if s := self.interval_sort():
-            result = [{s[0]}]
-            for u in s[1:]:
-                found = False
-                for r in range(len(result)):
-                    if all(v not in self.neighboring(u) for v in result[r]):
-                        result[r].add(u)
-                        found = True
-                        break
-                if not found:
-                    result.append({u})
+        if s := self.interval_sort(key=1):
+            result = []
+            while s:
+                curr, last = set(), None
+                for u in s:
+                    if last is None or u not in self.neighboring(last):
+                        curr.add(u)
+                        last = u
+                for u in curr:
+                    s.remove(u)
+                result.append(curr)
             return result
+            # result = [{s[0]}]
+            # for u in s[1:]:
+            #     found = False
+            #     for r in range(len(result)):
+            #         if all(v not in self.neighboring(u) for v in result[r]):
+            #             result[r].add(u)
+            #             found = True
+            #             break
+            #     if not found:
+            #         result.append({u})
+            # return result
         max_nodes, tmp = self.nodes, UndirectedGraph.copy(self)
         return helper([])
 
