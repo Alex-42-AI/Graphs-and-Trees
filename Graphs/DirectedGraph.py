@@ -1,6 +1,6 @@
-from functools import reduce
+from typing import Iterable
 
-from collections import Iterable
+from functools import reduce
 
 from itertools import permutations, product
 
