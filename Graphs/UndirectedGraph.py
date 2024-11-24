@@ -330,13 +330,11 @@ class UndirectedGraph:
         return [list(p) for p in combinations(self.nodes, abs(k)) if self.clique(*p)]
 
     def maxCliquesNode(self, u: Node):
-        if u not in self:
-            raise ValueError("Unrecognized node(s)!")
         if (tmp := self.component(u)).full():
-            return [set(tmp.nodes)]
+            return [tmp.nodes]
         cliques = [{u, v} for v in tmp.neighboring(u)]
         while True:
-            new = []
+            new = set()
             for i, cl1 in enumerate(cliques):
                 for cl2 in cliques[i + 1:]:
                     compatible = True
@@ -348,17 +346,17 @@ class UndirectedGraph:
                         if not compatible:
                             break
                     if compatible:
-                        new.append(cl1.union(cl2))
+                        new.add(frozenset(cl1.union(cl2)))
             if not new:
-                max_card = max(map(len, (cliques := self.allMaximalCliquesNode(u))))
-                return [cl for cl in cliques if len(cl) == max_card]
+                max_card = max(map(len, cliques))
+                return [set(cl) for cl in cliques if len(cl) == max_card]
             newer = new.copy()
             for cl1 in new:
                 for cl2 in new:
                     if len(cl1) < len(cl2):
                         newer.remove(cl1)
                         break
-            cliques = newer.copy()
+            cliques = list(newer)
 
     def maxCliques(self):
         result, low, high = [set()], 1, len(self.nodes)
@@ -372,13 +370,12 @@ class UndirectedGraph:
         return result
 
     def allMaximalCliquesNode(self, u: Node):
-        if u not in self:
-            raise ValueError("Unrecognized node(s)!")
         if (tmp := self.component(u)).full():
-            return [set(tmp.nodes)]
+            return [tmp.nodes]
         cliques = [{u, v} for v in tmp.neighboring(u)]
+        result = {frozenset((u, v)) for v in tmp.neighboring(u)}
         while True:
-            new = []
+            changed = False
             for i, cl1 in enumerate(cliques):
                 for cl2 in cliques[i + 1:]:
                     compatible = True
@@ -390,16 +387,18 @@ class UndirectedGraph:
                         if not compatible:
                             break
                     if compatible:
-                        new.append(cl1.union(cl2))
-            if not new:
-                return cliques
-            newer = new.copy()
-            for cl1 in new:
-                for cl2 in new:
+                        changed = True
+                        result.add(frozenset(cl1.union(cl2)))
+                        result.discard(frozenset(cl1)), result.discard(frozenset(cl2))
+            if not changed:
+                return list(map(set, result))
+            new = result.copy()
+            for cl1 in result:
+                for cl2 in result:
                     if cl1 != cl2 and cl1.issubset(cl2):
-                        newer.remove(cl1)
+                        new.remove(cl1)
                         break
-            cliques = newer.copy()
+            cliques, result = list(new), new.copy()
 
     def cliquesGraph(self):
         result, total = UndirectedGraph(), set()
