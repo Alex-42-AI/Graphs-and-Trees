@@ -1,12 +1,14 @@
 from functools import reduce
 
+from collections import Iterable
+
 from itertools import permutations, product
 
 from Graphs.General import Node
 
 
 class DirectedGraph:
-    def __init__(self, neighborhood: dict[Node, tuple[list[Node] | set[Node], list[Node] | set[Node]]] = {}):
+    def __init__(self, neighborhood: dict[Node, tuple[Iterable[Node], Iterable[Node]]] = {}):
         self.__nodes, self.__links = set(), set()
         self.__prev, self.__next, self.__degrees = {}, {}, {}
         for u, (prev_nodes, next_nodes) in neighborhood.items():
@@ -47,7 +49,7 @@ class DirectedGraph:
     def sinks(self) -> set[Node]:
         return {v for v in self.nodes if not self.degrees(v)[1]}
 
-    def add(self, u: Node, pointed_by: list[Node] | set[Node] = (), points_to: list[Node] | set[Node] = ()):
+    def add(self, u: Node, pointed_by: Iterable[Node] = (), points_to: Iterable[Node] = ()):
         if u not in self:
             self.__nodes.add(u)
             self.__degrees[u], self.__next[u], self.__prev[u] = [0, 0], set(), set()
@@ -61,7 +63,7 @@ class DirectedGraph:
                 self.__nodes.remove(n), self.__degrees.pop(n), self.__prev.pop(n), self.__next.pop(n)
         return self
 
-    def connect(self, u: Node, pointed_by: list[Node] | set[Node] = (), points_to: list[Node] | set[Node] = ()):
+    def connect(self, u: Node, pointed_by: Iterable[Node] = (), points_to: Iterable[Node] = ()):
         if u in self:
             for v in pointed_by:
                 if u != v and v not in self.prev(u) and v in self:
@@ -75,7 +77,7 @@ class DirectedGraph:
                     self.__degrees[v][0] += 1
         return self
 
-    def disconnect(self, u: Node, pointed_by: list[Node] | set[Node] = (), points_to: list[Node] | set[Node] = ()):
+    def disconnect(self, u: Node, pointed_by: Iterable[Node] = (), points_to: Iterable[Node] = ()):
         if u in self:
             for v in pointed_by:
                 if v in self.prev(u):
@@ -520,7 +522,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
     def copy(self):
         return WeightedNodesDirectedGraph({n: (self.node_weights(n), ([], self.next(n))) for n in self.nodes})
 
-    def add(self, n_w: tuple[Node, float], pointed_by: list[Node] | set[Node] = (), points_to: list[Node] | set[Node] = ()):
+    def add(self, n_w: tuple[Node, float], pointed_by: Iterable[Node] = (), points_to: Iterable[Node] = ()):
         super().add(n_w[0], pointed_by, points_to)
         if n_w[0] not in self.node_weights():
             self.set_weight(*n_w)
@@ -718,7 +720,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                     self.set_weight((u, v), w)
         return self
 
-    def disconnect(self, u: Node, pointed_by: list[Node] | set[Node] = (), points_to: list[Node] | set[Node] = ()):
+    def disconnect(self, u: Node, pointed_by: Iterable[Node] = (), points_to: Iterable[Node] = ()):
         if u in self:
             for v in pointed_by:
                 self.__link_weights.pop((v, u))
