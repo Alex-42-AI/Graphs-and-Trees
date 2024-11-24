@@ -452,26 +452,15 @@ class UndirectedGraph:
         if s := self.interval_sort(key=1):
             result = []
             while s:
-                curr, last = set(), None
+                current, last = set(), None
                 for u in s:
                     if last is None or u not in self.neighboring(last):
-                        curr.add(u)
+                        current.add(u)
                         last = u
-                for u in curr:
+                for u in current:
                     s.remove(u)
-                result.append(curr)
+                result.append(current)
             return result
-            # result = [{s[0]}]
-            # for u in s[1:]:
-            #     found = False
-            #     for r in range(len(result)):
-            #         if all(v not in self.neighboring(u) for v in result[r]):
-            #             result[r].add(u)
-            #             found = True
-            #             break
-            #     if not found:
-            #         result.append({u})
-            # return result
         max_nodes, tmp = self.nodes, UndirectedGraph.copy(self)
         return helper([])
 
