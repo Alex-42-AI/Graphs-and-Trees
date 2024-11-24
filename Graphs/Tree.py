@@ -1,3 +1,5 @@
+from collections import Iterable
+
 from itertools import permutations, product
 
 from Graphs.General import *
@@ -215,7 +217,7 @@ class BinTree:
 
 
 class Tree:
-    def __init__(self, root: Node, inheritance: dict = {}):
+    def __init__(self, root: Node, inheritance: dict[Node, Iterable[Node]] = {}):
         self.__root = root
         self.__hierarchy, self.__parent = {root: set()}, {}
         self.__nodes, self.__leaves = {root}, {root}
@@ -456,7 +458,7 @@ class Tree:
 
 
 class WeightedNodesTree(Tree):
-    def __init__(self, root_and_weight: (Node, float), inheritance: dict = {}):
+    def __init__(self, root_and_weight: (Node, float), inheritance: dict[Node, tuple[float, Iterable[Node]]] = {}):
         super().__init__(root_and_weight[0])
         self.__weights = dict([root_and_weight])
         for u, (w, desc) in inheritance.items():
@@ -488,7 +490,7 @@ class WeightedNodesTree(Tree):
                 res.add(v, {n: self.weights(n)}), queue.append(n)
         return res
 
-    def add(self, curr: Node, rest: dict = {}):
+    def add(self, curr: Node, rest: dict[Node, float] = {}):
         if curr not in self:
             raise Exception("Unrecognized node")
         for u, w in rest.items():
