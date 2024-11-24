@@ -19,7 +19,7 @@ class BinTree:
             self.__right = BinTree(right)
 
     @property
-    def root(self):
+    def root(self) -> Node:
         return self.__root
 
     @property
@@ -55,18 +55,18 @@ class BinTree:
 
         return dfs(self)
 
-    def nodes_on_level(self, level: int):
+    def nodes_on_level(self, level: int) -> set[Node]:
         def dfs(l, tree):
             if not tree:
-                return []
+                return set()
             if not l:
-                return [tree.root]
-            return dfs(l - 1, tree.left) + dfs(l - 1, tree.right)
+                return {tree.root}
+            return dfs(l - 1, tree.left).union(dfs(l - 1, tree.right))
 
         return dfs(abs(level), self)
 
     @property
-    def width(self):
+    def width(self) -> int:
         res = len(self.nodes_on_level(self.height))
         for i in range(self.height - 1, -1, -1):
             if (curr := len(self.nodes_on_level(i))) <= res and res >= 2 ** (i - 1):
@@ -74,7 +74,7 @@ class BinTree:
             res = max(res, curr)
 
     @property
-    def height(self):
+    def height(self) -> int:
         def dfs(tree):
             if not tree:
                 return -1
@@ -82,7 +82,7 @@ class BinTree:
 
         return dfs(self)
 
-    def count_leaves(self):
+    def count_leaves(self) -> int:
         def dfs(tree):
             if not tree:
                 return 0
@@ -92,7 +92,7 @@ class BinTree:
 
         return dfs(self)
 
-    def count_nodes(self):
+    def count_nodes(self) -> int:
         def dfs(tree):
             if not tree:
                 return 0
@@ -102,7 +102,7 @@ class BinTree:
 
         return dfs(self)
 
-    def code_in_morse(self, x):
+    def code_in_morse(self, x) -> str:
         def dfs(tree):
             if not tree:
                 return
@@ -118,7 +118,7 @@ class BinTree:
         u = Node(x)
         return dfs(self)
 
-    def encode(self, message: str):
+    def encode(self, message: str) -> str:
         res = ""
         for c in message:
             if Node(c) in self:
@@ -130,7 +130,7 @@ class BinTree:
     def inverted(self):
         return ~self.copy()
 
-    def traverse(self, traversal_type: str = "in-order"):
+    def traverse(self, traversal_type: str = "in-order") -> list[Node]:
         def preorder_print():
             def dfs(tree, traversal):
                 traversal += [tree.root]
@@ -226,31 +226,31 @@ class Tree:
                 self.add(u, *desc)
 
     @property
-    def root(self):
+    def root(self) -> Node:
         return self.__root
 
     @property
-    def nodes(self):
+    def nodes(self) -> set[Node]:
         return self.__nodes
 
     @property
-    def leaves(self):
+    def leaves(self) -> set[Node]:
         return self.__leaves
 
     @property
-    def height(self):
+    def height(self) -> int:
         def helper(x: Node):
             return 1 + max([0, *map(helper, self.descendants(x))])
 
         return helper(self.root)
 
-    def parent(self, u: Node = None):
+    def parent(self, u: Node = None) -> dict[Node, Node] | Node:
         return self.__parent if u is None else self.__parent[u]
 
-    def hierarchy(self, u: Node = None):
+    def hierarchy(self, u: Node = None) -> dict[Node, set[Node]] | set[Node]:
         return self.__hierarchy if u is None else self.__hierarchy[u]
 
-    def descendants(self, n: Node):
+    def descendants(self, n: Node) -> set[Node]:
         return self.hierarchy(n)
 
     def copy(self):
@@ -321,7 +321,7 @@ class Tree:
                 self.add_tree(tmp)
         return self
 
-    def node_depth(self, u: Node):
+    def node_depth(self, u: Node) -> int:
         if u in self:
             d = 0
             while u != self.root:
@@ -330,17 +330,17 @@ class Tree:
             return d
         raise ValueError("Unrecognized node")
 
-    def path_to(self, u: Node):
+    def path_to(self, u: Node) -> list[Node]:
         x, res = u, []
         while x != self.root:
             res = [x] + res
             x = self.parent(x)
         return [self.root] + res
 
-    def vertex_cover(self):
+    def vertex_cover(self) -> list[set[Node]]:
         return [set(filter(lambda x: x not in res, self.nodes)) for res in self.independent_set()]
 
-    def dominating_set(self):
+    def dominating_set(self) -> set[Node]:
         dp = {n: [{n}, set()] for n in self.nodes}
 
         def dfs(r):
@@ -366,7 +366,7 @@ class Tree:
         dfs(self.root)
         return root_val[0] if len((root_val := dp[self.root])[0]) <= len(root_val[1]) else root_val[1]
 
-    def independent_set(self):
+    def independent_set(self) -> list[set[Node]]:
         dp = {n: [[{n}], [set()]] for n in self.nodes}
 
         def dfs(x: Node):
@@ -383,7 +383,7 @@ class Tree:
             return dp[self.root][0] + dp[self.root][1]
         return dp[self.root][0] if a > b else dp[self.root][1]
 
-    def isomorphicFunction(self, other):
+    def isomorphicFunction(self, other) -> dict[Node, Node]:
         if isinstance(other, Tree):
             if len(self.nodes) != len(other.nodes) or len(self.leaves) != len(other.leaves) or len(self.descendants(self.root)) != len(other.descendants(other.root)):
                 return {}
@@ -465,7 +465,7 @@ class WeightedNodesTree(Tree):
             if desc:
                 self.add(u, {v: inheritance[v][0] if v in inheritance else 0 for v in desc})
 
-    def weights(self, u: Node = None):
+    def weights(self, u: Node = None) -> dict[Node, float] | float:
         return self.__weights if u is None else self.__weights.get(u)
 
     def set_weight(self, u: Node, w: float):
@@ -511,7 +511,7 @@ class WeightedNodesTree(Tree):
         self.__weights.pop(u)
         return super().remove(u)
 
-    def weighted_vertex_cover(self):
+    def weighted_vertex_cover(self) -> list[set[Node]]:
         dp = {n: [[{n}], [set()]] for n in self.nodes}
 
         def dfs(x):
@@ -528,7 +528,7 @@ class WeightedNodesTree(Tree):
             return dp[self.root][0] + dp[self.root][1]
         return dp[self.root][0] if a < b else dp[self.root][1]
 
-    def weighted_dominating_set(self):
+    def weighted_dominating_set(self) -> set[Node]:
         dp = {n: [{n}, set()] for n in self.nodes}
 
         def dfs(r):
@@ -554,7 +554,7 @@ class WeightedNodesTree(Tree):
         dfs(self.root)
         return root_val[0] if sum(map(self.weights, (root_val := dp[self.root])[0])) <= sum(map(self.weights, root_val[1])) else root_val[1]
 
-    def isomorphicFunction(self, other):
+    def isomorphicFunction(self, other) -> dict[Node, Node]:
         if isinstance(other, WeightedNodesTree):
             if len(self.nodes) != len(other.nodes) or len(self.leaves) != len(other.leaves) or len(self.descendants(self.root)) != len(other.descendants(other.root)):
                 return {}
