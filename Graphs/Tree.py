@@ -338,10 +338,10 @@ class Tree:
         return [self.root] + res
 
     def vertex_cover(self):
-        return [list(filter(lambda x: x not in res, self.nodes)) for res in self.independent_set()]
+        return [set(filter(lambda x: x not in res, self.nodes)) for res in self.independent_set()]
 
     def dominating_set(self):
-        dp = {n: [[n], []] for n in self.nodes}
+        dp = {n: [{n}, set()] for n in self.nodes}
 
         def dfs(r):
             if r in self.leaves:
@@ -349,7 +349,7 @@ class Tree:
             only_leaves, min_no_root = True, None
             for d in self.descendants(r):
                 if d in self.leaves:
-                    dp[r][1].append(min_no_root := d)
+                    dp[r][1].add(min_no_root := d)
                 else:
                     only_leaves = False
             if only_leaves:
@@ -357,26 +357,26 @@ class Tree:
             for d in self.descendants(r):
                 if d not in self.leaves:
                     dfs(d)
-                    dp[r][0] += dp[d][0] if len(dp[d][0]) < len(dp[d][1]) else dp[d][1]
+                    dp[r][0].update(dp[d][0] if len(dp[d][0]) < len(dp[d][1]) else dp[d][1])
                     if min_no_root is None or len(dp[d][0]) < len(dp[min_no_root][0]):
                         min_no_root = d
             for d in self.descendants(r):
-                dp[r][1] += dp[d][1] if len(dp[d][1]) < len(dp[d][0]) and d != min_no_root else dp[d][0]
+                dp[r][1].update(dp[d][1] if len(dp[d][1]) < len(dp[d][0]) and d != min_no_root else dp[d][0])
 
         dfs(self.root)
-        return dp[self.root][0] if len(dp[self.root][0]) <= len(dp[self.root][1]) else dp[self.root][1]
+        return root_val[0] if len((root_val := dp[self.root])[0]) <= len(root_val[1]) else root_val[1]
 
     def independent_set(self):
-        dp = {n: [[[n]], [[]]] for n in self.nodes}
+        dp = {n: [[{n}], [set()]] for n in self.nodes}
 
         def dfs(x: Node):
             for y in self.descendants(x):
                 dfs(y)
-                dp[x][0] = [c + d for c in dp[x][0] for d in dp[y][1]]
+                dp[x][0] = [c.union(d) for c in dp[x][0] for d in dp[y][1]]
                 optimal = dp[y][0] + dp[y][1]
                 if (c := len(dp[y][0][0])) != (d := len(dp[y][1][0])):
                     optimal = dp[y][0] if c > d else dp[y][1]
-                dp[x][1] = [c + d for c in dp[x][1] for d in optimal]
+                dp[x][1] = [c.union(d) for c in dp[x][1] for d in optimal]
 
         dfs(self.root)
         if (a := len(dp[self.root][0][0])) == (b := len(dp[self.root][1][0])):
@@ -512,7 +512,7 @@ class WeightedNodesTree(Tree):
         return super().remove(u)
 
     def weighted_vertex_cover(self):
-        dp = {n: [[[n]], [[]]] for n in self.nodes}
+        dp = {n: [[{n}], [set()]] for n in self.nodes}
 
         def dfs(x):
             for y in self.descendants(x):
@@ -520,8 +520,8 @@ class WeightedNodesTree(Tree):
                 optimal = dp[y][0] + dp[y][1]
                 if (c := sum(map(self.weights, dp[y][0][0]))) != (d := sum(map(self.weights, dp[y][1][0]))):
                     optimal = dp[y][0] if c < d else dp[y][1]
-                dp[x][0] = [c + d for c in dp[x][0] for d in optimal]
-                dp[x][1] = [c + d for c in dp[x][1] for d in dp[y][0]]
+                dp[x][0] = [c.union(d) for c in dp[x][0] for d in optimal]
+                dp[x][1] = [c.union(d) for c in dp[x][1] for d in dp[y][0]]
 
         dfs(self.root)
         if (a := sum(map(self.weights, dp[self.root][0][0]))) == (b := sum(map(self.weights, dp[self.root][1][0]))):
@@ -529,7 +529,7 @@ class WeightedNodesTree(Tree):
         return dp[self.root][0] if a < b else dp[self.root][1]
 
     def weighted_dominating_set(self):
-        dp = {n: [[n], []] for n in self.nodes}
+        dp = {n: [{n}, set()] for n in self.nodes}
 
         def dfs(r):
             if r in self.leaves:
@@ -537,7 +537,7 @@ class WeightedNodesTree(Tree):
             only_leaves, min_no_root = True, None
             for d in self.descendants(r):
                 if d in self.leaves:
-                    dp[r][1].append(min_no_root := d)
+                    dp[r][1].add(min_no_root := d)
                 else:
                     only_leaves = False
             if only_leaves:
@@ -545,15 +545,14 @@ class WeightedNodesTree(Tree):
             for d in self.descendants(r):
                 if d not in self.leaves:
                     dfs(d)
-                    dp[r][0] += dp[d][0] if ((d_weights_sum := sum(map(self.weights, dp[d][0])))
-                                             < sum(map(self.weights, dp[d][1]))) else dp[d][1]
+                    dp[r][0].update(dp[d][0] if (d_weights_sum := sum(map(self.weights, dp[d][0]))) < sum(map(self.weights, dp[d][1])) else dp[d][1])
                     if min_no_root is None or d_weights_sum < sum(map(self.weights, dp[min_no_root][0])):
                         min_no_root = d
             for d in self.descendants(r):
-                dp[r][1] += dp[d][1] if sum(map(self.weights, dp[d][1])) < sum(map(self.weights, dp[d][0])) and d != min_no_root else dp[d][0]
+                dp[r][1].update(dp[d][1] if sum(map(self.weights, dp[d][1])) < sum(map(self.weights, dp[d][0])) and d != min_no_root else dp[d][0])
 
         dfs(self.root)
-        return dp[self.root][0] if sum(map(self.weights, dp[self.root][0])) <= sum(map(self.weights, dp[self.root][1])) else dp[self.root][1]
+        return root_val[0] if sum(map(self.weights, (root_val := dp[self.root])[0])) <= sum(map(self.weights, root_val[1])) else root_val[1]
 
     def isomorphicFunction(self, other):
         if isinstance(other, WeightedNodesTree):
