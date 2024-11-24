@@ -263,7 +263,7 @@ class UndirectedGraph:
                 tmp.disconnect(path[i], path[i + 1])
             for i, u in enumerate(path):
                 while tmp.neighboring(u):
-                    curr = tmp.disconnect(u, v := tmp.neighboring(u)[0]).get_shortest_path(v, u)
+                    curr = tmp.disconnect(u, v := list(tmp.neighboring(u))[0]).get_shortest_path(v, u)
                     for j in range(len(curr) - 1):
                         tmp.disconnect(curr[j], curr[j + 1])
                     while curr:
@@ -275,44 +275,8 @@ class UndirectedGraph:
         neighborhood = {Node(l0): [Node(l1) for l1 in self.links if (l1.u in l0) ^ (l1.v in l0)] for l0 in self.links}
         return UndirectedGraph(neighborhood)
 
-    def interval_sort(self):
-        def get_path(given):
-            cont = None
-            if given[1:]:
-                for u in (c := given[0].value):
-                    if u in given[1].value:
-                        cont = u
-                        break
-                nodes = list(c)
-                nodes.remove(cont)
-                result = nodes + [cont]
-            else:
-                result = given[0].value
-            for i, c in enumerate(map(lambda x: list(x.value), given[1:])):
-                start = cont
-                c.remove(start)
-                try:
-                    cont = [x for x in c if x in given[i + 1]][0]
-                    c.remove(cont)
-                    result += c + [cont]
-                except IndexError:
-                    result += c
-            return result
-
-        if not self.links or self.full():
-            return list(self.nodes)
-        if not self.connected():
-            interval_sorts = list(map(lambda x: x.interval_sort(), self.connection_components()))
-            if any(not i_s for i_s in interval_sorts):
-                return []
-            return sum(interval_sorts, [])
-        tmp = self.cliquesGraph()
-        final_graph = tmp.cliquesGraph()
-        if any(final_graph.degrees(u) > 2 for u in final_graph.nodes):
-            return []
-        if len([u for u in final_graph.nodes if final_graph.degrees(u) == 1]) != 2:
-            return []
-        return get_path(get_path(final_graph.hamiltonWalk()))
+    def interval_sort(self) -> list[Node]:
+        pass
 
     def is_full_k_partite(self):
         return all(comp.full() for comp in self.complementary().connection_components())
@@ -327,12 +291,14 @@ class UndirectedGraph:
         return self.clique(*nodes)
 
     def cliques(self, k: int):
-        return [list(p) for p in combinations(self.nodes, abs(k)) if self.clique(*p)]
+        return [set(p) for p in combinations(self.nodes, abs(k)) if self.clique(*p)]
 
     def maxCliquesNode(self, u: Node):
         if (tmp := self.component(u)).full():
             return [tmp.nodes]
-        cliques = [{u, v} for v in tmp.neighboring(u)]
+        if not (neighbors := tmp.neighboring(u)):
+            return [{u}]
+        cliques = [{u, v} for v in neighbors]
         while True:
             new = set()
             for i, cl1 in enumerate(cliques):
@@ -358,7 +324,7 @@ class UndirectedGraph:
                         break
             cliques = list(newer)
 
-    def maxCliques(self):
+    def maxCliques(self) -> list[set[Node]]:
         result, low, high = [set()], 1, len(self.nodes)
         while low < high:
             if not (curr := self.cliques(mid := (low + high) // 2)):
@@ -372,8 +338,10 @@ class UndirectedGraph:
     def allMaximalCliquesNode(self, u: Node):
         if (tmp := self.component(u)).full():
             return [tmp.nodes]
-        cliques = [{u, v} for v in tmp.neighboring(u)]
-        result = {frozenset((u, v)) for v in tmp.neighboring(u)}
+        if not (neighbors := tmp.neighboring(u)):
+            return [{u}]
+        cliques = [{u, v} for v in neighbors]
+        result = {frozenset((u, v)) for v in neighbors}
         while True:
             changed = False
             for i, cl1 in enumerate(cliques):
@@ -417,18 +385,22 @@ class UndirectedGraph:
             r = [comp.independentSet() for comp in self.connection_components()]
             result = r[0]
             for i_s in r[1:]:
-                result = [a + b for a in result for b in i_s]
+                try:
+                    result = [a.union(b) for a in result for b in i_s]
+                except AttributeError:
+                    print(self, r, sep='\n')
+                    raise AttributeError
             return result
         if self.is_tree():
             if not self:
-                return [[]]
+                return [set()]
             return self.tree(list(self.nodes)[0]).independent_set()
         return self.complementary().maxCliques()
 
     def chromaticNodesPartition(self):
         def helper(curr):
             if tmp.full():
-                return curr + list(map(lambda x: [x], tmp.nodes))
+                return curr + list(map(lambda x: {x}, tmp.nodes))
             _result = max_nodes
             for anti_clique in tmp.independentSet():
                 neighbors = {n: tmp.neighboring(n) for n in anti_clique}
@@ -588,8 +560,8 @@ class UndirectedGraph:
             neighbors = tmp.neighboring(x)
             tmp.remove(x)
             if v is None and len(tmp.nodes) == 1 and tmp.nodes == neighbors:
-                tmp.add(x, neighbors[0])
-                return stack + [neighbors[0]]
+                tmp.add(x, list(neighbors)[0])
+                return stack + [list(neighbors)[0]]
             for y in neighbors:
                 if y == v:
                     if tmp.nodes == [v]:
