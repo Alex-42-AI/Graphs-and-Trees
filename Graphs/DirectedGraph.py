@@ -31,10 +31,10 @@ class DirectedGraph:
     def degrees(self, u: Node = None):
         return self.__degrees.copy() if u is None else self.__degrees[u]
 
-    def next(self, u: Node = None) -> dict | set:
+    def next(self, u: Node = None) -> dict[Node, set[Node]] | set[Node]:
         return self.__next if u is None else self.__next[u].copy()
 
-    def prev(self, u: Node = None) -> dict | set:
+    def prev(self, u: Node = None) -> dict[Node, set[Node]] | set[Node]:
         return self.__prev if u is None else self.__prev[u].copy()
 
     @property
