@@ -55,7 +55,7 @@ class UndirectedGraph:
     def links(self):
         return self.__links.copy()
 
-    def neighboring(self, u: Node = None) -> dict | set:
+    def neighboring(self, u: Node = None) -> dict[Node, set[Node]] | set[Node]:
         return (self.__neighboring if u is None else self.__neighboring[u]).copy()
 
     def degrees(self, u: Node = None):
