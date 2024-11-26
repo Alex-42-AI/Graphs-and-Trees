@@ -33,13 +33,13 @@ class DirectedGraph:
         return self.__links.copy()
 
     def degrees(self, u: Node = None) -> dict[Node, list[int, int]] | list[int, int]:
-        return self.__degrees.copy() if u is None else self.__degrees[u]
+        return (self.__degrees if u is None else self.__degrees[u]).copy()
 
     def next(self, u: Node = None) -> dict[Node, set[Node]] | set[Node]:
-        return self.__next if u is None else self.__next[u].copy()
+        return (self.__next if u is None else self.__next[u]).copy()
 
     def prev(self, u: Node = None) -> dict[Node, set[Node]] | set[Node]:
-        return self.__prev if u is None else self.__prev[u].copy()
+        return (self.__prev if u is None else self.__prev[u]).copy()
 
     @property
     def sources(self) -> set[Node]:
@@ -106,7 +106,7 @@ class DirectedGraph:
     def connection_components(self) -> list:
         components, rest = [], self.nodes
         while rest:
-            components.append(curr := self.component(list(rest)[0]))
+            components.append(curr := self.component(rest.copy().pop()))
             rest -= curr.nodes
         return components
 
@@ -115,7 +115,7 @@ class DirectedGraph:
             return False
         if m > (n - 1) * (n - 2) or n < 2:
             return True
-        queue, total = [u := list(self.nodes)[0]], {u}
+        queue, total = [u := self.nodes.pop()], {u}
         while queue:
             for v in filter(lambda x: x not in total, self.next(u := queue.pop(0)).union(self.prev(u))):
                 total.add(v), queue.append(v)
@@ -232,7 +232,7 @@ class DirectedGraph:
     def euler_tour(self) -> list[Node]:
         if self.euler_tour_exists():
             tmp = DirectedGraph.copy(self)
-            return tmp.disconnect(u := (l := list(tmp.links)[0])[1], [v := l[0]]).euler_walk(u, v)
+            return tmp.disconnect(u := (l := tmp.links.pop())[1], [v := l[0]]).euler_walk(u, v)
         return []
 
     def euler_walk(self, u: Node, v: Node) -> list[Node]:
@@ -245,7 +245,7 @@ class DirectedGraph:
                 tmp.disconnect(path[i + 1], [path[i]])
             for i, u in enumerate(path):
                 while tmp.next(u):
-                    curr = tmp.disconnect(v := list(tmp.next(u))[0], [u]).get_shortest_path(v, u)
+                    curr = tmp.disconnect(v := tmp.next(u).pop(), [u]).get_shortest_path(v, u)
                     for j in range(len(curr) - 1):
                         tmp.disconnect(curr[j + 1], [curr[j]])
                     while curr:
@@ -353,7 +353,7 @@ class DirectedGraph:
         if self.sources or self.sinks:
             return False
         tmp = DirectedGraph.copy(self)
-        can_end_in = tmp.prev(u := list(self.nodes)[0])
+        can_end_in = tmp.prev(u := self.nodes.pop())
         return dfs(u)
 
     def hamiltonWalkExists(self, u: Node, v: Node) -> bool:
@@ -366,7 +366,7 @@ class DirectedGraph:
     def hamiltonTour(self) -> list[Node]:
         if self.sources or self.sinks or not self:
             return []
-        for v in self.prev(u := list(self.nodes)[0]):
+        for v in self.prev(u := self.nodes.pop()):
             if result := self.hamiltonWalk(u, v):
                 return result
         return []
