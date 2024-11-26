@@ -412,12 +412,10 @@ class UndirectedGraph:
                     if len(c) > len(final):
                         for i in range(len(final), len(c)):
                             final.append(c[i])
-                return final
+                return curr + final
             if tmp.is_full_k_partite():
-                return [comp.nodes for comp in tmp.complementary().connection_components()]
+                return curr + [comp.nodes for comp in tmp.complementary().connection_components()]
             if tmp.is_tree():
-                if not tmp:
-                    return [set()]
                 queue, c0, c1, total = [tmp.nodes.pop()], tmp.nodes, set(), set()
                 while queue:
                     flag = (u := queue.pop(0)) in c0
@@ -425,7 +423,7 @@ class UndirectedGraph:
                         if flag:
                             c1.add(v), c0.remove(v)
                         queue.append(v), total.add(v)
-                return [c0, c1]
+                return curr + [c0, c1]
             if s := tmp.interval_sort(key=1):
                 result = []
                 while s:
@@ -437,10 +435,10 @@ class UndirectedGraph:
                     for u in current:
                         s.remove(u)
                     result.append(current)
-                return result
+                return curr + result
             res = [set() for _ in range(len(tmp.nodes))]
             pass
-            return list(filter(bool, res))
+            return curr + list(filter(bool, res))
 
         tmp = UndirectedGraph.copy(self)
         return helper([])
