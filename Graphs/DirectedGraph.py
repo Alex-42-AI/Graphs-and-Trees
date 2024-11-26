@@ -1,6 +1,6 @@
 from typing import Iterable
 
-from functools import reduce
+from collections import defaultdict
 
 from itertools import permutations, product
 
@@ -59,7 +59,7 @@ class DirectedGraph:
     def remove(self, u: Node, *rest: Node):
         for n in (u,) + rest:
             if n in self:
-                DirectedGraph.disconnect(self, n, list(self.prev(n)), list(self.next(n)))
+                DirectedGraph.disconnect(self, n, self.prev(n), self.next(n))
                 self.__nodes.remove(n), self.__degrees.pop(n), self.__prev.pop(n), self.__next.pop(n)
         return self
 
@@ -103,10 +103,10 @@ class DirectedGraph:
     def transposed(self):
         return DirectedGraph({u: (self.next(u), []) for u in self.nodes})
 
-    def connection_components(self) -> set:
-        components, rest = set(), self.nodes
+    def connection_components(self) -> list:
+        components, rest = [], self.nodes
         while rest:
-            components.add(curr := self.component(list(rest)[0]))
+            components.append(curr := self.component(list(rest)[0]))
             rest -= curr.nodes
         return components
 
@@ -181,8 +181,7 @@ class DirectedGraph:
             stack.remove(n)
         return False
 
-    def dag(self) -> bool:
-        return not self.has_loop()
+    dag = lambda x: not x.has_loop()
 
     def toposort(self) -> list[Node]:
         if not self.dag():
@@ -192,10 +191,7 @@ class DirectedGraph:
         while layer:
             new = set()
             for u in layer:
-                total.add(u)
-                for v in self.next(u):
-                    if v not in new:
-                        new.add(v)
+                total.add(u), new.update(self.next(u))
             for u in new.copy():
                 if any(v not in total for v in self.prev(u)):
                     new.remove(u)
@@ -236,7 +232,7 @@ class DirectedGraph:
     def euler_tour(self) -> list[Node]:
         if self.euler_tour_exists():
             tmp = DirectedGraph.copy(self)
-            return tmp.disconnect(u := (l := list(tmp.links)[0])[0], [v := l[1]]).euler_walk(u, v)
+            return tmp.disconnect(u := (l := list(tmp.links)[0])[1], [v := l[0]]).euler_walk(u, v)
         return []
 
     def euler_walk(self, u: Node, v: Node) -> list[Node]:
@@ -257,7 +253,7 @@ class DirectedGraph:
             return path
         return []
 
-    def strongly_connected_components(self) -> set[list[Node]]:
+    def strongly_connected_components(self) -> list[set[Node]]:
         def helper(x):
             def bfs(s):
                 previous, queue, so_far = {}, [s], {s}
@@ -275,24 +271,24 @@ class DirectedGraph:
             for y in filter(lambda _y: _y not in total, self.prev(x)):
                 if tmp := self.get_shortest_path(x, y):
                     for u in tmp:
-                        curr.append(u), total.add(u)
+                        curr.add(u), total.add(u)
                         for v in self.next(u):
                             if v not in total and v not in tmp:
                                 bfs(v)
                     return
-            curr.append(x)
+            curr.add(x)
 
         if self.dag():
             return list(map(lambda x: {x}, self.nodes))
         if not self.connected():
-            return reduce(lambda x, y: x.union(y.strongly_connected_components()),self.connection_components())
+            return sum(map(lambda x: x.strongly_connected_components(), self.connection_components()), [])
         if not self.sources and not self.sinks:
             return [self.nodes]
-        total, res = set(), set()
+        total, res = set(), []
         for n in self.nodes:
             if n not in total:
-                curr = []
-                total.add(n), helper(n), res.add(curr)
+                curr = set()
+                total.add(n), helper(n), res.append(curr)
         return res
 
     def scc_dag(self):
@@ -387,12 +383,12 @@ class DirectedGraph:
                     too_many = True
             prev_x, next_x = tmp.prev(x), tmp.next(x)
             tmp.remove(x)
-            if not tmp.nodes:
+            if not tmp:
                 tmp.add(x, prev_x, next_x)
                 return stack
             for y in next_x:
                 if y == v:
-                    if tmp.nodes == [v]:
+                    if tmp.nodes == {v}:
                         tmp.add(x, prev_x, next_x)
                         return stack + [v]
                     continue
@@ -422,21 +418,15 @@ class DirectedGraph:
         if isinstance(other, DirectedGraph):
             if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
                 return {}
-            this_degrees, other_degrees = {}, {}
+            this_degrees, other_degrees = defaultdict(int), defaultdict(int)
             for d in map(tuple, self.degrees().values()):
-                if d in this_degrees:
-                    this_degrees[d] += 1
-                else:
-                    this_degrees[d] = 1
+                this_degrees[d] += 1
             for d in map(tuple, other.degrees().values()):
-                if d in other_degrees:
-                    other_degrees[d] += 1
-                else:
-                    other_degrees[d] = 1
+                other_degrees[d] += 1
             if this_degrees != other_degrees:
                 return {}
-            this_nodes_degrees = {d: [] for d in this_degrees}
-            other_nodes_degrees = {d: [] for d in other_degrees}
+            this_nodes_degrees = defaultdict(list)
+            other_nodes_degrees = defaultdict(list)
             for n in self.nodes:
                 this_nodes_degrees[tuple(self.degrees(n))].append(n)
             for n in other.nodes:
@@ -584,31 +574,20 @@ class WeightedNodesDirectedGraph(DirectedGraph):
         if isinstance(other, WeightedNodesDirectedGraph):
             if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
                 return {}
-            this_degrees, other_degrees, this_weights, other_weights = {}, {}, {}, {}
+            this_degrees, other_degrees = defaultdict(int), defaultdict(int)
+            this_weights, other_weights = defaultdict(int), defaultdict(int)
             for d in map(tuple, self.degrees().values()):
-                if d in this_degrees:
-                    this_degrees[d] += 1
-                else:
-                    this_degrees[d] = 1
+                this_degrees[d] += 1
             for d in map(tuple, other.degrees().values()):
-                if d in other_degrees:
-                    other_degrees[d] += 1
-                else:
-                    other_degrees[d] = 1
+                other_degrees[d] += 1
             for w in self.node_weights().values():
-                if w in this_weights:
-                    this_weights[w] += 1
-                else:
-                    this_weights[w] = 1
+                this_weights[w] += 1
             for w in other.node_weights().values():
-                if w in other_weights:
-                    other_weights[w] += 1
-                else:
-                    other_weights[w] = 1
+                other_weights[w] += 1
             if this_degrees != other_degrees or this_weights != other_weights:
                 return {}
-            this_nodes_degrees = {d: [] for d in this_degrees}
-            other_nodes_degrees = {d: [] for d in other_degrees}
+            this_nodes_degrees = defaultdict(list)
+            other_nodes_degrees = defaultdict(list)
             for n in self.nodes:
                 this_nodes_degrees[tuple(self.degrees(n))].append(n)
             for n in other.nodes:
@@ -776,31 +755,20 @@ class WeightedLinksDirectedGraph(DirectedGraph):
         if isinstance(other, WeightedLinksDirectedGraph):
             if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
                 return {}
-            this_degrees, other_degrees, this_weights, other_weights = {}, {}, {}, {}
+            this_degrees, other_degrees = defaultdict(int), defaultdict(int)
+            this_weights, other_weights = defaultdict(int), defaultdict(int)
             for d in map(tuple, self.degrees().values()):
-                if d in this_degrees:
-                    this_degrees[d] += 1
-                else:
-                    this_degrees[d] = 1
+                this_degrees[d] += 1
             for d in map(tuple, other.degrees().values()):
-                if d in other_degrees:
-                    other_degrees[d] += 1
-                else:
-                    other_degrees[d] = 1
+                other_degrees[d] += 1
             for w in self.link_weights().values():
-                if w in this_weights:
-                    this_weights[w] += 1
-                else:
-                    this_weights[w] = 1
+                this_weights[w] += 1
             for w in other.link_weights().values():
-                if w in other_weights:
-                    other_weights[w] += 1
-                else:
-                    other_weights[w] = 1
+                other_weights[w] += 1
             if this_degrees != other_degrees or this_weights != other_weights:
                 return {}
-            this_nodes_degrees = {d: [] for d in this_degrees}
-            other_nodes_degrees = {d: [] for d in other_degrees}
+            this_nodes_degrees = defaultdict(list)
+            other_nodes_degrees = defaultdict(list)
             for n in self.nodes:
                 this_nodes_degrees[tuple(self.degrees(n))].append(n)
             for n in other.nodes:
@@ -991,43 +959,25 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
         if isinstance(other, WeightedDirectedGraph):
             if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
                 return {}
-            this_degrees, other_degrees = {}, {}
-            this_node_weights, other_node_weights = {}, {}
-            this_link_weights, other_link_weights = {}, {}
+            this_degrees, other_degrees = defaultdict(int), defaultdict(int)
+            this_node_weights, other_node_weights = defaultdict(int), defaultdict(int)
+            this_link_weights, other_link_weights = defaultdict(int), defaultdict(int)
             for d in map(tuple, self.degrees().values()):
-                if d in this_degrees:
-                    this_degrees[d] += 1
-                else:
-                    this_degrees[d] = 1
+                this_degrees[d] += 1
             for d in map(tuple, other.degrees().values()):
-                if d in other_degrees:
-                    other_degrees[d] += 1
-                else:
-                    other_degrees[d] = 1
+                other_degrees[d] += 1
             for w in self.link_weights().values():
-                if w in this_link_weights:
-                    this_link_weights[w] += 1
-                else:
-                    this_link_weights[w] = 1
+                this_link_weights[w] += 1
             for w in other.link_weights().values():
-                if w in other_link_weights:
-                    other_link_weights[w] += 1
-                else:
-                    other_link_weights[w] = 1
+                other_link_weights[w] += 1
             for w in self.node_weights().values():
-                if w in this_node_weights:
-                    this_node_weights[w] += 1
-                else:
-                    this_node_weights[w] = 1
+                this_node_weights[w] += 1
             for w in other.node_weights().values():
-                if w in other_node_weights:
-                    other_node_weights[w] += 1
-                else:
-                    other_node_weights[w] = 1
+                other_node_weights[w] += 1
             if this_degrees != other_degrees or this_node_weights != other_node_weights or this_link_weights != other_link_weights:
                 return {}
-            this_nodes_degrees = {d: [] for d in this_degrees}
-            other_nodes_degrees = {d: [] for d in other_degrees}
+            this_nodes_degrees = defaultdict(list)
+            other_nodes_degrees = defaultdict(list)
             for n in self.nodes:
                 this_nodes_degrees[tuple(self.degrees(n))].append(n)
             for n in other.nodes:
