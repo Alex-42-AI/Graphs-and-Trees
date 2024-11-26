@@ -1,4 +1,6 @@
-from collections import Iterable
+from typing import Iterable
+
+from collections import defaultdict
 
 from itertools import permutations, combinations, product
 
@@ -124,10 +126,10 @@ class UndirectedGraph:
             res.disconnect(l.u, l.v)
         return res
 
-    def connection_components(self) -> set:
-        components, rest = set(), self.nodes
+    def connection_components(self) -> list:
+        components, rest = [], self.nodes
         while rest:
-            components.add(curr := self.component(list(rest)[0]))
+            components.append(curr := self.component(list(rest)[0]))
             rest -= curr.nodes
         return components
 
@@ -278,23 +280,7 @@ class UndirectedGraph:
         return UndirectedGraph(neighborhood)
 
     def interval_sort(self, key=0) -> list[Node]:
-        def swap(i, j):
-            matrix[i], matrix[j] = matrix[j], matrix[i]
-            order[i], order[j] = order[j], order[i]
-            for k in range(len(matrix)):
-                matrix[k][i], matrix[k][j] = matrix[k][j], matrix[k][i]
-
-        order = list(self.nodes)
-        matrix = [[v == u or Link(u, v) in self.links for v in self.nodes] for u in self.nodes]
-        if key:
-            for r in range(len(self.nodes)):
-                for c in range(len(self.nodes)):
-                    pass
-        else:
-            for r in range(len(self.nodes)):
-                for c in range(len(self.nodes)):
-                    pass
-        return order
+        pass
 
     def is_full_k_partite(self) -> bool:
         return all(comp.full() for comp in self.complementary().connection_components())
@@ -413,18 +399,7 @@ class UndirectedGraph:
 
     def chromaticNodesPartition(self) -> list[set[Node]]:
         def helper(curr):
-            if tmp.full():
-                return curr + list(map(lambda x: {x}, tmp.nodes))
-            _result = max_nodes
-            for anti_clique in tmp.independentSet():
-                neighbors = {n: tmp.neighboring(n) for n in anti_clique}
-                tmp.remove(*anti_clique)
-                res = helper(curr + [anti_clique])
-                for n in anti_clique:
-                    tmp.add(n, *neighbors[n])
-                if len(res) < len(_result):
-                    _result = res
-            return _result
+            pass
 
         if not self.connected():
             r = [comp.chromaticNodesPartition() for comp in self.connection_components()]
@@ -602,21 +577,15 @@ class UndirectedGraph:
         if isinstance(other, UndirectedGraph):
             if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
                 return {}
-            this_degrees, other_degrees = {}, {}
+            this_degrees, other_degrees = defaultdict(int), defaultdict(int)
             for d in self.degrees().values():
-                if d in this_degrees:
-                    this_degrees[d] += 1
-                else:
-                    this_degrees[d] = 1
+                this_degrees[d] += 1
             for d in other.degrees().values():
-                if d in other_degrees:
-                    other_degrees[d] += 1
-                else:
-                    other_degrees[d] = 1
+                other_degrees[d] += 1
             if this_degrees != other_degrees:
                 return {}
-            this_nodes_degrees = {d: [] for d in this_degrees}
-            other_nodes_degrees = {d: [] for d in other_degrees}
+            this_nodes_degrees = defaultdict(list)
+            other_nodes_degrees = defaultdict(list)
             for n in self.nodes:
                 this_nodes_degrees[self.degrees(n)].append(n)
             for n in other.nodes:
@@ -802,31 +771,19 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         if isinstance(other, WeightedNodesUndirectedGraph):
             if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
                 return {}
-            this_degrees, other_degrees, this_weights, other_weights = {}, {}, {}, {}
+            this_degrees, other_degrees, this_weights, other_weights = defaultdict(int), defaultdict(int), defaultdict(int), defaultdict(int)
             for d in self.degrees().values():
-                if d in this_degrees:
-                    this_degrees[d] += 1
-                else:
-                    this_degrees[d] = 1
+                this_degrees[d] += 1
             for d in other.degrees().values():
-                if d in other_degrees:
-                    other_degrees[d] += 1
-                else:
-                    other_degrees[d] = 1
+                other_degrees[d] += 1
             for w in self.node_weights().values():
-                if w in this_weights:
-                    this_weights[w] += 1
-                else:
-                    this_weights[w] = 1
+                this_weights[w] += 1
             for w in other.node_weights().values():
-                if w in other_weights:
-                    other_weights[w] += 1
-                else:
-                    other_weights[w] = 1
+                other_weights[w] += 1
             if this_degrees != other_degrees or this_weights != other_weights:
                 return {}
-            this_nodes_degrees = {d: [] for d in this_degrees}
-            other_nodes_degrees = {d: [] for d in other_degrees}
+            this_nodes_degrees = defaultdict(list)
+            other_nodes_degrees = defaultdict(list)
             for n in self.nodes:
                 this_nodes_degrees[self.degrees(n)].append(n)
             for n in other.nodes:
@@ -1044,31 +1001,19 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         if isinstance(other, WeightedLinksUndirectedGraph):
             if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
                 return {}
-            this_degrees, other_degrees, this_weights, other_weights = {}, {}, {}, {}
+            this_degrees, other_degrees, this_weights, other_weights = defaultdict(int), defaultdict(int), defaultdict(int), defaultdict(int)
             for d in self.degrees().values():
-                if d in this_degrees:
-                    this_degrees[d] += 1
-                else:
-                    this_degrees[d] = 1
+                this_degrees[d] += 1
             for d in other.degrees().values():
-                if d in other_degrees:
-                    other_degrees[d] += 1
-                else:
-                    other_degrees[d] = 1
+                other_degrees[d] += 1
             for w in self.link_weights().values():
-                if w in this_weights:
-                    this_weights[w] += 1
-                else:
-                    this_weights[w] = 1
+                this_weights[w] += 1
             for w in other.link_weights().values():
-                if w in other_weights:
-                    other_weights[w] += 1
-                else:
-                    other_weights[w] = 1
+                other_weights[w] += 1
             if this_degrees != other_degrees or this_weights != other_weights:
                 return {}
-            this_nodes_degrees = {d: [] for d in this_degrees}
-            other_nodes_degrees = {d: [] for d in other_degrees}
+            this_nodes_degrees = defaultdict(list)
+            other_nodes_degrees = defaultdict(list)
             for n in self.nodes:
                 this_nodes_degrees[self.degrees(n)].append(n)
             for n in other.nodes:
@@ -1242,43 +1187,25 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
         if isinstance(other, WeightedUndirectedGraph):
             if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
                 return {}
-            this_degrees, other_degrees = {}, {}
-            this_node_weights, other_node_weights = {}, {}
-            this_link_weights, other_link_weights = {}, {}
+            this_degrees, other_degrees = defaultdict(int), defaultdict(int)
+            this_node_weights, other_node_weights = defaultdict(int), defaultdict(int)
+            this_link_weights, other_link_weights = defaultdict(int), defaultdict(int)
             for d in self.degrees().values():
-                if d in this_degrees:
-                    this_degrees[d] += 1
-                else:
-                    this_degrees[d] = 1
+                this_degrees[d] += 1
             for d in other.degrees().values():
-                if d in other_degrees:
-                    other_degrees[d] += 1
-                else:
-                    other_degrees[d] = 1
+                other_degrees[d] += 1
             for w in self.link_weights().values():
-                if w in this_link_weights:
-                    this_link_weights[w] += 1
-                else:
-                    this_link_weights[w] = 1
+                this_link_weights[w] += 1
             for w in other.link_weights().values():
-                if w in other_link_weights:
-                    other_link_weights[w] += 1
-                else:
-                    other_link_weights[w] = 1
+                other_link_weights[w] += 1
             for w in self.node_weights().values():
-                if w in this_node_weights:
-                    this_node_weights[w] += 1
-                else:
-                    this_node_weights[w] = 1
+                this_node_weights[w] += 1
             for w in other.node_weights().values():
-                if w in other_node_weights:
-                    other_node_weights[w] += 1
-                else:
-                    other_node_weights[w] = 1
+                other_node_weights[w] += 1
             if this_degrees != other_degrees or this_node_weights != other_node_weights or this_link_weights != other_link_weights:
                 return {}
-            this_nodes_degrees = {d: [] for d in this_degrees}
-            other_nodes_degrees = {d: [] for d in other_degrees}
+            this_nodes_degrees = defaultdict(list)
+            other_nodes_degrees = defaultdict(list)
             for n in self.nodes:
                 this_nodes_degrees[self.degrees(n)].append(n)
             for n in other.nodes:
