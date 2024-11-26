@@ -239,7 +239,7 @@ with open("Undirected graphs.txt", "w", encoding="utf-8") as file:
     file.write(f"Chromatic nodes partition of graph 1: {ug0.chromaticNodesPartition()}\n")
     file.write(f"Chromatic links partition of graph 1: {ug0.chromaticLinksPartition()}\n")
     file.write(f"Chromatic nodes partition of graph 2: {ug1.chromaticNodesPartition()}\n")
-    file.write(f"Chromatic links partition of graph 2: {ug1.chromaticNodesPartition()}\n")
+    file.write(f"Chromatic links partition of graph 2: {ug1.chromaticLinksPartition()}\n")
     file.write(f"Path with a length of 4 in graph 1 between 4 and 5: {ug0.pathWithLength(n4, n5, 4)}\n")
     file.write(f"Loop with a length of 5 in graph 1: {ug0.loopWithLength(5)}\n")
     file.write(f"Graph 1 optimal vertex covers: {ug0.vertexCover()}\n")
