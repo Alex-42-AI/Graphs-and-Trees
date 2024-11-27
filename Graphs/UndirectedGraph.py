@@ -4,9 +4,9 @@ from collections import defaultdict
 
 from itertools import permutations, combinations, product
 
-from Personal.DiscreteMath.Graphs.General import Node
+from Graphs.General import Node
 
-from Personal.DiscreteMath.Graphs.Tree import Tree, WeightedTree
+from Graphs.Tree import Tree, WeightedTree
 
 
 class Link:
@@ -421,9 +421,8 @@ class UndirectedGraph:
             for c in r[1:]:
                 for i in range(min(len(c), len(final))):
                     final[i].update(c[i])
-                if len(c) > len(final):
-                    for i in range(len(final), len(c)):
-                        final.append(c[i])
+                for i in range(len(final), len(c)):
+                    final.append(c[i])
             return final
         if self.is_full_k_partite():
             return [comp.nodes for comp in self.complementary().connection_components()]
