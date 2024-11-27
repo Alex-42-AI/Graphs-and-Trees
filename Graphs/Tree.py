@@ -318,7 +318,7 @@ class Tree:
         if u in self:
             tmp = self.subtree(u) if subtree else None
             self.remove(u, subtree)
-            self.add(at_new, {u: self.weights(u)} if isinstance(self, WeightedNodesTree) else u)
+            self.add(at_new, {u: self.weights(u)} if isinstance(self, WeightedTree) else u)
             if subtree:
                 self.add_tree(tmp)
         return self
@@ -457,7 +457,7 @@ class Tree:
         return f"Tree({self.root}, {inheritance})"
 
 
-class WeightedNodesTree(Tree):
+class WeightedTree(Tree):
     def __init__(self, root_and_weight: (Node, float), inheritance: dict[Node, tuple[float, Iterable[Node]]] = {}):
         super().__init__(root_and_weight[0])
         self.__weights = dict([root_and_weight])
@@ -475,16 +475,21 @@ class WeightedNodesTree(Tree):
             self.__weights[u] = w
         return self
 
+    def increase_weight(self, u: Node, w: float):
+        if u in self.weights:
+            self.set_weight(u, self.weights(u) + w)
+        return self
+
     def copy(self):
         inheritance = {u: (self.weights(u), {v: self.weights(v) for v in self.descendants(u)}) for u in self.nodes}
-        return WeightedNodesTree((self.root, self.weights(self.root)), inheritance)
+        return WeightedTree((self.root, self.weights(self.root)), inheritance)
 
     def subtree(self, u: Node):
         if u not in self:
             raise ValueError("Unrecognized node!")
         if u == self.root:
             return self
-        queue, res = [u], WeightedNodesTree((u, self.weights(u)))
+        queue, res = [u], WeightedTree((u, self.weights(u)))
         while queue:
             for n in self.descendants(v := queue.pop(0)):
                 res.add(v, {n: self.weights(n)}), queue.append(n)
@@ -502,7 +507,7 @@ class WeightedNodesTree(Tree):
         super().add_tree(tree)
         queue = [tree.root]
         while queue:
-            self.set_weight((u := queue.pop(0)), tree.weights(u) if isinstance(tree, WeightedNodesTree) else 0)
+            self.set_weight((u := queue.pop(0)), tree.weights(u) if isinstance(tree, WeightedTree) else 0)
             queue += self.descendants(u)
         return self
 
@@ -557,7 +562,7 @@ class WeightedNodesTree(Tree):
         return root_val[0] if sum(map(self.weights, (root_val := dp[self.root])[0])) <= sum(map(self.weights, root_val[1])) else root_val[1]
 
     def isomorphicFunction(self, other) -> dict[Node, Node]:
-        if isinstance(other, WeightedNodesTree):
+        if isinstance(other, WeightedTree):
             if len(self.nodes) != len(other.nodes) or len(self.leaves) != len(other.leaves) or len(self.descendants(self.root)) != len(other.descendants(other.root)):
                 return {}
             this_hierarchies, other_hierarchies = {}, {}
@@ -604,7 +609,7 @@ class WeightedNodesTree(Tree):
         return super().isomorphicFunction(other)
 
     def __eq__(self, other):
-        if isinstance(other, WeightedNodesTree):
+        if isinstance(other, WeightedTree):
             return self.weights() == other.weights() and super().__eq__(other)
         return False
 
