@@ -447,7 +447,7 @@ class UndirectedGraph:
                     sort.remove(u)
                 result.append(current)
             return result
-        independent_sets = [_ for _ in anti_cliques(set())][1:]
+        independent_sets = [i_s for i_s in anti_cliques(set())][1:]
         return helper([])
 
     def chromaticLinksPartition(self) -> list[set[Node]]:
