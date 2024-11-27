@@ -636,8 +636,7 @@ class UndirectedGraph:
             return other + self
         res = self.copy()
         for n in other.nodes:
-            if n not in res:
-                res.add(n)
+            res.add(n)
         for l in other.links:
             res.connect(l.u, l.v)
         return res
@@ -673,7 +672,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
     def total_nodes_weight(self) -> float:
         return sum(self.node_weights().values())
 
-    def add(self, n_w: (Node, float), *current_nodes: Node):
+    def add(self, n_w: tuple[Node, float], *current_nodes: Node):
         super().add(n_w[0], *current_nodes)
         if n_w[0] not in self.node_weights():
             self.set_weight(*n_w)
@@ -687,6 +686,11 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
     def set_weight(self, u: Node, w: float):
         if u in self:
             self.__node_weights[u] = w
+        return self
+
+    def increase_weight(self, u: Node, w: float):
+        if u in self.node_weights:
+            self.set_weight(u, self.node_weights(u) + w)
         return self
 
     def copy(self):
@@ -832,7 +836,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
             res = self.copy()
             for n in other.nodes:
                 if n in res:
-                    res.set_weight(n, res.node_weights(n) + other.node_weights(n))
+                    res.increase_weight(n, other.node_weights(n))
                 else:
                     res.add((n, other.node_weights(n)))
             for l in other.links:
@@ -909,6 +913,11 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
     def set_weight(self, l: Link, w: float):
         if l.u in self.neighboring(l.v):
             self.__link_weights[l] = w
+        return self
+
+    def increase_weight(self, l: Link, w: float):
+        if l in self.link_weights:
+            self.set_weight(l, self.link_weights(l) + w)
         return self
 
     def copy(self):
@@ -1056,11 +1065,10 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         if isinstance(other, WeightedLinksUndirectedGraph):
             res = self.copy()
             for n in other.nodes:
-                if n not in res:
-                    res.add(n)
+                res.add(n)
             for l in other.links:
                 if l in res.links:
-                    res.set_weight(l, res.link_weights(l) + other.link_weights(l))
+                    res.increase_weight(l, other.link_weights(l))
                 else:
                     res.connect(l.u, {l.v: other.link_weights(l)})
             return res
@@ -1092,7 +1100,7 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
     def total_weight(self):
         return self.total_nodes_weight + self.total_links_weight
 
-    def add(self, n_w: (Node, float), nodes_weights: dict[Node, float] = {}):
+    def add(self, n_w: tuple[Node, float], nodes_weights: dict[Node, float] = {}):
         WeightedLinksUndirectedGraph.add(self, n_w[0], nodes_weights)
         if n_w[0] not in self.node_weights():
             self.set_weight(*n_w)
@@ -1113,9 +1121,16 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
 
     def set_weight(self, el: Node | Link, w: float):
         if el in self:
-            WeightedNodesUndirectedGraph.set_weight(self, el, w)
-        elif el in self.links:
+            return super().set_weight(el, w)
+        if el in self.links:
             WeightedLinksUndirectedGraph.set_weight(self, el, w)
+        return self
+
+    def increase_weight(self, el: Node | Link, w: float):
+        if el in self.node_weights:
+            return self.set_weight(el, self.node_weights(el) + w)
+        if el in self.link_weights:
+            self.set_weight(el, self.link_weights(el) + w)
         return self
 
     def copy(self):
@@ -1252,14 +1267,14 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
             res = self.copy()
             for n in other.nodes:
                 if n in res:
-                    res.set_weight(n, res.node_weights(n) + other.node_weights(n))
+                    res.increase_weight(n, other.node_weights(n))
                 else:
                     res.add((n, other.node_weights(n)))
             for l in other.links:
-                if (v := l.v) in res.neighboring(u := l.u):
-                    res.set_weight(l, res.link_weights(l) + other.link_weights(l))
+                if l in res.links:
+                    res.increase_weight(l, other.link_weights(l))
                 else:
-                    res.connect(u, {v: other.link_weights(l)})
+                    res.connect(l.u, {l.v: other.link_weights(l)})
             return res
         if isinstance(other, WeightedNodesUndirectedGraph):
             return self + WeightedUndirectedGraph({u: (other.node_weights(u), {v: 0 for v in other.neighboring(u)}) for u in other.nodes})
