@@ -6,7 +6,7 @@ from itertools import permutations, combinations, product
 
 from Graphs.General import Node
 
-from Graphs.Tree import Tree, WeightedNodesTree
+from Graphs.Tree import Tree, WeightedTree
 
 
 class Link:
@@ -104,21 +104,19 @@ class UndirectedGraph:
     def copy(self):
         return UndirectedGraph(self.neighboring())
 
-    def width(self) -> int:
-        result = 0
-        for n in self.nodes:
-            res, total, queue = 0, {n}, [n]
+    def excentricity(self, u: Node) -> int:
+        res, total, queue = 0, {u}, [u]
+        while queue:
+            new = []
             while queue:
-                new = []
-                while queue:
-                    for v in filter(lambda x: x not in total, self.neighboring(_ := queue.pop(0))):
-                        new.append(v)
-                        total.add(v)
-                queue = new.copy()
-                res += bool(new)
-            if res > result:
-                result = res
-        return result
+                for v in filter(lambda x: x not in total, self.neighboring(_ := queue.pop(0))):
+                    new.append(v), total.add(v)
+            queue = new.copy()
+            res += bool(new)
+        return res
+
+    def diameter(self) -> int:
+        return max(self.excentricity(u) for u in self.nodes)
 
     def complementary(self):
         res = UndirectedGraph({u: self.nodes for u in self.nodes})
@@ -398,49 +396,59 @@ class UndirectedGraph:
         return self.complementary().maxCliques()
 
     def chromaticNodesPartition(self) -> list[set[Node]]:
-        def helper(curr):
-            if tmp.full():
-                return curr + list(map(lambda _x: {_x}, tmp.nodes))
-            if not tmp.links:
-                return curr + [tmp.nodes]
-            if not tmp.connected():
-                r = [comp.chromaticNodesPartition() for comp in tmp.connection_components()]
-                final = r[0]
-                for c in r[1:]:
-                    for i in range(min(len(c), len(final))):
-                        final[i].update(c[i])
-                    if len(c) > len(final):
-                        for i in range(len(final), len(c)):
-                            final.append(c[i])
-                return curr + final
-            if tmp.is_full_k_partite():
-                return curr + [comp.nodes for comp in tmp.complementary().connection_components()]
-            if tmp.is_tree():
-                queue, c0, c1, total = [tmp.nodes.pop()], tmp.nodes, set(), set()
-                while queue:
-                    flag = (u := queue.pop(0)) in c0
-                    for v in filter(lambda x: x not in total, tmp.neighboring(u)):
-                        if flag:
-                            c1.add(v), c0.remove(v)
-                        queue.append(v), total.add(v)
-                return curr + [c0, c1]
-            if s := tmp.interval_sort(key=1):
-                result = []
-                while s:
-                    current, last = set(), None
-                    for u in s:
-                        if last is None or u not in tmp.neighboring(last):
-                            current.add(u)
-                            last = u
-                    for u in current:
-                        s.remove(u)
-                    result.append(current)
-                return curr + result
-            res = [set() for _ in range(len(tmp.nodes))]
-            pass
-            return curr + list(filter(bool, res))
+        def anti_cliques(curr, ii=0):
+            yield curr
+            for j, n in enumerate(list(self.nodes)[ii:]):
+                if curr.isdisjoint(self.neighboring(n)):
+                    for res in anti_cliques(curr.union({n}), ii + j + 1):
+                        yield res
 
-        tmp = UndirectedGraph.copy(self)
+        def helper(partition, union=set(), ii=0):
+            if union == self.nodes:
+                return partition
+            res = list(map(lambda x: {x}, self.nodes))
+            for j, s in enumerate(independent_sets[ii:]):
+                if s.isdisjoint(union):
+                    curr = helper(partition + [s], union.union(s), ii + j + 1)
+                    if len(curr) == 2:
+                        return curr
+                    res = min(res, curr, key=len)
+            return res
+
+        if not self.connected():
+            r = [comp.chromaticNodesPartition() for comp in self.connection_components()]
+            final = r[0]
+            for c in r[1:]:
+                for i in range(min(len(c), len(final))):
+                    final[i].update(c[i])
+                if len(c) > len(final):
+                    for i in range(len(final), len(c)):
+                        final.append(c[i])
+            return final
+        if self.is_full_k_partite():
+            return [comp.nodes for comp in self.complementary().connection_components()]
+        if self.is_tree():
+            queue, c0, c1, total = [self.nodes.pop()], self.nodes, set(), set()
+            while queue:
+                flag = (u := queue.pop(0)) in c0
+                for v in filter(lambda x: x not in total, self.neighboring(u)):
+                    if flag:
+                        c1.add(v), c0.remove(v)
+                    queue.append(v), total.add(v)
+            return [c0, c1]
+        if sort := self.interval_sort(key=1):
+            result = []
+            while sort:
+                current, last = set(), None
+                for u in sort:
+                    if last is None or u not in self.neighboring(last):
+                        current.add(u)
+                        last = u
+                for u in current:
+                    sort.remove(u)
+                result.append(current)
+            return result
+        independent_sets = [_ for _ in anti_cliques(set())][1:]
         return helper([])
 
     def chromaticLinksPartition(self) -> list[set[Node]]:
@@ -685,8 +693,8 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
     def copy(self):
         return WeightedNodesUndirectedGraph({n: (self.node_weights(n), self.neighboring(n)) for n in self.nodes})
 
-    def weighted_tree(self, n: Node) -> WeightedNodesTree:
-        tree = WeightedNodesTree((n, self.node_weights(n)))
+    def weighted_tree(self, n: Node) -> WeightedTree:
+        tree = WeightedTree((n, self.node_weights(n)))
         queue, total = [n], {n}
         while queue:
             for v in filter(lambda x: x not in total, self.neighboring(u := queue.pop(0))):
