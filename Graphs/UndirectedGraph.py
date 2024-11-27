@@ -4,9 +4,9 @@ from collections import defaultdict
 
 from itertools import permutations, combinations, product
 
-from Graphs.General import Node
+from Personal.DiscreteMath.Graphs.General import Node
 
-from Graphs.Tree import Tree, WeightedTree
+from Personal.DiscreteMath.Graphs.Tree import Tree, WeightedTree
 
 
 class Link:
@@ -277,7 +277,7 @@ class UndirectedGraph:
         neighborhood = {Node(l0): [Node(l1) for l1 in self.links if (l1.u in l0) ^ (l1.v in l0)] for l0 in self.links}
         return UndirectedGraph(neighborhood)
 
-    def interval_sort(self, key=0) -> list[Node]:
+    def interval_sort(self, ending=0) -> list[Node]:
         pass
 
     def is_full_k_partite(self) -> bool:
@@ -436,7 +436,7 @@ class UndirectedGraph:
                         c1.add(v), c0.remove(v)
                     queue.append(v), total.add(v)
             return [c0, c1]
-        if sort := self.interval_sort(key=1):
+        if sort := self.interval_sort(ending=1):
             result = []
             while sort:
                 current, last = set(), None
@@ -475,6 +475,16 @@ class UndirectedGraph:
                 isolated.add(n), nodes.remove(n)
         return helper(isolated, isolated)
 
+    def loopWithLength(self, length: int) -> list[Node]:
+        if abs(length) < 3:
+            return []
+        for l in (tmp := UndirectedGraph.copy(self)).links:
+            res = tmp.disconnect(u := l.u, v := l.v).pathWithLength(v, u, abs(length) - 1)
+            tmp.connect(u, v)
+            if res:
+                return res
+        return []
+
     def pathWithLength(self, u: Node, v: Node, length: int) -> list[Node]:
         def dfs(x: Node, l: int, stack: list[Link]):
             if not l:
@@ -489,16 +499,6 @@ class UndirectedGraph:
         if length + 1 == k:
             return tmp
         return dfs(u, length, [])
-
-    def loopWithLength(self, length: int) -> list[Node]:
-        if abs(length) < 3:
-            return []
-        for l in (tmp := UndirectedGraph.copy(self)).links:
-            res = tmp.disconnect(u := l.u, v := l.v).pathWithLength(v, u, abs(length) - 1)
-            tmp.connect(u, v)
-            if res:
-                return res
-        return []
 
     def hamiltonTourExists(self) -> bool:
         def dfs(x):
