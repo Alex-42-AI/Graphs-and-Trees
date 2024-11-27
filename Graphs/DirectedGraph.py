@@ -466,11 +466,9 @@ class DirectedGraph:
             return other + self
         res = self.copy()
         for n in other.nodes:
-            if n not in res:
-                res.add(n)
-        for l in other.links:
-            if l not in res.links:
-                res.connect(l[1], [l[0]])
+            res.add(n)
+        for u, v in other.links:
+            res.connect(v, [u])
         return res
 
     def __eq__(self, other):
@@ -528,6 +526,11 @@ class WeightedNodesDirectedGraph(DirectedGraph):
             self.__node_weights[u] = w
         return self
 
+    def increase_weight(self, u: Node, w: float):
+        if u in self.node_weights:
+            self.set_weight(u, self.node_weights(u) + w)
+        return self
+
     def complementary(self):
         res = WeightedNodesDirectedGraph({n: (self.node_weights(n), ([], self.nodes)) for n in self.nodes})
         for l in self.links:
@@ -570,7 +573,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
         neighborhood = {n: (self.node_weights(n), ({}, {m: 0 for m in self.next(n)})) for n in self.nodes}
         return WeightedDirectedGraph(neighborhood).minimalPath(u, v)
 
-    def isomorphicFunction(self, other) -> dict[Node, Node]:
+    def isomorphicFunction(self, other: DirectedGraph) -> dict[Node, Node]:
         if isinstance(other, WeightedNodesDirectedGraph):
             if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
                 return {}
@@ -625,12 +628,11 @@ class WeightedNodesDirectedGraph(DirectedGraph):
             res = self.copy()
             for n in other.nodes:
                 if n in res:
-                    res.set_weight(n, res.node_weights(n) + other.node_weights(n))
+                    res.increase_weight(n, other.node_weights(n))
                 else:
                     res.add((n, other.node_weights(n)))
             for u, v in other.links:
-                if v not in res.next(u):
-                    res.connect(v, [u])
+                res.connect(v, [u])
             return res
         return self + WeightedNodesDirectedGraph({n: (0, ([], other.next(n))) for n in other.nodes})
 
@@ -713,6 +715,11 @@ class WeightedLinksDirectedGraph(DirectedGraph):
             self.__link_weights[l] = w
         return self
 
+    def increase_weight(self, l: tuple[Node, Node], w: float):
+        if l in self.link_weights:
+            self.set_weight(l, self.link_weights(l) + w)
+        return self
+
     def transposed(self):
         return WeightedLinksDirectedGraph({u: (self.link_weights(u), {}) for u in self.nodes})
 
@@ -751,7 +758,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
     def minimalPathLinks(self, u: Node, v: Node) -> [Node]:
         return WeightedDirectedGraph({n: (0, ({}, self.link_weights(n))) for n in self.nodes}).minimalPath(u, v)
 
-    def isomorphicFunction(self, other) -> dict[Node, Node]:
+    def isomorphicFunction(self, other: DirectedGraph) -> dict[Node, Node]:
         if isinstance(other, WeightedLinksDirectedGraph):
             if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
                 return {}
@@ -800,11 +807,10 @@ class WeightedLinksDirectedGraph(DirectedGraph):
         if isinstance(other, WeightedLinksDirectedGraph):
             res = self.copy()
             for n in other.nodes:
-                if n not in res:
-                    res.add(n)
+                res.add(n)
             for u, v in other.links:
                 if v in res.next(u):
-                    res.set_weight((u, v), res.link_weights(u, v) + other.link_weights(u, v))
+                    res.increase_weight((u, v), other.link_weights(u, v))
                 else:
                     res.connect(v, {u: other.link_weights((u, v))})
             return res
@@ -863,6 +869,13 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
             super().set_weight(el, w)
         elif el in self.links:
             WeightedLinksDirectedGraph.set_weight(self, el, w)
+        return self
+
+    def increase_weight(self, el: Node | tuple[Node, Node], w: float):
+        if el in self.node_weights:
+            return self.set_weight(el, self.node_weights(el) + w)
+        if el in self.link_weights:
+            self.set_weight(el, self.link_weights(el) + w)
         return self
 
     def transposed(self):
@@ -955,7 +968,7 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
             return []
         raise ValueError('Unrecognized node(s)!')
 
-    def isomorphicFunction(self, other) -> dict[Node, Node]:
+    def isomorphicFunction(self, other: DirectedGraph) -> dict[Node, Node]:
         if isinstance(other, WeightedDirectedGraph):
             if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
                 return {}
@@ -1013,12 +1026,12 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
             res = self.copy()
             for n in other.nodes:
                 if n in res:
-                    res.set_weight(n, res.node_weights(n) + other.node_weights(n))
+                    res.increase_weight(n, other.node_weights(n))
                 else:
                     res.add((n, other.node_weights(n)))
             for u, v in other.links:
                 if v in res.next(u):
-                    res.set_weight((u, v), res.link_weights(u, v) + other.link_weights(u, v))
+                    res.increase_weight((u, v), other.link_weights(u, v))
                 else:
                     res.connect(v, {u: other.link_weights(u, v)})
             return res
