@@ -62,7 +62,7 @@ class UndirectedGraph:
     def neighboring(self, u: Node = None) -> dict[Node, set[Node]] | set[Node]:
         return (self.__neighboring if u is None else self.__neighboring[u]).copy()
 
-    def degrees(self, u: Node = None) -> dict[Node, float] | float:
+    def degrees(self, u: Node = None) -> dict[Node, int] | int:
         return self.__degrees.copy() if u is None else self.__degrees[u]
 
     @property
