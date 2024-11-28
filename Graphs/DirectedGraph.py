@@ -253,42 +253,47 @@ class DirectedGraph:
             return path
         return []
 
-    def strongly_connected_components(self) -> list[set[Node]]:
+    def strongly_connected_component(self, n: Node) -> set[Node]:
         def helper(x):
             def bfs(s):
                 previous, queue, so_far = {}, [s], {s}
                 while queue:
-                    for t in filter(lambda _t: _t not in so_far, self.next(_s := queue.pop(0))):
+                    for t in filter(lambda _t: _t not in so_far, tmp.next(_s := queue.pop(0))):
                         previous[t] = _s
-                        if t in tmp:
+                        if t in path:
                             node = t
                             while node != s:
-                                tmp.append(previous[node])
+                                path.append(previous[node])
                                 node = previous[node]
                             return
                         queue.append(t), so_far.add(t)
 
-            for y in filter(lambda _y: _y not in total, self.prev(x)):
-                if tmp := self.get_shortest_path(x, y):
-                    for u in tmp:
-                        curr.add(u), total.add(u)
-                        for v in self.next(u):
-                            if v not in total and v not in tmp:
+            for y in filter(lambda _y: _y not in total, tmp.prev(x)):
+                if path := tmp.get_shortest_path(x, y):
+                    for u in path:
+                        res.add(u), total.add(u)
+                        for v in tmp.next(u):
+                            if v not in total and v not in path:
                                 bfs(v)
                     return
-            curr.add(x)
+            res.add(x)
 
+        tmp = self.component(n)
+        res, total = set(), {n}
+        helper(n)
+        return res
+
+    def strongly_connected_components(self) -> list[set[Node]]:
         if self.dag():
             return list(map(lambda x: {x}, self.nodes))
         if not self.connected():
             return sum(map(lambda x: x.strongly_connected_components(), self.connection_components()), [])
         if not self.sources and not self.sinks:
             return [self.nodes]
-        total, res = set(), []
-        for n in self.nodes:
-            if n not in total:
-                curr = set()
-                total.add(n), helper(n), res.append(curr)
+        rest, res = self.nodes, []
+        while rest:
+            res.append(curr := self.strongly_connected_component(rest.copy().pop()))
+            rest -= curr
         return res
 
     def scc_dag(self):
