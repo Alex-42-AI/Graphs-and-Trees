@@ -277,7 +277,7 @@ class UndirectedGraph:
         neighborhood = {Node(l0): [Node(l1) for l1 in self.links if (l1.u in l0) ^ (l1.v in l0)] for l0 in self.links}
         return UndirectedGraph(neighborhood)
 
-    def interval_sort(self, ending=0) -> list[Node]:
+    def interval_sort(self, ending: bool = False) -> list[Node]:
         pass
 
     def is_full_k_partite(self) -> bool:
@@ -580,6 +580,8 @@ class UndirectedGraph:
                 if self.degrees(_u) == 1:
                     return []
             return []
+        if u is None and v is not None:
+            u, v = v, u
         if u not in self or v is not None and v not in self:
             raise Exception("Unrecognized node(s).")
         return dfs(u, [u])
