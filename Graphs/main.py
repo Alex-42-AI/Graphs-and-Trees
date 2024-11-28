@@ -16,11 +16,11 @@ def clique_to_SAT(cnf: list[tuple[tuple[str, bool]]]):
 
     if not cnf:
         return [[]]
-    n, graph, node_vars, var_nodes, i, independent_sets = len(cnf), UndirectedGraph(), {}, {}, 0, []
+    n, graph, node_vars, i, independent_sets = len(cnf), UndirectedGraph(), {}, 0, []
     for clause in cnf:
         j = i
         for var in clause:
-            node_vars[Node(i)], var_nodes[var] = var, Node(i)
+            node_vars[Node(i)] = var
             graph.add(Node(i))
             i += 1
         i += 1
@@ -30,7 +30,7 @@ def clique_to_SAT(cnf: list[tuple[tuple[str, bool]]]):
             if u != v and compatible(node_vars[u], node_vars[v]) and v.value not in independent_set(u.value):
                 graph.connect(u, v)
     result = []
-    for u in list(map(var_nodes.__getitem__, cnf[0])):
+    for u in min(independent_sets, key=len):
         if len((curr := graph.maxCliquesNode(u))[0]) == n:
             result += [set(map(node_vars.__getitem__, clique)) for clique in curr]
     return result
