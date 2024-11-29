@@ -4,9 +4,9 @@ from collections import defaultdict
 
 from itertools import permutations, combinations, product
 
-from Graphs.General import Node
+from Personal.DiscreteMath.Graphs.General import Node
 
-from Graphs.Tree import Tree, WeightedTree
+from Personal.DiscreteMath.Graphs.Tree import Tree, WeightedTree
 
 
 class Link:
@@ -287,9 +287,22 @@ class UndirectedGraph:
 
     def interval_sort(self, ending: bool = False) -> list[Node]:
         def lex_bfs(u: Node):
-            res = [u]
-            ...
-            return res
+            labels = {node: 0 for node in self.nodes}
+            order = [u]
+            labels.pop(u)
+            for v in self.neighboring(u):
+                if v in labels:
+                    labels[v] += 1
+            while labels:
+                max_vals = max(labels.values())
+                next_candidates = {k: v for k, v in dict(sorted(labels.items(), reverse=ending)).items() if v == max_vals}
+                next_node = max(next_candidates, key=labels.get)
+                order.append(next_node)
+                labels.pop(next_node)
+                for v in self.neighboring(next_node):
+                    if v in labels:
+                        labels[v] += 1
+            return order
 
         if not self.connected():
             return sum(map(lambda comp: comp.interval_sort(), self.connection_components()), [])
@@ -538,7 +551,7 @@ class UndirectedGraph:
 
         if (n := len(self.nodes)) == 1 or (2 * (l := len(self.links)) > (n - 1) * (n - 2) + 2 or n > 2 and all(2 * self.degrees(n) >= n for n in self.nodes)):
             return True
-        if n != l + 1 or self.leaves or not self.connected() or self.interval_sort():
+        if n > l or self.leaves or not self.connected():
             return False
         tmp = UndirectedGraph.copy(self)
         can_end_in = tmp.neighboring(u := self.nodes.pop())
