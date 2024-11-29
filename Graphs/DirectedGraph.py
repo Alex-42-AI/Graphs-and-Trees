@@ -151,6 +151,7 @@ class DirectedGraph:
                     res.add(n, [], [v]), queue.append(n)
         return res
 
+    @property
     def full(self) -> bool:
         return len(self.links) == (n := len(self.nodes)) * (n - 1)
 
