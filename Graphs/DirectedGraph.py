@@ -49,6 +49,12 @@ class DirectedGraph:
     def sinks(self) -> set[Node]:
         return {v for v in self.nodes if not self.degrees(v)[1]}
 
+    def source(self, n: Node) -> bool:
+        return n in self.sources
+
+    def sink(self, n: Node) -> bool:
+        return n in self.sinks
+
     def add(self, u: Node, pointed_by: Iterable[Node] = (), points_to: Iterable[Node] = ()):
         if u not in self:
             self.__nodes.add(u)
@@ -124,7 +130,7 @@ class DirectedGraph:
     def reachable(self, u: Node, v: Node) -> bool:
         if u not in self or v not in self:
             raise Exception("Unrecognized node(s).")
-        if u == v:
+        if v in {v, *self.next(u)}:
             return True
         return v in self.subgraph(u)
 
@@ -144,6 +150,9 @@ class DirectedGraph:
                 else:
                     res.add(n, [], [v]), queue.append(n)
         return res
+
+    def full(self) -> bool:
+        return len(self.links) == (n := len(self.nodes)) * (n - 1)
 
     def subgraph(self, u: Node):
         if u not in self:
@@ -258,7 +267,7 @@ class DirectedGraph:
             def bfs(s):
                 previous, queue, so_far = {}, [s], {s}
                 while queue:
-                    for t in filter(lambda _t: _t not in so_far, tmp.next(_s := queue.pop(0))):
+                    for t in filter(lambda _t: _t not in so_far, self.next(_s := queue.pop(0))):
                         previous[t] = _s
                         if t in path:
                             node = t
@@ -268,17 +277,16 @@ class DirectedGraph:
                             return
                         queue.append(t), so_far.add(t)
 
-            for y in filter(lambda _y: _y not in total, tmp.prev(x)):
-                if path := tmp.get_shortest_path(x, y):
+            for y in filter(lambda _y: _y not in total, self.prev(x)):
+                if path := self.get_shortest_path(x, y):
                     for u in path:
                         res.add(u), total.add(u)
-                        for v in tmp.next(u):
+                        for v in self.next(u):
                             if v not in total and v not in path:
                                 bfs(v)
                     return
             res.add(x)
 
-        tmp = self.component(n)
         res, total = set(), {n}
         helper(n)
         return res
@@ -340,7 +348,7 @@ class DirectedGraph:
 
     def hamiltonTourExists(self) -> bool:
         def dfs(x):
-            if tmp.nodes == [x]:
+            if tmp.nodes == {x}:
                 return x in can_end_in
             if all(y not in tmp for y in can_end_in):
                 return False
@@ -353,7 +361,7 @@ class DirectedGraph:
             tmp.add(x, tmp0, tmp1)
             return False
 
-        if len(self.links) > (len(self.nodes) - 1) ** 2 + 1:
+        if (n := len(self.nodes)) == 1 or len(self.links) > (n - 1) ** 2 or all(sum(self.degrees(u)) >= n for u in self.nodes):
             return True
         if self.sources or self.sinks:
             return False
@@ -407,7 +415,7 @@ class DirectedGraph:
         if u is None:
             if v is not None and v not in self:
                 raise Exception("Unrecognized node.")
-            if self.dag() and (v is None or v in self.sinks):
+            if self.dag() and (v is None or self.sink(v)):
                 if any(self.degrees(n)[0] > 1 or self.degrees(n)[1] > 1 for n in self.nodes):
                     return []
                 return self.toposort()
