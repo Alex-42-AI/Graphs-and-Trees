@@ -222,6 +222,7 @@ class UndirectedGraph:
                 dfs(n, 0)
         return res
 
+    @property
     def full(self) -> bool:
         return self.degrees_sum == (n := len(self.nodes)) * (n - 1)
 
@@ -299,11 +300,11 @@ class UndirectedGraph:
         return []
 
     def is_full_k_partite(self) -> bool:
-        return all(comp.full() for comp in self.complementary().connection_components())
+        return all(comp.full for comp in self.complementary().connection_components())
 
     def clique(self, n: Node, *nodes: Node) -> bool:
         if {n, *nodes} == self.nodes:
-            return self.full()
+            return self.full
         if not nodes:
             return True
         if any(u not in self.neighboring(n) for u in nodes):
@@ -314,7 +315,7 @@ class UndirectedGraph:
         return [set(p) for p in combinations(self.nodes, abs(k)) if self.clique(*p)]
 
     def maxCliquesNode(self, u: Node) -> list[set[Node]]:
-        if (tmp := self.component(u)).full():
+        if (tmp := self.component(u)).full:
             return [tmp.nodes]
         if not (neighbors := tmp.neighboring(u)):
             return [{u}]
@@ -356,7 +357,7 @@ class UndirectedGraph:
         return result
 
     def allMaximalCliquesNode(self, u: Node) -> list[set[Node]]:
-        if (tmp := self.component(u)).full():
+        if (tmp := self.component(u)).full:
             return [tmp.nodes]
         if not (neighbors := tmp.neighboring(u)):
             return [{u}]
