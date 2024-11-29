@@ -24,7 +24,7 @@ def clique_to_SAT(cnf: list[tuple[tuple[str, bool]]]):
             graph.add(Node(i))
             i += 1
         i += 1
-        independent_sets.append({*range(j, i)})
+        independent_sets.append({*map(Node, range(j, i))})
     for u in graph.nodes:
         for v in graph.nodes:
             if u != v and compatible(node_vars[u], node_vars[v]) and v.value not in independent_set(u.value):
@@ -201,7 +201,7 @@ with open("K_3_3.txt", "w") as file:
     file.write(f"Chromatic nodes partition: {k_3_3.chromaticNodesPartition()}\n")
     file.write(f"Chromatic links partition: {k_3_3.chromaticLinksPartition()}\n")
     file.write(f"Hamilton tour: {k_3_3.hamiltonTour()}\n")
-    file.write(f"Interval sort: {k_3_3.interval_sort()}\n")
+    # file.write(f"Interval sort: {k_3_3.interval_sort()}\n")
     file.write(f"Dominating sets: {k_3_3.dominatingSet()}\n")
     file.write(f"Vertex covers: {k_3_3.vertexCover()} \n")
     file.write(f"Independent sets: {k_3_3.independentSet()}\n")
@@ -211,7 +211,7 @@ with open("K_5.txt", "w") as file:
     file.write(f"3-cliques: {k_5.cliques(3)}\n")
     file.write(f"Chromatic links partition: {k_5.chromaticLinksPartition()}\n")
     file.write(f"Euler tour: {k_5.euler_tour()}\n")
-    file.write(f"Interval sort: {k_5.interval_sort()}\n")
+    # file.write(f"Interval sort: {k_5.interval_sort()}\n")
     file.write(f"Dominating sets: {k_5.dominatingSet()}\n")
     file.write(f"Vertex covers: {k_5.vertexCover()}\n")
     file.write(f"Independent sets: {k_5.independentSet()}\n")
@@ -221,14 +221,14 @@ with open("Petersen graph.txt", "w") as file:
     file.write(f"Chromatic nodes partition: {petersen_graph.chromaticNodesPartition()}\n")
     file.write(f"Chromatic links partition: {petersen_graph.chromaticLinksPartition()}\n")
     file.write(f"Hamilton walk: {petersen_graph.hamiltonWalk()}\n")
-    file.write(f"Interval sort: {petersen_graph.interval_sort()}\n")
+    # file.write(f"Interval sort: {petersen_graph.interval_sort()}\n")
     file.write(f"Dominating sets: {petersen_graph.dominatingSet()}\n")
     file.write(f"Vertex covers: {petersen_graph.vertexCover()}\n")
     file.write(f"Independent sets: {petersen_graph.independentSet()}\n")
     file.write(f"Shortest path from 0 to 7: {petersen_graph.get_shortest_path(n0, n7)}\n")
 with open("Undirected graphs.txt", "w", encoding="utf-8") as file:
     file.write(f"Graph 1: {ug0}\nGraph 2: {ug1}\n")
-    file.write(f"Graph 2 width: {ug1.width()}\n")
+    file.write(f"Graph 2 width: {ug1.diameter()}\n")
     file.write(f"Is graph 1 a tree: {ug0.is_tree()}\nIs graph 2 a tree: {ug1.is_tree()}\n")
     file.write(f"Graph 1 tree with root 2:\n{ug0.tree(n2)}\n")
     file.write(f"Graph 2 tree with root 0:\n{ug1.tree(n0)}\n")
