@@ -340,7 +340,7 @@ class Tree:
         return [self.root] + res
 
     def vertex_cover(self) -> list[set[Node]]:
-        return [set(filter(lambda x: x not in res, self.nodes)) for res in self.independent_set()]
+        return [self.nodes - curr for curr in self.independent_set()]
 
     def dominating_set(self) -> set[Node]:
         dp = {n: [{n}, set()] for n in self.nodes}
@@ -369,8 +369,6 @@ class Tree:
         return root_val[0] if len((root_val := dp[self.root])[0]) <= len(root_val[1]) else root_val[1]
 
     def independent_set(self) -> list[set[Node]]:
-        dp = {n: [[{n}], [set()]] for n in self.nodes}
-
         def dfs(x: Node):
             for y in self.descendants(x):
                 dfs(y)
@@ -380,6 +378,7 @@ class Tree:
                     optimal = dp[y][0] if c > d else dp[y][1]
                 dp[x][1] = [c.union(d) for c in dp[x][1] for d in optimal]
 
+        dp = {n: [[{n}], [set()]] for n in self.nodes}
         dfs(self.root)
         if (a := len(dp[self.root][0][0])) == (b := len(dp[self.root][1][0])):
             return dp[self.root][0] + dp[self.root][1]
@@ -436,7 +435,7 @@ class Tree:
         return item in self.nodes
 
     def __eq__(self, other):
-        if isinstance(other, Tree):
+        if type(other) == Tree:
             return self.hierarchy == other.hierarchy
         return False
 
@@ -519,21 +518,7 @@ class WeightedTree(Tree):
         return super().remove(u)
 
     def weighted_vertex_cover(self) -> list[set[Node]]:
-        dp = {n: [[{n}], [set()]] for n in self.nodes}
-
-        def dfs(x):
-            for y in self.descendants(x):
-                dfs(y)
-                optimal = dp[y][0] + dp[y][1]
-                if (c := sum(map(self.weights, dp[y][0][0]))) != (d := sum(map(self.weights, dp[y][1][0]))):
-                    optimal = dp[y][0] if c < d else dp[y][1]
-                dp[x][0] = [c.union(d) for c in dp[x][0] for d in optimal]
-                dp[x][1] = [c.union(d) for c in dp[x][1] for d in dp[y][0]]
-
-        dfs(self.root)
-        if (a := sum(map(self.weights, dp[self.root][0][0]))) == (b := sum(map(self.weights, dp[self.root][1][0]))):
-            return dp[self.root][0] + dp[self.root][1]
-        return dp[self.root][0] if a < b else dp[self.root][1]
+        return [self.nodes - curr for curr in self.weighted_independent_set()]
 
     def weighted_dominating_set(self) -> set[Node]:
         dp = {n: [{n}, set()] for n in self.nodes}
@@ -561,9 +546,26 @@ class WeightedTree(Tree):
         dfs(self.root)
         return root_val[0] if sum(map(self.weights, (root_val := dp[self.root])[0])) <= sum(map(self.weights, root_val[1])) else root_val[1]
 
+    def weighted_independent_set(self):
+        def dfs(x):
+            for y in self.descendants(x):
+                dfs(y)
+                optimal = dp[y][0] + dp[y][1]
+                if (c := sum(map(self.weights, dp[y][0][0]))) != (d := sum(map(self.weights, dp[y][1][0]))):
+                    optimal = dp[y][0] if c > d else dp[y][1]
+                dp[x][0] = [c.union(d) for c in dp[x][0] for d in optimal]
+                dp[x][1] = [c.union(d) for c in dp[x][1] for d in dp[y][0]]
+
+        dp = {n: [[{n}], [set()]] for n in self.nodes}
+        dfs(self.root)
+        if (a := sum(map(self.weights, dp[self.root][0][0]))) == (b := sum(map(self.weights, dp[self.root][1][0]))):
+            return dp[self.root][0] + dp[self.root][1]
+        return dp[self.root][0] if a > b else dp[self.root][1]
+
     def isomorphicFunction(self, other) -> dict[Node, Node]:
         if isinstance(other, WeightedTree):
-            if len(self.nodes) != len(other.nodes) or len(self.leaves) != len(other.leaves) or len(self.descendants(self.root)) != len(other.descendants(other.root)):
+            if len(self.nodes) != len(other.nodes) or len(self.leaves) != len(other.leaves) or len(
+                    self.descendants(self.root)) != len(other.descendants(other.root)):
                 return {}
             this_hierarchies, other_hierarchies = {}, {}
             for n in self.nodes:
@@ -610,7 +612,7 @@ class WeightedTree(Tree):
 
     def __eq__(self, other):
         if isinstance(other, WeightedTree):
-            return self.weights() == other.weights() and super().__eq__(other)
+            return (self.hierarchy, self.weights()) == (other.hierarchy, other.weights())
         return False
 
     def __str__(self):
