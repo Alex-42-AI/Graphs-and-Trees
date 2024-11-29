@@ -59,6 +59,13 @@ class UndirectedGraph:
     def links(self) -> set[Link]:
         return self.__links.copy()
 
+    @property
+    def leaves(self) -> set[Node]:
+        return {n for n in self.nodes if self.degrees(n) == 1}
+
+    def leaf(self, n: Node) -> bool:
+        return n in self.leaves
+
     def neighboring(self, u: Node = None) -> dict[Node, set[Node]] | set[Node]:
         return (self.__neighboring if u is None else self.__neighboring[u]).copy()
 
@@ -156,7 +163,7 @@ class UndirectedGraph:
     def reachable(self, u: Node, v: Node) -> bool:
         if u not in self or v not in self:
             raise Exception("Unrecognized node(s)!")
-        if u in {v}.union(self.neighboring(v)):
+        if v in {u, *self.neighboring(u)}:
             return True
         return v in self.component(u)
 
@@ -278,7 +285,18 @@ class UndirectedGraph:
         return UndirectedGraph(neighborhood)
 
     def interval_sort(self, ending: bool = False) -> list[Node]:
-        pass
+        def lex_bfs(u: Node):
+            res = [u]
+            ...
+            return res
+
+        if not self.connected():
+            return sum(map(lambda comp: comp.interval_sort(), self.connection_components()), [])
+        for n in self.nodes:
+            if self.clique(n, *self.neighboring(n)):
+                if result := lex_bfs(n):
+                    return result
+        return []
 
     def is_full_k_partite(self) -> bool:
         return all(comp.full() for comp in self.complementary().connection_components())
@@ -389,6 +407,9 @@ class UndirectedGraph:
             for i_s in r[1:]:
                 result = [a.union(b) for a in result for b in i_s]
             return result
+        if self.is_full_k_partite():
+            max_card = max(map(len, cliques := [comp.nodes for comp in self.complementary().connection_components()]))
+            return list(filter(lambda x: len(x) == max_card, cliques))
         if self.is_tree():
             if not self:
                 return [set()]
@@ -435,7 +456,7 @@ class UndirectedGraph:
                         c1.add(v), c0.remove(v)
                     queue.append(v), total.add(v)
             return [c0, c1]
-        if sort := self.interval_sort(ending=1):
+        if sort := self.interval_sort(True):
             result = []
             while sort:
                 current, last = set(), None
@@ -454,7 +475,7 @@ class UndirectedGraph:
         return [set(map(lambda x: x.value, s)) for s in UndirectedGraph.links_graph(self).chromaticNodesPartition()]
 
     def vertexCover(self) -> list[set[Node]]:
-        return [set(filter(lambda x: x not in res, self.nodes)) for res in self.independentSet()]
+        return [self.nodes - curr for curr in self.independentSet()]
 
     def dominatingSet(self) -> list[set[Node]]:
         def helper(curr, total, i=0):
@@ -501,7 +522,7 @@ class UndirectedGraph:
 
     def hamiltonTourExists(self) -> bool:
         def dfs(x):
-            if tmp.nodes == [x]:
+            if tmp.nodes == {x}:
                 return x in can_end_in
             if all(y not in tmp for y in can_end_in):
                 return False
@@ -514,9 +535,9 @@ class UndirectedGraph:
             tmp.add(x, *neighbors)
             return False
 
-        if (k := len(self.nodes)) == 1 or (self.degrees_sum > (k - 1) * (k - 2) + 2 or k > 2 and all(2 * self.degrees(n) >= k for n in self.nodes)):
+        if (n := len(self.nodes)) == 1 or (2 * (l := len(self.links)) > (n - 1) * (n - 2) + 2 or n > 2 and all(2 * self.degrees(n) >= n for n in self.nodes)):
             return True
-        if any(self.degrees(n) < 2 for n in self.nodes) or self.is_tree() and any(self.degrees(n) > 2 for n in self.nodes) or not self.connected() or self.interval_sort():
+        if n != l + 1 or self.leaves or not self.connected() or self.interval_sort():
             return False
         tmp = UndirectedGraph.copy(self)
         can_end_in = tmp.neighboring(u := self.nodes.pop())
@@ -532,7 +553,7 @@ class UndirectedGraph:
         return UndirectedGraph.copy(self).connect(u, v).hamiltonTourExists()
 
     def hamiltonTour(self) -> list[Node]:
-        if any(self.degrees(n) < 2 for n in self.nodes) or not self or not self.connected():
+        if self.leaves or not self or not self.connected():
             return []
         for v in self.neighboring(u := self.nodes.pop()):
             if res := self.hamiltonWalk(u, v):
@@ -541,11 +562,11 @@ class UndirectedGraph:
 
     def hamiltonWalk(self, u: Node = None, v: Node = None) -> list[Node]:
         def dfs(x, stack):
-            if not tmp.degrees(x) or v is not None and not tmp.degrees(v):
+            if not tmp.degrees(x) or v is not None and not tmp.degrees(v) or not tmp.connected():
                 return []
             too_many = v is not None
             for n in tmp.nodes:
-                if n not in {x, v} and tmp.degrees(n) < 2:
+                if n not in {x, v} and tmp.leaf(n):
                     if too_many:
                         return []
                     too_many = True
@@ -558,7 +579,7 @@ class UndirectedGraph:
                 return stack + [y]
             for y in neighbors:
                 if y == v:
-                    if tmp.nodes == [v]:
+                    if tmp.nodes == {v}:
                         tmp.add(x, *neighbors)
                         return stack + [v]
                     continue
@@ -577,7 +598,7 @@ class UndirectedGraph:
             for _u in self.nodes:
                 if result := dfs(_u, [_u]):
                     return result
-                if self.degrees(_u) == 1:
+                if self.leaf(_u):
                     return []
             return []
         if u is None and v is not None:
@@ -731,38 +752,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         return WeightedUndirectedGraph(neighborhood).minimalPath(u, v)
 
     def weightedVertexCover(self) -> list[set[Node]]:
-        if not self.connected():
-            r = [comp.weightedVertexCover() for comp in self.connection_components()]
-            final = r[0]
-            for i_s in r[1:]:
-                final = [a.union(b) for a in final for b in i_s]
-            return final
-        if self.is_tree():
-            if not self:
-                return [set()]
-            return self.weighted_tree(self.nodes.pop()).weighted_vertex_cover()
-        nodes, weights, tmp = self.nodes, self.total_nodes_weight, WeightedNodesUndirectedGraph.copy(self)
-
-        def helper(curr, res_sum=0.0, i=0):
-            if not tmp.links:
-                return [curr.copy()], res_sum
-            result, result_sum = [nodes.copy()], weights
-            for j, u in enumerate(list(nodes)[i:]):
-                if neighbors := tmp.neighboring(u):
-                    tmp.remove(u)
-                    cover, weight = helper(curr.union({u}), res_sum + (w := tmp.node_weights(u)), i + j + 1)
-                    tmp.add((u, w), *neighbors)
-                    if weight == result_sum:
-                        result.update(cover)
-                    elif weight < result_sum:
-                        result, result_sum = cover, weight
-            return result, result_sum
-
-        for n in self.nodes:
-            if not self.degrees(n):
-                nodes.remove(n)
-                weights -= self.node_weights(n)
-        return helper([])[0]
+        return [self.nodes - curr for curr in self.weightedIndependentSet()]
 
     def weightedDominatingSet(self) -> list[set[Node]]:
         def helper(curr, total, total_weight, i=0):
@@ -783,6 +773,39 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
                 isolated.add(n), nodes.remove(n)
                 weights += self.node_weights(n)
         return helper(isolated, isolated, weights)[0]
+
+    def weightedIndependentSet(self) -> list[set[Node]]:
+        def helper(curr, res_sum=0.0, i=0):
+            if not tmp.links:
+                return [curr.copy()], res_sum
+            result, result_sum = [nodes.copy()], weights
+            for j, u in enumerate(list(nodes)[i:]):
+                if neighbors := tmp.neighboring(u):
+                    tmp.remove(u)
+                    cover, weight = helper(curr.union({u}), res_sum + (w := tmp.node_weights(u)), i + j + 1)
+                    tmp.add((u, w), *neighbors)
+                    if weight == result_sum:
+                        result.update(cover)
+                    elif weight > result_sum:
+                        result, result_sum = cover, weight
+            return result, result_sum
+
+        if not self.connected():
+            r = [comp.weightedIndependentSet() for comp in self.connection_components()]
+            final = r[0]
+            for i_s in r[1:]:
+                final = [a.union(b) for a in final for b in i_s]
+            return final
+        if self.is_tree():
+            if not self:
+                return [set()]
+            return self.weighted_tree(self.nodes.pop()).weighted_independent_set()
+        nodes, weights, tmp = self.nodes, self.total_nodes_weight, WeightedNodesUndirectedGraph.copy(self)
+        for n in self.nodes:
+            if not self.degrees(n):
+                nodes.remove(n)
+                weights -= self.node_weights(n)
+        return helper([])[0]
 
     def isomorphicFunction(self, other: UndirectedGraph) -> dict[Node, Node]:
         if isinstance(other, WeightedNodesUndirectedGraph):
