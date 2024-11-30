@@ -431,11 +431,11 @@ class UndirectedGraph:
                 result = [a.union(b) for a in result for b in i_s]
             return result
         if self.is_full_k_partite():
+            if not self:
+                return [set()]
             max_card = max(map(len, cliques := [comp.nodes for comp in self.complementary().connection_components()]))
             return list(filter(lambda x: len(x) == max_card, cliques))
         if self.is_tree():
-            if not self:
-                return [set()]
             return self.tree(self.nodes.pop()).independent_set()
         return self.complementary().maxCliques()
 
