@@ -286,9 +286,19 @@ class UndirectedGraph:
         return UndirectedGraph(neighborhood)
 
     def interval_sort(self, ending: bool = False) -> list[Node]:
+        def consecutive_1s(ll):
+            for u in self.nodes:
+                j = -1
+                for j, v in enumerate(ll[:-1]):
+                    if u not in self.neighboring(w := ll[j + 1]).union({w}) and u in self.neighboring(v).union({v}):
+                        break
+                for i, v in enumerate(ll[j + 2:]):
+                    if u in self.neighboring(v).union({v}):
+                        return False
+            return True
+
         def lex_bfs(u: Node):
-            labels = {node: 0 for node in self.nodes}
-            order = [u]
+            labels, order = {node: 0 for node in self.nodes}, [u]
             labels.pop(u)
             for v in self.neighboring(u):
                 if v in labels:
@@ -297,24 +307,11 @@ class UndirectedGraph:
                 max_vals = max(labels.values())
                 next_candidates = {k: v for k, v in dict(sorted(labels.items(), reverse=ending)).items() if v == max_vals}
                 next_node = max(next_candidates, key=labels.get)
-                order.append(next_node)
-                labels.pop(next_node)
+                order.append(next_node), labels.pop(next_node)
                 for v in self.neighboring(next_node):
                     if v in labels:
                         labels[v] += 1
             return order
-
-        def consecutive_1s(ll):
-            for u in self.nodes:
-                j = -1
-                for j, v in enumerate(ll[:-1]):
-                    if (u in self.neighboring(ll[j + 1]).union({ll[j + 1]}), u in self.neighboring(v).union({v})) == (0, 1):
-                        break
-                if j < len(ll) - 1:
-                    for i in range(j + 1, len(ll)):
-                        if u in self.neighboring(ll[i]).union({ll[i]}):
-                            return False
-            return True
 
         if not self.connected():
             return sum(map(lambda comp: comp.interval_sort(), self.connection_components()), [])
@@ -324,8 +321,8 @@ class UndirectedGraph:
                     return result
         return []
 
-    def is_full_k_partite(self) -> bool:
-        return all(comp.full for comp in self.complementary().connection_components())
+    def is_full_k_partite(self, k: int = -1) -> bool:
+        return k in {-1, len(comps := self.complementary().connection_components())} and all(c.full for c in comps)
 
     def clique(self, n: Node, *nodes: Node) -> bool:
         if {n, *nodes} == self.nodes:
