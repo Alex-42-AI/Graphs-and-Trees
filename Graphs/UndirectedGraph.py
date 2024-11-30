@@ -304,11 +304,23 @@ class UndirectedGraph:
                         labels[v] += 1
             return order
 
+        def consecutive_1s(ll):
+            for u in self.nodes:
+                j = -1
+                for j, v in enumerate(ll[:-1]):
+                    if (u in self.neighboring(ll[j + 1]).union({ll[j + 1]}), u in self.neighboring(v).union({v})) == (0, 1):
+                        break
+                if j < len(ll) - 1:
+                    for i in range(j + 1, len(ll)):
+                        if u in self.neighboring(ll[i]).union({ll[i]}):
+                            return False
+            return True
+
         if not self.connected():
             return sum(map(lambda comp: comp.interval_sort(), self.connection_components()), [])
         for n in self.nodes:
             if self.clique(n, *self.neighboring(n)):
-                if result := lex_bfs(n):
+                if consecutive_1s(result := lex_bfs(n)):
                     return result
         return []
 
