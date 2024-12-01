@@ -289,7 +289,7 @@ class UndirectedGraph:
         neighborhood = {Node(l0): [Node(l1) for l1 in self.links if (l1.u in l0) ^ (l1.v in l0)] for l0 in self.links}
         return UndirectedGraph(neighborhood)
 
-    def interval_sort(self, ending: bool = False) -> list[Node]:
+    def interval_sort(self) -> list[Node]:
         def consecutive_1s(ll):
             for u in self.nodes:
                 j = -1
@@ -315,7 +315,7 @@ class UndirectedGraph:
             order = [u]
             while labels:
                 max_vals = max(labels.values())
-                next_candidates = {k: v for k, v in dict(sorted(labels.items(), reverse=ending)).items() if v == max_vals}
+                next_candidates = {k: v for k, v in labels.items() if v == max_vals}
                 next_node = max(next_candidates, key=labels.get)
                 order.append(next_node), labels.pop(next_node)
                 for v in self.neighboring(next_node):
