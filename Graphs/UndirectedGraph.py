@@ -1,5 +1,7 @@
 from typing import Iterable
 
+from functools import reduce
+
 from collections import defaultdict
 
 from itertools import permutations, combinations, product
@@ -73,7 +75,7 @@ class UndirectedGraph:
         return self.__degrees.copy() if u is None else self.__degrees[u]
 
     @property
-    def degrees_sum(self) -> float:
+    def degrees_sum(self) -> int:
         return 2 * len(self.links)
 
     def add(self, u: Node, *current_nodes: Node):
@@ -149,6 +151,7 @@ class UndirectedGraph:
                 total.add(v), queue.append(v)
         return len(total) == len(self.nodes)
 
+    @property
     def is_tree(self) -> bool:
         return len(self.nodes) == len(self.links) + bool(self.nodes) and self.connected()
 
@@ -241,6 +244,7 @@ class UndirectedGraph:
                 queue.append(m), total.add(m)
                 previous[m] = n
 
+    @property
     def euler_tour_exists(self) -> bool:
         for n in self.nodes:
             if self.degrees(n) % 2:
@@ -251,14 +255,14 @@ class UndirectedGraph:
         if u not in self or v not in self:
             raise ValueError("Unrecognized node(s)!")
         if u == v:
-            return self.euler_tour_exists()
+            return self.euler_tour_exists
         for n in self.nodes:
             if self.degrees(n) % 2 - (n in {u, v}):
                 return False
         return self.connected()
 
     def euler_tour(self) -> list[Node]:
-        if self.euler_tour_exists():
+        if self.euler_tour_exists:
             tmp = UndirectedGraph.copy(self)
             return tmp.disconnect(u := (l := tmp.links.pop()).u, v := l.v).euler_walk(u, v)
         return []
@@ -298,11 +302,17 @@ class UndirectedGraph:
             return True
 
         def lex_bfs(u: Node):
-            labels, order = {node: 0 for node in self.nodes}, [u]
+            labels, neighbors = {node: 0 for node in self.nodes}, self.neighboring(u)
             labels.pop(u)
-            for v in self.neighboring(u):
-                if v in labels:
-                    labels[v] += 1
+            for v in neighbors:
+                labels[v] += 1
+            last = set()
+            for v in neighbors:
+                if not self.neighboring(v).union({v}).isdisjoint(neighbors.union({u})):
+                    last.add(v)
+            if not last:
+                return [u, *(self.nodes - {u})]
+            order = [u]
             while labels:
                 max_vals = max(labels.values())
                 next_candidates = {k: v for k, v in dict(sorted(labels.items(), reverse=ending)).items() if v == max_vals}
@@ -435,7 +445,7 @@ class UndirectedGraph:
                 return [set()]
             max_card = max(map(len, cliques := [comp.nodes for comp in self.complementary().connection_components()]))
             return list(filter(lambda x: len(x) == max_card, cliques))
-        if self.is_tree():
+        if self.is_tree:
             return self.tree(self.nodes.pop()).independent_set()
         return self.complementary().maxCliques()
 
@@ -470,7 +480,7 @@ class UndirectedGraph:
             return final
         if self.is_full_k_partite():
             return [comp.nodes for comp in self.complementary().connection_components()]
-        if self.is_tree():
+        if self.is_tree:
             queue, c0, c1, total = [self.nodes.pop()], self.nodes, set(), set()
             while queue:
                 flag = (u := queue.pop(0)) in c0
@@ -543,6 +553,7 @@ class UndirectedGraph:
             return tmp
         return dfs(u, length, [])
 
+    @property
     def hamiltonTourExists(self) -> bool:
         def dfs(x):
             if tmp.nodes == {x}:
@@ -570,10 +581,10 @@ class UndirectedGraph:
         if u not in self or v not in self:
             raise Exception("Unrecognized node(s).")
         if v in self.neighboring(u):
-            return True if all(n in {u, v} for n in self.nodes) else self.hamiltonTourExists()
+            return True if all(n in {u, v} for n in self.nodes) else self.hamiltonTourExists
         if s := self.interval_sort():
             return {u, v}.issubset({s[0], s[-1], None})
-        return UndirectedGraph.copy(self).connect(u, v).hamiltonTourExists()
+        return UndirectedGraph.copy(self).connect(u, v).hamiltonTourExists
 
     def hamiltonTour(self) -> list[Node]:
         if self.leaves or not self or not self.connected():
@@ -742,6 +753,12 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
     def copy(self):
         return WeightedNodesUndirectedGraph({n: (self.node_weights(n), self.neighboring(n)) for n in self.nodes})
 
+    def complementary(self):
+        res = WeightedNodesUndirectedGraph({u: (self.node_weights(u), self.nodes) for u in self.nodes})
+        for l in self.links:
+            res.disconnect(l.u, l.v)
+        return res
+
     def weighted_tree(self, n: Node) -> WeightedTree:
         tree = WeightedTree((n, self.node_weights(n)))
         queue, total = [n], {n}
@@ -819,7 +836,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
             for i_s in r[1:]:
                 final = [a.union(b) for a in final for b in i_s]
             return final
-        if self.is_tree():
+        if self.is_tree:
             if not self:
                 return [set()]
             return self.weighted_tree(self.nodes.pop()).weighted_independent_set()
@@ -914,7 +931,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
                 elif v not in self.neighboring(u):
                     self.connect(u, {v: w})
 
-    def link_weights(self, u_or_l: Node | Link = None, v: Node = None):
+    def link_weights(self, u_or_l: Node | Link = None, v: Node = None) -> dict[Link, float] | dict[Node, float] | float:
         if u_or_l is None:
             return self.__link_weights
         elif isinstance(u_or_l, Node):
@@ -925,7 +942,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
             return self.__link_weights.get(u_or_l)
 
     @property
-    def total_links_weight(self):
+    def total_links_weight(self) -> float:
         return sum(self.link_weights().values())
 
     def add(self, u: Node, nodes_weights: dict[Node, float] = {}):
@@ -983,7 +1000,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
                     res.add(n, {v: self.link_weights(v, n)}), queue.append(n)
         return res
 
-    def minimal_spanning_tree(self) -> set[Link] | list[set[Link]]:
+    def minimal_spanning_tree(self) -> set[Link]:
         def insert(x):
             low, high, f_x = 0, len(bridge_links), self.link_weights(x)
             while low < high:
@@ -1031,8 +1048,8 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
                     low = mid
 
         if not self.connected():
-            return [comp.minimal_spanning_tree() for comp in self.connection_components()]
-        if self.is_tree():
+            return reduce(lambda x, y: x.union(y.minimal_spanning_tree()), self.connection_components())
+        if len(self.nodes) == len(self.links) + 1 or not self:
             return self.links
         res_links, total = set(), {u := self.nodes.pop()}
         bridge_links = []
@@ -1145,7 +1162,7 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
                     self.add((v, 0), {u: w})
 
     @property
-    def total_weight(self):
+    def total_weight(self) -> float:
         return self.total_nodes_weight + self.total_links_weight
 
     def add(self, n_w: tuple[Node, float], nodes_weights: dict[Node, float] = {}):
