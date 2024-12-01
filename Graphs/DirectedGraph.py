@@ -116,6 +116,7 @@ class DirectedGraph:
             rest -= curr.nodes
         return components
 
+    @property
     def connected(self) -> bool:
         if (m := len(self.links)) + 1 < (n := len(self.nodes)):
             return False
@@ -167,6 +168,7 @@ class DirectedGraph:
                     res.add(n, [v]), queue.append(n)
         return res
 
+    @property
     def has_loop(self) -> bool:
         def dfs(u):
             for v in self.next(u):
@@ -191,10 +193,12 @@ class DirectedGraph:
             stack.remove(n)
         return False
 
-    dag = lambda x: not x.has_loop()
+    @property
+    def dag(self) -> bool:
+        return not self.has_loop
 
     def toposort(self) -> list[Node]:
-        if not self.dag():
+        if not self.dag:
             return []
         layer, total = self.sources, set()
         res = list(layer)
@@ -223,24 +227,25 @@ class DirectedGraph:
                 queue.append(y), total.add(y)
                 previous[y] = n
 
+    @property
     def euler_tour_exists(self) -> bool:
         for d in self.degrees().values():
             if d[0] != d[1]:
                 return False
-        return self.connected()
+        return self.connected
 
     def euler_walk_exists(self, u: Node, v: Node) -> bool:
         if u not in self or v not in self:
             raise ValueError("Unrecognized node(s)!")
-        if self.euler_tour_exists():
+        if self.euler_tour_exists:
             return u == v
         for n in self.nodes:
             if self.degrees(n)[1] + (n == v) != self.degrees(n)[0] + (n == u):
                 return False
-        return self.connected()
+        return self.connected
 
     def euler_tour(self) -> list[Node]:
-        if self.euler_tour_exists():
+        if self.euler_tour_exists:
             tmp = DirectedGraph.copy(self)
             return tmp.disconnect(u := (l := tmp.links.pop())[1], [v := l[0]]).euler_walk(u, v)
         return []
@@ -293,9 +298,9 @@ class DirectedGraph:
         return res
 
     def strongly_connected_components(self) -> list[set[Node]]:
-        if self.dag():
+        if self.dag:
             return list(map(lambda x: {x}, self.nodes))
-        if not self.connected():
+        if not self.connected:
             return sum(map(lambda x: x.strongly_connected_components(), self.connection_components()), [])
         if not self.sources and not self.sinks:
             return [self.nodes]
@@ -347,6 +352,7 @@ class DirectedGraph:
                 return res
         return []
 
+    @property
     def hamiltonTourExists(self) -> bool:
         def dfs(x):
             if tmp.nodes == {x}:
@@ -374,8 +380,8 @@ class DirectedGraph:
         if u not in self or v not in self:
             raise Exception("Unrecognized node(s).")
         if u in self.next(v):
-            return True if all(n in {u, v} for n in self.nodes) else self.hamiltonTourExists()
-        return DirectedGraph.copy(self).connect(u, [v]).hamiltonTourExists()
+            return True if all(n in {u, v} for n in self.nodes) else self.hamiltonTourExists
+        return DirectedGraph.copy(self).connect(u, [v]).hamiltonTourExists
 
     def hamiltonTour(self) -> list[Node]:
         if self.sources or self.sinks or not self:
@@ -416,7 +422,7 @@ class DirectedGraph:
         if u is None:
             if v is not None and v not in self:
                 raise Exception("Unrecognized node.")
-            if self.dag() and (v is None or self.sink(v)):
+            if self.dag and (v is None or self.sink(v)):
                 if any(self.degrees(n)[0] > 1 or self.degrees(n)[1] > 1 for n in self.nodes):
                     return []
                 return self.toposort()
@@ -769,7 +775,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                     res.add(n, {v: self.link_weights(v, n)}), queue.append(n)
         return res
 
-    def minimalPathLinks(self, u: Node, v: Node) -> [Node]:
+    def minimalPathLinks(self, u: Node, v: Node) -> list[Node]:
         return WeightedDirectedGraph({n: (0, ({}, self.link_weights(n))) for n in self.nodes}).minimalPath(u, v)
 
     def isomorphicFunction(self, other: DirectedGraph) -> dict[Node, Node]:
