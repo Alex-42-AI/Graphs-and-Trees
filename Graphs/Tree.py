@@ -457,7 +457,7 @@ class Tree:
 
 
 class WeightedTree(Tree):
-    def __init__(self, root_and_weight: (Node, float), inheritance: dict[Node, tuple[float, Iterable[Node]]] = {}):
+    def __init__(self, root_and_weight: tuple[Node, float], inheritance: dict[Node, tuple[float, Iterable[Node]]] = {}):
         super().__init__(root_and_weight[0])
         self.__weights = dict([root_and_weight])
         for u, (w, desc) in inheritance.items():
