@@ -290,10 +290,12 @@ class UndirectedGraph(Graph):
         def consecutive_1s(ll):
             for u in self.nodes:
                 j = -1
+                ll.pop(jj := ll.index(u))
                 for j, v in enumerate(ll[:-1]):
-                    ll[j].remove(u)
                     if u not in self.neighboring(ll[j + 1]) and u in self.neighboring(v):
+                        ll.insert(jj, u)
                         break
+                ll.insert(jj, u)
                 for i, v in enumerate(ll[j + 2:]):
                     if u in self.neighboring(v):
                         return False
