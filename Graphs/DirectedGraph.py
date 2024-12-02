@@ -55,21 +55,21 @@ class DirectedGraph(Graph):
     def sink(self, n: Node) -> bool:
         return not self.degrees(n)[1]
 
-    def add(self, u: Node, pointed_by: Iterable[Node] = (), points_to: Iterable[Node] = ()):
+    def add(self, u: Node, pointed_by: Iterable[Node] = (), points_to: Iterable[Node] = ()) -> "DirectedGraph":
         if u not in self:
             self.__nodes.add(u)
             self.__degrees[u], self.__next[u], self.__prev[u] = [0, 0], set(), set()
             DirectedGraph.connect(self, u, pointed_by, points_to)
         return self
 
-    def remove(self, u: Node, *rest: Node):
+    def remove(self, u: Node, *rest: Node) -> "DirectedGraph":
         for n in (u,) + rest:
             if n in self:
                 DirectedGraph.disconnect(self, n, self.prev(n), self.next(n))
                 self.__nodes.remove(n), self.__degrees.pop(n), self.__prev.pop(n), self.__next.pop(n)
         return self
 
-    def connect(self, u: Node, pointed_by: Iterable[Node] = (), points_to: Iterable[Node] = ()):
+    def connect(self, u: Node, pointed_by: Iterable[Node] = (), points_to: Iterable[Node] = ()) -> "DirectedGraph":
         if u in self:
             for v in pointed_by:
                 if u != v and v not in self.prev(u) and v in self:
@@ -83,7 +83,7 @@ class DirectedGraph(Graph):
                     self.__degrees[v][0] += 1
         return self
 
-    def disconnect(self, u: Node, pointed_by: Iterable[Node] = (), points_to: Iterable[Node] = ()):
+    def disconnect(self, u: Node, pointed_by: Iterable[Node] = (), points_to: Iterable[Node] = ()) -> "DirectedGraph":
         if u in self:
             for v in pointed_by:
                 if v in self.prev(u):
@@ -97,19 +97,19 @@ class DirectedGraph(Graph):
                     self.__links.remove((u, v)), self.__next[u].remove(v), self.__prev[v].remove(u)
         return self
 
-    def copy(self):
+    def copy(self) -> "DirectedGraph":
         return DirectedGraph({n: ([], self.next(n)) for n in self.nodes})
 
-    def complementary(self):
+    def complementary(self) -> "DirectedGraph":
         res = DirectedGraph({n: ([], self.nodes) for n in self.nodes})
         for l in self.links:
             res.disconnect(l[0], [l[1]])
         return res
 
-    def transposed(self):
+    def transposed(self) -> "DirectedGraph":
         return DirectedGraph({u: (self.next(u), []) for u in self.nodes})
 
-    def connection_components(self) -> list:
+    def connection_components(self) -> "list[DirectedGraph]":
         components, rest = [], self.nodes
         while rest:
             components.append(curr := self.component(rest.copy().pop()))
@@ -134,7 +134,7 @@ class DirectedGraph(Graph):
             return True
         return v in self.subgraph(u)
 
-    def component(self, u: Node):
+    def component(self, u: Node) -> "DirectedGraph":
         if u not in self:
             raise ValueError("Unrecognized node!")
         queue, res = [u], DirectedGraph({u: ([], [])})
@@ -154,7 +154,7 @@ class DirectedGraph(Graph):
     def full(self) -> bool:
         return len(self.links) == (n := len(self.nodes)) * (n - 1)
 
-    def subgraph(self, u: Node):
+    def subgraph(self, u: Node) -> "DirectedGraph":
         if u not in self:
             raise ValueError("Unrecognized node!")
         queue, res = [u], DirectedGraph({u: ([], [])})
@@ -305,7 +305,7 @@ class DirectedGraph(Graph):
             rest -= curr
         return res
 
-    def scc_dag(self):
+    def scc_dag(self) -> "DirectedGraph":
         result = DirectedGraph()
         scc = self.strongly_connected_components()
         for s in scc:
@@ -428,7 +428,7 @@ class DirectedGraph(Graph):
             raise Exception("Unrecognized node(s).")
         return dfs(u, [u])
 
-    def isomorphicFunction(self, other) -> dict[Node, Node]:
+    def isomorphicFunction(self, other: "DirectedGraph") -> dict[Node, Node]:
         if isinstance(other, DirectedGraph):
             if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
                 return {}
@@ -467,13 +467,13 @@ class DirectedGraph(Graph):
     def __bool__(self):
         return bool(self.nodes)
 
-    def __reversed__(self):
+    def __reversed__(self) -> "DirectedGraph":
         return self.complementary()
 
     def __contains__(self, u: Node):
         return u in self.nodes
 
-    def __add__(self, other):
+    def __add__(self, other: "DirectedGraph") -> "DirectedGraph":
         if not isinstance(other, DirectedGraph):
             raise TypeError(f"Addition not defined between class DirectedGraph and type {type(other).__name__}!")
         if isinstance(other, (WeightedNodesDirectedGraph, WeightedLinksDirectedGraph)):
@@ -485,8 +485,8 @@ class DirectedGraph(Graph):
             res.connect(v, [u])
         return res
 
-    def __eq__(self, other):
-        if isinstance(other, DirectedGraph):
+    def __eq__(self, other: "DirectedGraph"):
+        if type(other) == DirectedGraph:
             return (self.nodes, self.links) == (other.nodes, other.links)
         return False
 
@@ -521,40 +521,41 @@ class WeightedNodesDirectedGraph(DirectedGraph):
     def total_nodes_weight(self) -> float:
         return sum(self.node_weights().values())
 
-    def copy(self):
+    def copy(self) -> "WeightedNodesDirectedGraph":
         return WeightedNodesDirectedGraph({n: (self.node_weights(n), ([], self.next(n))) for n in self.nodes})
 
-    def add(self, n_w: tuple[Node, float], pointed_by: Iterable[Node] = (), points_to: Iterable[Node] = ()):
+    def add(self, n_w: tuple[Node, float], pointed_by: Iterable[Node] = (), points_to: Iterable[Node] = ()) -> "WeightedNodesDirectedGraph":
         super().add(n_w[0], pointed_by, points_to)
         if n_w[0] not in self.node_weights():
             self.set_weight(*n_w)
         return self
 
-    def remove(self, u: Node, *rest: Node):
+    def remove(self, u: Node, *rest: Node) -> "WeightedNodesDirectedGraph":
         for n in (u,) + rest:
             self.__node_weights.pop(n)
-        return DirectedGraph.remove(self, u, *rest)
+        DirectedGraph.remove(self, u, *rest)
+        return self
 
-    def set_weight(self, u: Node, w: float):
+    def set_weight(self, u: Node, w: float) -> "WeightedNodesDirectedGraph":
         if u in self:
             self.__node_weights[u] = w
         return self
 
-    def increase_weight(self, u: Node, w: float):
+    def increase_weight(self, u: Node, w: float) -> "WeightedNodesDirectedGraph":
         if u in self.node_weights:
             self.set_weight(u, self.node_weights(u) + w)
         return self
 
-    def complementary(self):
+    def complementary(self) -> "WeightedNodesDirectedGraph":
         res = WeightedNodesDirectedGraph({n: (self.node_weights(n), ([], self.nodes)) for n in self.nodes})
         for l in self.links:
             res.disconnect(l[0], [l[1]])
         return res
 
-    def transposed(self):
+    def transposed(self) -> "WeightedNodesDirectedGraph":
         return WeightedNodesDirectedGraph({u: (self.node_weights(u), (self.next(u), [])) for u in self.nodes})
 
-    def component(self, u: Node):
+    def component(self, u: Node) -> "WeightedNodesDirectedGraph":
         if u not in self:
             raise ValueError("Unrecognized node!")
         queue, res = [u], WeightedNodesDirectedGraph({u: (self.node_weights(u), ([], []))})
@@ -571,7 +572,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
                     res.add((n, self.node_weights(n)), [], [v]), queue.append(n)
         return res
 
-    def subgraph(self, u: Node):
+    def subgraph(self, u: Node) -> "WeightedNodesDirectedGraph":
         if u not in self:
             raise ValueError("Unrecognized node!")
         queue, res = [u], WeightedNodesDirectedGraph({u: (self.node_weights(u), ([], []))})
@@ -628,7 +629,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
             return {}
         return super().isomorphicFunction(other)
 
-    def __add__(self, other):
+    def __add__(self, other: DirectedGraph) -> "WeightedNodesDirectedGraph":
         if not isinstance(other, DirectedGraph):
             raise TypeError(f"Addition not defined between class DirectedGraph and type {type(other).__name__}!")
         if isinstance(other, WeightedDirectedGraph):
@@ -647,8 +648,8 @@ class WeightedNodesDirectedGraph(DirectedGraph):
             return res
         return self + WeightedNodesDirectedGraph({n: (0, ([], other.next(n))) for n in other.nodes})
 
-    def __eq__(self, other):
-        if isinstance(other, WeightedNodesDirectedGraph):
+    def __eq__(self, other: "WeightedNodesDirectedGraph"):
+        if type(other) == WeightedNodesDirectedGraph:
             return (self.node_weights, self.links) == (other.node_weights, other.links)
         return False
 
@@ -688,12 +689,12 @@ class WeightedLinksDirectedGraph(DirectedGraph):
     def total_links_weight(self) -> float:
         return sum(self.link_weights().values())
 
-    def add(self, u: Node, pointed_by_weights: dict[Node, float] = {}, points_to_weights: dict[Node, float] = {}):
+    def add(self, u: Node, pointed_by_weights: dict[Node, float] = {}, points_to_weights: dict[Node, float] = {}) -> "WeightedLinksDirectedGraph":
         if u not in self:
             super().add(u), self.connect(u, pointed_by_weights, points_to_weights)
         return self
 
-    def remove(self, n: Node, *rest: Node):
+    def remove(self, n: Node, *rest: Node) -> "WeightedLinksDirectedGraph":
         for u in (n,) + rest:
             for v in self.next(u):
                 self.__link_weights.pop((u, v))
@@ -701,7 +702,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                 self.__link_weights.pop((v, u))
         return super().remove(n, *rest)
 
-    def connect(self, u: Node, pointed_by_weights: dict[Node, float] = {}, points_to_weights: dict[Node, float] = {}):
+    def connect(self, u: Node, pointed_by_weights: dict[Node, float] = {}, points_to_weights: dict[Node, float] = {}) -> "WeightedLinksDirectedGraph":
         if u in self:
             super().connect(u, pointed_by_weights.keys(), points_to_weights.keys())
             for v, w in pointed_by_weights.items():
@@ -712,7 +713,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                     self.set_weight((u, v), w)
         return self
 
-    def disconnect(self, u: Node, pointed_by: Iterable[Node] = (), points_to: Iterable[Node] = ()):
+    def disconnect(self, u: Node, pointed_by: Iterable[Node] = (), points_to: Iterable[Node] = ()) -> "WeightedLinksDirectedGraph":
         if u in self:
             for v in pointed_by:
                 self.__link_weights.pop((v, u))
@@ -721,23 +722,23 @@ class WeightedLinksDirectedGraph(DirectedGraph):
             super().disconnect(u, pointed_by, points_to)
         return self
 
-    def set_weight(self, l: tuple, w: float):
+    def set_weight(self, l: tuple, w: float) -> "WeightedLinksDirectedGraph":
         if l in self.links:
             self.__link_weights[l] = w
         return self
 
-    def increase_weight(self, l: tuple[Node, Node], w: float):
+    def increase_weight(self, l: tuple[Node, Node], w: float) -> "WeightedLinksDirectedGraph":
         if l in self.link_weights:
             self.set_weight(l, self.link_weights(l) + w)
         return self
 
-    def transposed(self):
+    def transposed(self) -> "WeightedLinksDirectedGraph":
         return WeightedLinksDirectedGraph({u: (self.link_weights(u), {}) for u in self.nodes})
 
-    def copy(self):
+    def copy(self) -> "WeightedLinksDirectedGraph":
         return WeightedLinksDirectedGraph({u: ({}, self.link_weights(u)) for u in self.nodes})
 
-    def component(self, u: Node):
+    def component(self, u: Node) -> "WeightedLinksDirectedGraph":
         if u not in self:
             raise ValueError("Unrecognized node!")
         queue, res = [u], WeightedLinksDirectedGraph({u: ({}, {})})
@@ -754,7 +755,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                     res.add(n, points_to_weights={v: self.link_weights((n, v))}), queue.append(n)
         return res
 
-    def subgraph(self, u: Node):
+    def subgraph(self, u: Node) -> "WeightedLinksDirectedGraph":
         if u not in self:
             raise ValueError("Unrecognized node!")
         queue, res = [u], WeightedLinksDirectedGraph({u: ({}, {})})
@@ -807,7 +808,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
             return {}
         return super().isomorphicFunction(other)
 
-    def __add__(self, other):
+    def __add__(self, other: DirectedGraph) -> "WeightedLinksDirectedGraph":
         if not isinstance(other, DirectedGraph):
             raise TypeError(f"Addition not defined between class DirectedGraph and type {type(other).__name__}!")
         if isinstance(other, WeightedNodesDirectedGraph):
@@ -824,8 +825,8 @@ class WeightedLinksDirectedGraph(DirectedGraph):
             return res
         return self + WeightedLinksDirectedGraph({u: ({}, {v: 0 for v in other.next(u)}) for u in other.nodes})
 
-    def __eq__(self, other):
-        if isinstance(other, WeightedLinksDirectedGraph):
+    def __eq__(self, other: "WeightedLinksDirectedGraph"):
+        if type(other) == WeightedLinksDirectedGraph:
             return (self.nodes, self.link_weights()) == (other.nodes, other.link_weights())
         return False
 
@@ -855,46 +856,46 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
     def total_weight(self) -> float:
         return self.total_nodes_weight + self.total_links_weight
 
-    def add(self, n_w: tuple[Node, float], pointed_by_weights: dict[Node, float] = {}, points_to_weights: dict[Node, float] = {}):
+    def add(self, n_w: tuple[Node, float], pointed_by_weights: dict[Node, float] = {}, points_to_weights: dict[Node, float] = {}) -> "WeightedDirectedGraph":
         WeightedLinksDirectedGraph.add(self, n_w[0], pointed_by_weights, points_to_weights)
         if n_w[0] not in self.node_weights():
             self.set_weight(*n_w)
         return self
 
-    def remove(self, u: Node, *rest: Node):
+    def remove(self, u: Node, *rest: Node) -> "WeightedDirectedGraph":
         for n in (u,) + rest:
             WeightedLinksDirectedGraph.disconnect(self, n, self.prev(n), self.next(n)), super().remove(n)
         return self
 
-    def connect(self, u: Node, pointed_by_weights: dict[Node, float] = {}, points_to_weights: dict[Node, float] = {}):
+    def connect(self, u: Node, pointed_by_weights: dict[Node, float] = {}, points_to_weights: dict[Node, float] = {}) -> "WeightedDirectedGraph":
         return WeightedLinksDirectedGraph.connect(self, u, pointed_by_weights, points_to_weights)
 
-    def disconnect(self, u: Node, pointed_by: list[Node] = (), points_to: list[Node] = ()):
+    def disconnect(self, u: Node, pointed_by: list[Node] = (), points_to: list[Node] = ()) -> "WeightedDirectedGraph":
         return WeightedLinksDirectedGraph.disconnect(self, u, pointed_by, points_to)
 
-    def set_weight(self, el: Node | tuple, w: float):
+    def set_weight(self, el: Node | tuple, w: float) -> "WeightedDirectedGraph":
         if el in self:
             super().set_weight(el, w)
         elif el in self.links:
             WeightedLinksDirectedGraph.set_weight(self, el, w)
         return self
 
-    def increase_weight(self, el: Node | tuple[Node, Node], w: float):
+    def increase_weight(self, el: Node | tuple[Node, Node], w: float) -> "WeightedDirectedGraph":
         if el in self.node_weights:
             return self.set_weight(el, self.node_weights(el) + w)
         if el in self.link_weights:
             self.set_weight(el, self.link_weights(el) + w)
         return self
 
-    def transposed(self):
+    def transposed(self) -> "WeightedDirectedGraph":
         neighborhood = {u: (self.node_weights(u), (self.link_weights(u), {})) for u in self.nodes}
         return WeightedDirectedGraph(neighborhood)
 
-    def copy(self):
+    def copy(self) -> "WeightedDirectedGraph":
         neighborhood = {u: (self.node_weights(u), ({}, self.link_weights(u))) for u in self.nodes}
         return WeightedDirectedGraph(neighborhood)
 
-    def component(self, u: Node):
+    def component(self, u: Node) -> "WeightedDirectedGraph":
         if u not in self:
             raise ValueError("Unrecognized node!")
         queue, res = [u], WeightedDirectedGraph({u: (self.node_weights(u), ({}, {}))})
@@ -911,7 +912,7 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
                     res.add((n, self.node_weights(n)), points_to_weights={v: self.link_weights((n, v))}), queue.append(n)
         return res
 
-    def subgraph(self, u: Node):
+    def subgraph(self, u: Node) -> "WeightedDirectedGraph":
         if u not in self:
             raise ValueError("Unrecognized node!")
         queue, res = [u], WeightedDirectedGraph({u: (self.node_weights(u), ({}, {}))})
@@ -1024,7 +1025,7 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
             return type(other).isomorphicFunction(other, self)
         return DirectedGraph.isomorphicFunction(self, other)
 
-    def __add__(self, other):
+    def __add__(self, other: DirectedGraph) -> "WeightedDirectedGraph":
         if not isinstance(other, DirectedGraph):
             raise TypeError(f"Addition not defined between class DirectedGraph and type {type(other).__name__}!")
         if isinstance(other, WeightedDirectedGraph):
@@ -1047,8 +1048,8 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
             return self + WeightedDirectedGraph({u: (0, ({}, other.link_weights(u))) for u in other.nodes})
         return self + WeightedDirectedGraph({u: (0, ({}, {v: 0 for v in other.next(u)})) for u in other.nodes})
 
-    def __eq__(self, other):
-        if isinstance(other, WeightedDirectedGraph):
+    def __eq__(self, other: "WeightedDirectedGraph"):
+        if type(other) == WeightedDirectedGraph:
             return (self.node_weights(), self.link_weights()) == (other.node_weights(), other.link_weights())
         return False
 
