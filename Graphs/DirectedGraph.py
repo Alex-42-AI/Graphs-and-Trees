@@ -43,7 +43,7 @@ class DirectedGraph(Graph):
 
     @property
     def sources(self) -> set[Node]:
-        return {u for u in self.nodes if not self.source(u)}
+        return {u for u in self.nodes if self.source(u)}
 
     @property
     def sinks(self) -> set[Node]:
