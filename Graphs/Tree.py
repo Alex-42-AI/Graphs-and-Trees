@@ -27,26 +27,26 @@ class BinTree:
         return self.__root
 
     @property
-    def left(self):
+    def left(self) -> "BinTree":
         return self.__left
 
     @property
-    def right(self):
+    def right(self) -> "BinTree":
         return self.__right
 
-    def copy(self):
+    def copy(self) -> "BinTree":
         if self:
             return BinTree(self.root, self.left.copy(), self.right.copy())
 
-    def rotate_left(self):
+    def rotate_left(self) -> "BinTree":
         self.__root, self.__left, self.__right = self.right.root, BinTree(self.root, self.left, self.right.left), self.right.right
         return self
 
-    def rotate_right(self):
+    def rotate_right(self) -> "BinTree":
         self.__root, self.__left, self.__right = self.left.root, self.left.left, BinTree(self.root, self.left.right, self.right)
         return self
 
-    def subtree(self, u: Node):
+    def subtree(self, u: Node) -> "BinTree":
         def dfs(tree):
             if not tree:
                 return
@@ -129,7 +129,7 @@ class BinTree:
                 res += c + "  "
         return res[:-2]
 
-    def inverted(self):
+    def inverted(self) -> "BinTree":
         return ~self.copy()
 
     def traverse(self, traversal_type: str = "in-order") -> list[Node]:
@@ -174,7 +174,7 @@ class BinTree:
         else:
             raise ValueError("Traversal type " + str(traversal_type) + " is not supported!")
 
-    def __invert__(self):
+    def __invert__(self) -> "BinTree":
         def dfs(tree):
             if not tree:
                 return
@@ -189,14 +189,13 @@ class BinTree:
             return True
         if self.left and item in self.left:
             return True
-        if self.right:
-            return item in self.right
+        return self.right and item in self.right
 
     def __bool__(self):
         return self.root.value is not None or bool(self.left) or bool(self.right)
 
-    def __eq__(self, other):
-        if isinstance(other, BinTree):
+    def __eq__(self, other: "BinTree"):
+        if type(other) == BinTree:
             return (self.root, self.left, self.right) == (other.root, other.left, other.right)
         return False
 
@@ -254,10 +253,10 @@ class Tree:
     def descendants(self, n: Node) -> set[Node]:
         return self.hierarchy(n)
 
-    def copy(self):
+    def copy(self) -> "Tree":
         return Tree(self.root, {u: self.descendants(u) for u in self.nodes if u != self.root})
 
-    def subtree(self, u: Node):
+    def subtree(self, u: Node) -> "Tree":
         if u not in self:
             raise ValueError("Unrecognized node!")
         if u == self.root:
@@ -268,7 +267,7 @@ class Tree:
                 res.add(v, n), queue.append(n)
         return res
 
-    def add(self, curr: Node, u: Node, *rest: Node):
+    def add(self, curr: Node, u: Node, *rest: Node) -> "Tree":
         if curr not in self:
             raise Exception("Unrecognized node")
         if curr in self.leaves: self.__leaves.remove(curr)
@@ -281,7 +280,7 @@ class Tree:
                 self.__hierarchy[v] = set()
         return self
 
-    def add_tree(self, tree):
+    def add_tree(self, tree: "Tree") -> "Tree":
         if not isinstance(tree, Tree):
             raise TypeError("Tree expected!")
         if tree.root not in self:
@@ -293,7 +292,7 @@ class Tree:
                 queue += res
         return self
 
-    def remove(self, u: Node, subtree=False):
+    def remove(self, u: Node, subtree: bool = False) -> "Tree":
         if u not in self:
             raise ValueError("Unrecognized node!")
         if u == self.root:
@@ -313,7 +312,7 @@ class Tree:
         self.__hierarchy.pop(u)
         return self
 
-    def move_node(self, u: Node, at_new: Node, subtree=False):
+    def move_node(self, u: Node, at_new: Node, subtree: bool = False) -> "Tree":
         if u in self:
             tmp = self.subtree(u) if subtree else None
             self.remove(u, subtree)
@@ -383,7 +382,7 @@ class Tree:
             return dp[self.root][0] + dp[self.root][1]
         return dp[self.root][0] if a > b else dp[self.root][1]
 
-    def isomorphicFunction(self, other) -> dict[Node, Node]:
+    def isomorphicFunction(self, other: "Tree") -> dict[Node, Node]:
         if isinstance(other, Tree):
             if len(self.nodes) != len(other.nodes) or len(self.leaves) != len(other.leaves) or len(self.descendants(self.root)) != len(other.descendants(other.root)):
                 return {}
@@ -416,10 +415,10 @@ class Tree:
     def __bool__(self):
         return bool(self.nodes)
 
-    def __contains__(self, item):
+    def __contains__(self, item: Node):
         return item in self.nodes
 
-    def __eq__(self, other):
+    def __eq__(self, other: "Tree"):
         if type(other) == Tree:
             return self.hierarchy == other.hierarchy
         return False
@@ -454,21 +453,21 @@ class WeightedTree(Tree):
     def weights(self, u: Node = None) -> dict[Node, float] | float:
         return self.__weights if u is None else self.__weights.get(u)
 
-    def set_weight(self, u: Node, w: float):
+    def set_weight(self, u: Node, w: float) -> "WeightedTree":
         if u in self:
             self.__weights[u] = w
         return self
 
-    def increase_weight(self, u: Node, w: float):
+    def increase_weight(self, u: Node, w: float) -> "WeightedTree":
         if u in self.weights:
             self.set_weight(u, self.weights(u) + w)
         return self
 
-    def copy(self):
+    def copy(self) -> "WeightedTree":
         inheritance = {u: (self.weights(u), {v: self.weights(v) for v in self.descendants(u)}) for u in self.nodes}
         return WeightedTree((self.root, self.weights(self.root)), inheritance)
 
-    def subtree(self, u: Node):
+    def subtree(self, u: Node) -> "WeightedTree":
         if u not in self:
             raise ValueError("Unrecognized node!")
         if u == self.root:
@@ -479,15 +478,17 @@ class WeightedTree(Tree):
                 res.add(v, {n: self.weights(n)}), queue.append(n)
         return res
 
-    def add(self, curr: Node, rest: dict[Node, float] = {}):
+    def add(self, curr: Node, rest: dict[Node, float] = {}) -> "WeightedTree":
         if curr not in self:
             raise Exception("Unrecognized node")
         for u, w in rest.items():
             if u not in self:
                 self.__weights[u] = w
-        return super().add(curr, *rest.keys()) if rest else self
+        if rest:
+            super().add(curr, *rest.keys())
+        return self
 
-    def add_tree(self, tree):
+    def add_tree(self, tree) -> "WeightedTree":
         super().add_tree(tree)
         queue = [tree.root]
         while queue:
@@ -495,12 +496,13 @@ class WeightedTree(Tree):
             queue += self.descendants(u)
         return self
 
-    def remove(self, u: Node, subtree=False):
+    def remove(self, u: Node, subtree: bool = False) -> "WeightedTree":
         if subtree:
             for d in self.descendants(u):
                 self.remove(d, True)
         self.__weights.pop(u)
-        return super().remove(u)
+        super().remove(u)
+        return self
 
     def weighted_vertex_cover(self) -> list[set[Node]]:
         return [self.nodes - curr for curr in self.weighted_independent_set()]
@@ -531,7 +533,7 @@ class WeightedTree(Tree):
         dfs(self.root)
         return root_val[0] if sum(map(self.weights, (root_val := dp[self.root])[0])) <= sum(map(self.weights, root_val[1])) else root_val[1]
 
-    def weighted_independent_set(self):
+    def weighted_independent_set(self) -> list[set[Node]]:
         def dfs(x):
             for y in self.descendants(x):
                 dfs(y)
@@ -547,10 +549,9 @@ class WeightedTree(Tree):
             return dp[self.root][0] + dp[self.root][1]
         return dp[self.root][0] if a > b else dp[self.root][1]
 
-    def isomorphicFunction(self, other) -> dict[Node, Node]:
+    def isomorphicFunction(self, other: Tree) -> dict[Node, Node]:
         if isinstance(other, WeightedTree):
-            if len(self.nodes) != len(other.nodes) or len(self.leaves) != len(other.leaves) or len(
-                    self.descendants(self.root)) != len(other.descendants(other.root)):
+            if len(self.nodes) != len(other.nodes) or len(self.leaves) != len(other.leaves) or len(self.descendants(self.root)) != len(other.descendants(other.root)):
                 return {}
             this_hierarchies, other_hierarchies = {}, {}
             for n in self.nodes:
@@ -595,8 +596,8 @@ class WeightedTree(Tree):
             return {}
         return super().isomorphicFunction(other)
 
-    def __eq__(self, other):
-        if isinstance(other, WeightedTree):
+    def __eq__(self, other: "WeightedTree"):
+        if type(other) == WeightedTree:
             return (self.hierarchy, self.weights()) == (other.hierarchy, other.weights())
         return False
 
