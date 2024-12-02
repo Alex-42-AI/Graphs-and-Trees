@@ -51,10 +51,6 @@ class Node:
 
 class Graph(ABC):
     @abstractmethod
-    def __init__(self):
-        pass
-
-    @abstractmethod
     def nodes(self) -> set[Node]:
         pass
 
@@ -63,39 +59,27 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def degrees(self) -> dict | int:
+    def degrees(self, n: Node = None) -> dict | int:
         pass
 
     @abstractmethod
-    def add(self):
+    def remove(self, n: Node, *rest: Node) -> "Graph":
         pass
 
     @abstractmethod
-    def remove(self):
+    def copy(self) -> "Graph":
         pass
 
     @abstractmethod
-    def connect(self):
+    def complementary(self) -> "Graph":
         pass
 
     @abstractmethod
-    def disconnect(self):
+    def component(self, n: Node) -> "Graph":
         pass
 
     @abstractmethod
-    def copy(self):
-        pass
-
-    @abstractmethod
-    def complementary(self):
-        pass
-
-    @abstractmethod
-    def component(self):
-        pass
-
-    @abstractmethod
-    def connection_components(self):
+    def connection_components(self) -> "list[Graph]":
         pass
 
     @abstractmethod
@@ -103,7 +87,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def reachable(self) -> bool:
+    def reachable(self, u: Node, v: Node) -> bool:
         pass
 
     @abstractmethod
@@ -111,7 +95,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def get_shortest_path(self) -> list[Node]:
+    def get_shortest_path(self, u: Node, v: Node) -> list[Node]:
         pass
 
     @abstractmethod
@@ -119,7 +103,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def euler_walk_exists(self) -> bool:
+    def euler_walk_exists(self, u: Node, v: Node) -> bool:
         pass
 
     @abstractmethod
@@ -127,15 +111,15 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def euler_walk(self) -> list[Node]:
+    def euler_walk(self, u: Node, v: Node) -> list[Node]:
         pass
 
     @abstractmethod
-    def pathWithLength(self) -> list[Node]:
+    def pathWithLength(self, u: Node, v: Node, length: int) -> list[Node]:
         pass
 
     @abstractmethod
-    def loopWithLength(self) -> list[Node]:
+    def loopWithLength(self, length: int) -> list[Node]:
         pass
 
     @abstractmethod
@@ -143,7 +127,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def hamiltonWalkExists(self) -> bool:
+    def hamiltonWalkExists(self, u: Node, v: Node) -> bool:
         pass
 
     @abstractmethod
@@ -151,11 +135,11 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def hamiltonWalk(self) -> list[Node]:
+    def hamiltonWalk(self, u: Node, v: Node) -> list[Node]:
         pass
 
     @abstractmethod
-    def isomorphicFunction(self) -> dict[Node, Node]:
+    def isomorphicFunction(self, other: "Graph") -> dict[Node, Node]:
         pass
 
     @abstractmethod
@@ -163,7 +147,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def __reversed__(self):
+    def __reversed__(self) -> "Graph":
         pass
 
     @abstractmethod
@@ -171,11 +155,11 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def __add__(self):
+    def __add__(self, other: "Graph") -> "Graph":
         pass
 
     @abstractmethod
-    def __eq__(self):
+    def __eq__(self, other: "Graph"):
         pass
 
     @abstractmethod
