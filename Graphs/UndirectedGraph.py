@@ -6,7 +6,7 @@ from collections import defaultdict
 
 from itertools import permutations, combinations, product
 
-from Graphs.General import Node, Graph
+from Graphs.General import *
 
 from Graphs.Tree import Tree, WeightedTree
 
@@ -291,10 +291,11 @@ class UndirectedGraph(Graph):
             for u in self.nodes:
                 j = -1
                 for j, v in enumerate(ll[:-1]):
-                    if u not in self.neighboring(w := ll[j + 1]).union({w}) and u in self.neighboring(v).union({v}):
+                    ll[j].remove(u)
+                    if u not in self.neighboring(ll[j + 1]) and u in self.neighboring(v):
                         break
                 for i, v in enumerate(ll[j + 2:]):
-                    if u in self.neighboring(v).union({v}):
+                    if u in self.neighboring(v):
                         return False
             return True
 
