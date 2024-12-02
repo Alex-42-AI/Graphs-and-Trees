@@ -5,28 +5,29 @@ This project is an implementation of an unweighted undirected graph, a weighted 
 
 In file General.py, there's an implementation of a node and an implementation of an abstract base class Graph. It implements the following methods, that are common for both direted and undirected graphs:
 1) nodes, links and degrees getters;
-2) add a node;
-3) remove nodes;
-4) connect a node to other nodes;
-5) disconnect a node from other nodes;
-6) returning a copy of the graph;
-7) returning the complementary graph of the given one;
-8) returning the graph component of a given node;
-9) listing out the connection components in the graph;
-10) checking whether the graph is connected;
-11) checking whether one node can reach another one in the graph;
-12) checking whether the graph is full (whether there are links between every two nodes in it);
-13) calculating the shortest path from one node to another in the graph;
-14) checking whether a path/loop with a given length exists between from one node to another;
-15) checking whether an Euler tour, an Euler walk, a Hamilton tour and a Hamilton walk exist;
-16) actually finding an Euler tour, an Euler walk, a Hamilton tour and a Hamilton walk;
-17) checking whether the graph is isomorphic to another graph and if so, returning the bijection between the sets of nodes of the graphs;
-18) returning the reverse (complementary) graph of the original one;
-19) defining __bool__ as whether the graph has any nodes;
-20) checking whether a node is present in the graph;
-21) checking whether two graphs are equal;
-22) combining two graphs into one (addition);
-23) representing the graph (__str__ and __repr__).
+2) remove nodes;
+3) returning a copy of the graph;
+4) returning the complementary graph of the given one;
+5) returning the graph component of a given node;
+6) listing out the connection components in the graph;
+7) checking whether the graph is connected;
+8) checking whether one node can reach another one in the graph;
+9) checking whether the graph is full (whether there are links between every two nodes in it);
+10) calculating the shortest path from one node to another in the graph;
+11) checking whether a path/loop with a given length exists between from one node to another;
+12) checking whether an Euler tour, an Euler walk, a Hamilton tour and a Hamilton walk exist;
+13) actually finding an Euler tour, an Euler walk, a Hamilton tour and a Hamilton walk;
+14) checking whether the graph is isomorphic to another graph and if so, returning the bijection between the sets of nodes of the graphs;
+15) returning the reverse (complementary) graph of the original one;
+16) defining __bool__ as whether the graph has any nodes;
+17) checking whether a node is present in the graph;
+18) checking whether two graphs are equal;
+19) combining two graphs into one (addition);
+20) representing the graph (__str__ and __repr__).
+
+All graphs also have methods for adding a node to already present nodes, connecting a node to already present nodes and disconnecting a node from already present nodes, but they're implemented differently in undirected graps and directed graphs.
+
+In file UndirectedPath.py are implemented class Link for an undirected link and the undirected graph classes.
 
 Undirected graph classes further have methods for:
 1) listing out the leaves in the graph (nodes with a degree of 1);
@@ -70,34 +71,41 @@ Furthermore, the degrees method returns a pair of numbers, the first of which sh
 Weighted graphs by nodes, in addition to their parental superclass, have methods for:
 1) returning the weight of a node, if such is given, otherwise returns the same for all nodes;
 2) returning the sum of the weights of all nodes;
-3) setting the weight of a given node to a given real value;
+3) setting/increasing the weight of a given node to/with a given real value;
 4) finding the minimal (lightest) path between two nodes;
-5) listing out all optimal by total sum of the weights of the nodes vertex covers of the graph;
-6) listing out all optimal by total sum of the weights of the nodes dominating sets of the graph;
+5) listing out all minimum by total sum of the weights of the nodes vertex covers of the graph;
+6) listing out all minimum by total sum of the weights of the nodes dominating sets of the graph;
+5) listing out all maximum by total sum of the weights of the nodes independent sets of the graph;
 
 Weighted graphs by links, in addition to their parental superclass, have methods for:
 1) returning the weight of a link, if such is given, otherwise returns the same for all links;
 2) returning the sum of the weights of all links;
-3) setting the weight of a given link to a given real value;
+3) setting/increasing the weight of a given link to/with a given real value;
 4) finding the minimal spanning tree of the graph (for undirected graphs);
 5) finding the minimal (lightest) path between two nodes.
 
 Weighted graphs by nodes and links, in addition to their parental superclasses, have a method for finding the minimal (lightest in terms of sum of node and link weights) path between two nodes and for getting the total sum of all nodes and links.
 
 On top of that, the methods for adding and connecting nodes differ such, that instead of accepting a positive number of nodes, which a given node is going to be connected to, they accept a positive number of pairs, each of which contains a node and a real number, that is going to be the value of the link between the two nodes.
-Also, their methods for finding an Euler tour, an Euler walk, a Hamilton tour and a Hamilton walk also return the sum of the weights of the links in the paths found and the Hamilton methods look for the lightest routes possible (using a greedy algorithm).
 
 The binary tree in this project has:
-1) methods left() and right(), that return respectively the left subtree and the right subtree;
-2) a method to return the height of the tree (in terms of links);
-3) a method to return all nodes on a certain level in the tree and a method, that returns the width of the tree;
-4) a method for counting the leaves of the tree;
-5) a method for counting the nodes of the tree;
-6) a method for finding the Morse code of a node with a given value in the tree (left is dot and right is dash);
-7) a method for encrypting a message into morse code;
-8) __contains__ and __eq__ methods;
-9) a method for inverting the tree and one for returning a copy of the tree being inverted without inverting it;
-10) methods for printing all the node values in the tree preorder, in order and post order.
+1) methods root, left and right, that return respectively the root, the left subtree and the right subtree;
+2) copy() methed;
+3) rotate_left and rotate_right methods;
+4) a method to get the subtree with a given node as a root in the tree;
+5) a method to return the height of the tree (in terms of links);
+6) a method to return all nodes on a certain level in the tree and a method, that returns the width of the tree;
+7) a method for counting the leaves of the tree;
+8) a method for counting the nodes of the tree;
+9) a method for finding the Morse code of a node with a given value in the tree (left is dot and right is dash);
+10) a method for encrypting a message into morse code;
+11) a method to get an inverted copy of the tree;
+12) traverse method, where the traversal type can be specified;
+13) __contains__ and __eq__ methods;
+14) __invert__ for inverting the tree;
+15) __bool__, asking whether the tree has a root;
+16) __str__ method, which basically draws the tree;
+17) __repr__ method, that returns the same as method traverse with default traversal type in-order.
 
 The tree class in the project has methods for:
 1) getting the root, the nodes, the links, the leaves and the hierarchy in the tree;
@@ -105,20 +113,24 @@ The tree class in the project has methods for:
 3) making a copy of the tree;
 4) adding new nodes to one already in the tree;
 5) extending the tree with another one on a given node;
-6) removing a node with all of its descendants;
+6) removing a node with or without its subtree;
 7) returning the parent node of a given one;
 8) returning the depth of a given node;
 9) returning the height of the tree;
 10) getting the path from the root to a given node;
-11) returning an optimal (with a minimal cardinality) vertex cover of the nodes of the tree;
-12) returning an optimal (with a minimal cardinality) dominating set of the nodes of the tree;
-13) returning an optimal (with a maximal cardinality) independent set of the nodes of the tree;
-14) checking whether the tree is isomorphic with another tree and if so, returning the isomorphic function between the nodes of the trees;
-15) checking whether a node or a link is contained in the tree;
-16) comparing the tree with another one.
+11) returning all minimum by cardinality vertex covers of the nodes of the tree;
+12) returning a minimum by cardinality dominating set of the nodes of the tree;
+13) returning all maximum by cardinality independent sets of the nodes of the tree;
+14) checking whether the tree is isomorphic with another tree and if so, returning an isomorphic function between the nodes of the trees;
+15) checking whether the tree has nodes;
+16) checking whether a node is in the tree;
+17) comparing the tree with another one;
+18) drawing the tree (__str__);
+19) representing the tree (__repr__).
 
 The weighted tree class in particular has methods for:
 1) returning the weight of a node, if such is given, otherwise returns the same for all nodes;
 2) setting the weight of a node to a given real numerical value;
-3) returning an optimal (with a minimal sum of the node weights) vertex cover of the nodes of the tree;
-4) returning an optimal (with a minimal sum of the node weights) dominating set of the nodes of the tree;
+3) returning all minimum by sum of the weights vertex covers of the nodes of the tree;
+4) returning a minimum by sum of the weights dominating set of the nodes of the tree;
+5) returning all maximum by sum of the weights independent sets of the nodes of the tree.
