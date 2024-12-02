@@ -43,17 +43,17 @@ class DirectedGraph(Graph):
 
     @property
     def sources(self) -> set[Node]:
-        return {u for u in self.nodes if not self.degrees(u)[0]}
+        return {u for u in self.nodes if not self.source(u)}
 
     @property
     def sinks(self) -> set[Node]:
-        return {v for v in self.nodes if not self.degrees(v)[1]}
+        return {v for v in self.nodes if self.sink(v)}
 
     def source(self, n: Node) -> bool:
-        return n in self.sources
+        return not self.degrees(n)[0]
 
     def sink(self, n: Node) -> bool:
-        return n in self.sinks
+        return not self.degrees(n)[1]
 
     def add(self, u: Node, pointed_by: Iterable[Node] = (), points_to: Iterable[Node] = ()):
         if u not in self:
