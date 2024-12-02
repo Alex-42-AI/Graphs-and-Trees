@@ -63,10 +63,10 @@ class UndirectedGraph(Graph):
 
     @property
     def leaves(self) -> set[Node]:
-        return {n for n in self.nodes if self.degrees(n) == 1}
+        return {n for n in self.nodes if self.leaf(n)}
 
     def leaf(self, n: Node) -> bool:
-        return n in self.leaves
+        return self.degrees(n) == 1
 
     def neighboring(self, u: Node = None) -> dict[Node, set[Node]] | set[Node]:
         return (self.__neighboring if u is None else self.__neighboring[u]).copy()
@@ -431,22 +431,6 @@ class UndirectedGraph(Graph):
                     result.connect(u, v)
         return result
 
-    def independentSet(self) -> list[set[Node]]:
-        if not self.connected():
-            r = [comp.independentSet() for comp in self.connection_components()]
-            result = r[0]
-            for i_s in r[1:]:
-                result = [a.union(b) for a in result for b in i_s]
-            return result
-        if self.is_full_k_partite():
-            if not self:
-                return [set()]
-            max_card = max(map(len, cliques := [comp.nodes for comp in self.complementary().connection_components()]))
-            return list(filter(lambda x: len(x) == max_card, cliques))
-        if self.is_tree():
-            return self.tree(self.nodes.pop()).independent_set()
-        return self.complementary().maxCliques()
-
     def chromaticNodesPartition(self) -> list[set[Node]]:
         def anti_cliques(curr, ii=0):
             yield curr
@@ -525,6 +509,22 @@ class UndirectedGraph(Graph):
             if not self.degrees(n):
                 isolated.add(n), nodes.remove(n)
         return helper(isolated, isolated)
+
+    def independentSet(self) -> list[set[Node]]:
+        if not self.connected():
+            r = [comp.independentSet() for comp in self.connection_components()]
+            result = r[0]
+            for i_s in r[1:]:
+                result = [a.union(b) for a in result for b in i_s]
+            return result
+        if self.is_full_k_partite():
+            if not self:
+                return [set()]
+            max_card = max(map(len, cliques := [comp.nodes for comp in self.complementary().connection_components()]))
+            return list(filter(lambda x: len(x) == max_card, cliques))
+        if self.is_tree():
+            return self.tree(self.nodes.pop()).independent_set()
+        return self.complementary().maxCliques()
 
     def loopWithLength(self, length: int) -> list[Node]:
         if abs(length) < 3:
