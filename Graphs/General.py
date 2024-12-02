@@ -1,3 +1,6 @@
+from abc import ABC, abstractmethod
+
+
 class Node:
     def __init__(self, value):
         self.__value = value
@@ -46,19 +49,139 @@ class Node:
     __repr__ = __str__
 
 
-def build_heap(ll: list[int], h: int = 0):
-    def heapify(low: int, high: int, ind: int, f=max):
-        left, right = 2 * ind - low, 2 * ind - low + 1
-        res = ind
-        if left <= high and (el := ll[ind - 1]) != f(ll[left - 1], el):
-            res = left
-        if right <= high and (el := ll[res - 1]) != f(ll[right - 1], el):
-            res = right
-        if res != ind:
-            ll[ind - 1], ll[res - 1] = ll[res - 1], ll[ind - 1]
-            heapify(res - low - 1, high, res, f)
+class Graph(ABC):
+    @abstractmethod
+    def __init__(self):
+        pass
 
-    if not h:
-        h = len(ll)
-    for i in range(h // 2, 0, -1):
-        heapify(0, h, i)
+    @abstractmethod
+    def nodes(self) -> set[Node]:
+        pass
+
+    @abstractmethod
+    def links(self) -> set:
+        pass
+
+    @abstractmethod
+    def degrees(self) -> dict | int:
+        pass
+
+    @abstractmethod
+    def add(self):
+        pass
+
+    @abstractmethod
+    def remove(self):
+        pass
+
+    @abstractmethod
+    def connect(self):
+        pass
+
+    @abstractmethod
+    def disconnect(self):
+        pass
+
+    @abstractmethod
+    def copy(self):
+        pass
+
+    @abstractmethod
+    def complementary(self):
+        pass
+
+    @abstractmethod
+    def component(self):
+        pass
+
+    @abstractmethod
+    def connection_components(self):
+        pass
+
+    @abstractmethod
+    def connected(self) -> bool:
+        pass
+
+    @abstractmethod
+    def reachable(self) -> bool:
+        pass
+
+    @abstractmethod
+    def full(self) -> bool:
+        pass
+
+    @abstractmethod
+    def get_shortest_path(self) -> list[Node]:
+        pass
+
+    @abstractmethod
+    def euler_tour_exists(self) -> bool:
+        pass
+
+    @abstractmethod
+    def euler_walk_exists(self) -> bool:
+        pass
+
+    @abstractmethod
+    def euler_tour(self) -> list[Node]:
+        pass
+
+    @abstractmethod
+    def euler_walk(self) -> list[Node]:
+        pass
+
+    @abstractmethod
+    def pathWithLength(self) -> list[Node]:
+        pass
+
+    @abstractmethod
+    def loopWithLength(self) -> list[Node]:
+        pass
+
+    @abstractmethod
+    def hamiltonTourExists(self) -> bool:
+        pass
+
+    @abstractmethod
+    def hamiltonWalkExists(self) -> bool:
+        pass
+
+    @abstractmethod
+    def hamiltonTour(self) -> list[Node]:
+        pass
+
+    @abstractmethod
+    def hamiltonWalk(self) -> list[Node]:
+        pass
+
+    @abstractmethod
+    def isomorphicFunction(self) -> dict[Node, Node]:
+        pass
+
+    @abstractmethod
+    def __bool__(self):
+        pass
+
+    @abstractmethod
+    def __reversed__(self):
+        pass
+
+    @abstractmethod
+    def __contains__(self):
+        pass
+
+    @abstractmethod
+    def __add__(self):
+        pass
+
+    @abstractmethod
+    def __eq__(self):
+        pass
+
+    @abstractmethod
+    def __str__(self):
+        pass
+
+    @abstractmethod
+    def __repr__(self):
+        pass
