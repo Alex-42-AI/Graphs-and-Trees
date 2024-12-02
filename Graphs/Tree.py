@@ -1,8 +1,10 @@
 from typing import Iterable
 
+from collections import defaultdict
+
 from itertools import permutations, product
 
-from Graphs.General import *
+from Graphs.General import Node
 
 
 class BinTree:
@@ -67,15 +69,13 @@ class BinTree:
 
         return dfs(abs(level), self)
 
-    @property
     def width(self) -> int:
-        res = len(self.nodes_on_level(self.height))
-        for i in range(self.height - 1, -1, -1):
+        res = len(self.nodes_on_level(self.height()))
+        for i in range(self.height() - 1, -1, -1):
             if (curr := len(self.nodes_on_level(i))) <= res and res >= 2 ** (i - 1):
                 return res
             res = max(res, curr)
 
-    @property
     def height(self) -> int:
         def dfs(tree):
             if not tree:
@@ -239,7 +239,6 @@ class Tree:
     def leaves(self) -> set[Node]:
         return self.__leaves
 
-    @property
     def height(self) -> int:
         def helper(x: Node):
             return 1 + max([0, *map(helper, self.descendants(x))])
@@ -388,27 +387,13 @@ class Tree:
         if isinstance(other, Tree):
             if len(self.nodes) != len(other.nodes) or len(self.leaves) != len(other.leaves) or len(self.descendants(self.root)) != len(other.descendants(other.root)):
                 return {}
-            this_hierarchies, other_hierarchies = {}, {}
-            for n in self.nodes:
-                descendants = len(self.descendants(n))
-                if descendants not in this_hierarchies:
-                    this_hierarchies[descendants] = 1
-                else:
-                    this_hierarchies[descendants] += 1
-            for n in other.nodes:
-                descendants = len(other.descendants(n))
-                if descendants not in other_hierarchies:
-                    other_hierarchies[descendants] = 1
-                else:
-                    other_hierarchies[descendants] += 1
-            if this_hierarchies != other_hierarchies:
-                return {}
-            this_nodes_descendants = {d: [] for d in this_hierarchies}
-            other_nodes_descendants = {d: [] for d in other_hierarchies}
+            this_nodes_descendants, other_nodes_descendants = defaultdict(list), defaultdict(list)
             for n in self.nodes:
                 this_nodes_descendants[len(self.descendants(n))].append(n)
             for n in other.nodes:
                 other_nodes_descendants[len(self.descendants(n))].append(n)
+            if any(len(this_nodes_descendants[d]) != len(other_nodes_descendants[d]) for d in this_nodes_descendants):
+                return {}
             this_nodes_descendants = list(sorted(this_nodes_descendants.values(), key=lambda x: len(x)))
             other_nodes_descendants = list(sorted(other_nodes_descendants.values(), key=lambda x: len(x)))
             for possibility in product(*map(permutations, this_nodes_descendants)):
