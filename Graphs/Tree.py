@@ -238,6 +238,9 @@ class Tree:
     def leaves(self) -> set[Node]:
         return self.__leaves
 
+    def leaf(self, n) -> bool:
+        return n in self.leaves
+
     def height(self) -> int:
         def helper(x: Node):
             return 1 + max([0, *map(helper, self.descendants(x))])
@@ -270,7 +273,7 @@ class Tree:
     def add(self, curr: Node, u: Node, *rest: Node) -> "Tree":
         if curr not in self:
             raise Exception("Unrecognized node")
-        if curr in self.leaves: self.__leaves.remove(curr)
+        if self.leaf(curr): self.__leaves.remove(curr)
         for v in [u] + [*rest]:
             if v not in self:
                 self.__nodes.add(v)
@@ -305,7 +308,7 @@ class Tree:
         for n in self.descendants(u):
             self.__parent[n] = v
         self.__hierarchy[v] += self.hierarchy(u)
-        if u in self.leaves:
+        if self.leaf(u):
             self.__leaves.remove(u)
             if not self.hierarchy(v):
                 self.__leaves.add(v)
@@ -340,31 +343,40 @@ class Tree:
     def vertex_cover(self) -> list[set[Node]]:
         return [self.nodes - curr for curr in self.independent_set()]
 
-    def dominating_set(self) -> set[Node]:
-        dp = {n: [{n}, set()] for n in self.nodes}
-
+    def dominating_set(self) -> list[set[Node]]:
         def dfs(r):
-            if r in self.leaves:
+            if self.leaf(r):
                 return
-            only_leaves, min_no_root = True, None
+            only_leaves, optimal_no_root = True, None
             for d in self.descendants(r):
-                if d in self.leaves:
-                    dp[r][1].add(min_no_root := d)
+                if self.leaf(d):
+                    for i in range(len(dp[r][1])):
+                        dp[r][1][i].add(optimal_no_root := d)
                 else:
                     only_leaves = False
             if only_leaves:
                 return
             for d in self.descendants(r):
-                if d not in self.leaves:
+                if not self.leaf(d):
                     dfs(d)
-                    dp[r][0].update(dp[d][0] if len(dp[d][0]) < len(dp[d][1]) else dp[d][1])
-                    if min_no_root is None or len(dp[d][0]) < len(dp[min_no_root][0]):
-                        min_no_root = d
+                    optimal = dp[d][0] + dp[d][1]
+                    if (c0 := len(dp[d][0][0])) != (c1 := len(dp[d][1][0])):
+                        optimal = dp[d][0] if c0 < c1 else dp[d][1]
+                    dp[r][0] = [a.union(b) for a in dp[r][0] for b in optimal]
+                    if optimal_no_root is None or len(dp[d][0][0]) < len(dp[optimal_no_root][0][0]):
+                        optimal_no_root = d
             for d in self.descendants(r):
-                dp[r][1].update(dp[d][1] if len(dp[d][1]) < len(dp[d][0]) and d != min_no_root else dp[d][0])
+                optimal = dp[d][0] + dp[d][1]
+                if (c0 := len(dp[d][0][0])) != (c1 := len(dp[d][1][0])):
+                    optimal = dp[d][0] if c0 < c1 or d == optimal_no_root else dp[d][1]
+                dp[r][1] = [a.union(b) for a in dp[r][1] for b in optimal]
 
+        dp = {n: [[{n}], [set()]] for n in self.nodes}
         dfs(self.root)
-        return root_val[0] if len((root_val := dp[self.root])[0]) <= len(root_val[1]) else root_val[1]
+        result = (root_val := dp[self.root])[0] + root_val[1]
+        if len(root_val[0][0]) != len(root_val[1][0]):
+            result = root_val[0] if len(root_val[0][0]) < len(root_val[1][0]) else root_val[1]
+        return result
 
     def independent_set(self) -> list[set[Node]]:
         def dfs(x: Node):
@@ -507,31 +519,40 @@ class WeightedTree(Tree):
     def weighted_vertex_cover(self) -> list[set[Node]]:
         return [self.nodes - curr for curr in self.weighted_independent_set()]
 
-    def weighted_dominating_set(self) -> set[Node]:
-        dp = {n: [{n}, set()] for n in self.nodes}
-
+    def weighted_dominating_set(self) -> list[set[Node]]:
         def dfs(r):
-            if r in self.leaves:
+            if self.leaf(r):
                 return
-            only_leaves, min_no_root = True, None
+            only_leaves, optimal_no_root = True, None
             for d in self.descendants(r):
-                if d in self.leaves:
-                    dp[r][1].add(min_no_root := d)
+                if self.leaf(d):
+                    for i in range(len(dp[r][1])):
+                        dp[r][1][i].add(optimal_no_root := d)
                 else:
                     only_leaves = False
             if only_leaves:
                 return
             for d in self.descendants(r):
-                if d not in self.leaves:
+                if not self.leaf(d):
                     dfs(d)
-                    dp[r][0].update(dp[d][0] if (d_weights_sum := sum(map(self.weights, dp[d][0]))) < sum(map(self.weights, dp[d][1])) else dp[d][1])
-                    if min_no_root is None or d_weights_sum < sum(map(self.weights, dp[min_no_root][0])):
-                        min_no_root = d
+                    optimal = dp[d][0] + dp[d][1]
+                    if (s0 := sum(map(self.weights, dp[d][0][0]))) != (s1 := sum(map(self.weights, dp[d][1][0]))):
+                        optimal = dp[d][0] if s0 < s1 else dp[d][1]
+                    dp[r][0] = [a.union(b) for a in dp[r][0] for b in optimal]
+                    if optimal_no_root is None or s0 < sum(map(self.weights, dp[optimal_no_root][0][0])):
+                        optimal_no_root = d
             for d in self.descendants(r):
-                dp[r][1].update(dp[d][1] if sum(map(self.weights, dp[d][1])) < sum(map(self.weights, dp[d][0])) and d != min_no_root else dp[d][0])
+                optimal = dp[d][0] + dp[d][1]
+                if (s0 := sum(map(self.weights, dp[d][0][0]))) != (s1 := sum(map(self.weights, dp[d][1][0]))):
+                    optimal = dp[d][0] if s0 < s1 or d == optimal_no_root else dp[d][1]
+                dp[r][1] = [a.union(b) for a in dp[r][1] for b in optimal]
 
+        dp = {n: [[{n}], [set()]] for n in self.nodes}
         dfs(self.root)
-        return root_val[0] if sum(map(self.weights, (root_val := dp[self.root])[0])) <= sum(map(self.weights, root_val[1])) else root_val[1]
+        result = (root_val := dp[self.root])[0] + root_val[1]
+        if (s0 := sum(map(self.weights, root_val[0][0]))) != (s1 := sum(map(self.weights, root_val[1][0]))):
+            result = root_val[0] if s0 < s1 else root_val[1]
+        return result
 
     def weighted_independent_set(self) -> list[set[Node]]:
         def dfs(x):
