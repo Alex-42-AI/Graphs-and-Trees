@@ -50,9 +50,9 @@ Undirected graph classes further have methods for:
 18) listing out all maximal by inclusion (not cardinality) cliques in the graph, to which a given node belongs;
 19) returning the clique graph of the original one (where a node represents a maximal by inclusion clique in the original one and links represent clique intersections);
 20) partitioning the nodes/links of the graph into a set of independent sets (anti-cliques) such, that the partition has as few elements as possible;
-21) listing out all minimum by cardinality vertex covers of the graph;
-22) listing out all minimum by cardinality dominating sets of the grpah;
-23) listing out all maximum by cardinality independent sets of the graph;
+21) returning a minimum by cardinality vertex cover of the graph;
+22) returning a minimum by cardinality dominating set of the graph;
+23) returning a minimum by cardinality independent set of the graph;
 
 Unique methods for directed graph classes are:
 1) listing out the previous nodes of a given one (if such is gives, otherwise it shows this for all nodes);
@@ -73,9 +73,10 @@ Weighted graphs by nodes, in addition to their parental superclass, have methods
 2) returning the sum of the weights of all nodes;
 3) setting/increasing the weight of a given node to/with a given real value;
 4) finding the minimal (lightest) path between two nodes;
-5) listing out all minimum by total sum of the weights of the nodes vertex covers of the graph;
-6) listing out all minimum by total sum of the weights of the nodes dominating sets of the graph;
-5) listing out all maximum by total sum of the weights of the nodes independent sets of the graph;
+5) returning a minimum by total sum of the weights of the nodes vertex cover of the graph;
+6) returning a minimum by total sum of the weights of the nodes dominating set of the graph;
+7) returning a maximum by total sum of the weights of the nodes independent set of the graph.
+The last tree methods are only present in the undirected graphs.
 
 Weighted graphs by links, in addition to their parental superclass, have methods for:
 1) returning the weight of a link, if such is given, otherwise returns the same for all links;
@@ -95,7 +96,7 @@ The binary tree in this project has:
 4) a method to get the subtree with a given node as a root in the tree;
 5) a method to return the height of the tree (in terms of links);
 6) a method to return all nodes on a certain level in the tree and a method, that returns the width of the tree;
-7) a method for counting the leaves of the tree;
+7) a method to return the leaves of the tree;
 8) a method for counting the nodes of the tree;
 9) a method for finding the Morse code of a node with a given value in the tree (left is dot and right is dash);
 10) a method for encrypting a message into morse code;
@@ -118,9 +119,9 @@ The tree class in the project has methods for:
 8) returning the depth of a given node;
 9) returning the height of the tree;
 10) getting the path from the root to a given node;
-11) returning all minimum by cardinality vertex covers of the nodes of the tree;
-12) returning all minimum by cardinality dominating sets of the nodes of the tree;
-13) returning all maximum by cardinality independent sets of the nodes of the tree;
+11) returning a minimum by cardinality vertex cover of the tree;
+12) returning a minimum by cardinality dominating set of the tree;
+13) returning a minimum by cardinality independent set of the tree;
 14) checking whether the tree is isomorphic with another tree and if so, returning an isomorphic function between the nodes of the trees;
 15) checking whether the tree has nodes;
 16) checking whether a node is in the tree;
@@ -131,6 +132,6 @@ The tree class in the project has methods for:
 The weighted tree class in particular has methods for:
 1) returning the weight of a node, if such is given, otherwise returns the same for all nodes;
 2) setting the weight of a node to a given real numerical value;
-3) returning all minimum by sum of the weights vertex covers of the nodes of the tree;
-4) returning all minimum by sum of the weights dominating sets of the nodes of the tree;
-5) returning all maximum by sum of the weights independent sets of the nodes of the tree.
+3) returning a minimum by total sum of the weights of the nodes vertex cover of the tree;
+4) returning a minimum by total sum of the weights of the nodes dominating set of the tree;
+5) returning a maximum by total sum of the weights of the nodes independent set of the tree.
