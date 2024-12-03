@@ -162,6 +162,15 @@ class UndirectedGraph(Graph):
                 tree.add(u, v), queue.append(v), total.add(v)
         return tree
 
+    def loop_with_length_3(self) -> list[Node]:
+        for l in self.links:
+            if intersection := self.neighboring(u := l.u).intersection(self.neighboring(v := l.v)):
+                return [u, v, intersection.pop()]
+        return []
+
+    def planar(self) -> bool:
+        return len(self.links) <= (2 + bool(self.loop_with_length_3())) * (len(self.nodes) - 2)
+
     def reachable(self, u: Node, v: Node) -> bool:
         if u not in self or v not in self:
             raise Exception("Unrecognized node(s)!")
@@ -490,61 +499,51 @@ class UndirectedGraph(Graph):
     def chromaticLinksPartition(self) -> list[set[Node]]:
         return [set(map(lambda x: x.value, s)) for s in UndirectedGraph.links_graph(self).chromaticNodesPartition()]
 
-    def vertexCover(self) -> list[set[Node]]:
-        return [self.nodes - curr for curr in self.independentSet()]
+    def vertexCover(self) -> set[Node]:
+        return self.nodes - self.independentSet()
 
-    def dominatingSet(self) -> list[set[Node]]:
+    def dominatingSet(self) -> set[Node]:
         def helper(curr, total, i=0):
             if total == self.nodes:
-                return [curr.copy()]
-            result = [list(self.nodes)]
+                return curr.copy()
+            result = self.nodes
             for j, u in enumerate(list(nodes)[i:]):
-                if len((res := helper(curr.union({u}), total.union({u, *self.neighboring(u)}), i + j + 1))[0]) == len(result[0]):
-                    result += res
-                elif len(res[0]) < len(result[0]):
+                if len((res := helper(curr.union({u}), total.union({u, *self.neighboring(u)}), i + j + 1))) < len(result):
                     result = res
             return result
 
         if not self.connected():
-            r = [comp.dominatingSet() for comp in self.connection_components()]
-            result = r[0]
-            for i_s in r[1:]:
-                result = [a.union(b) for a in result for b in i_s]
-            return result
+            return reduce(lambda x, y: x.union(y), [comp.dominatingSet() for comp in self.connection_components()])
         if len(self.nodes) == len(self.links) + 1:
             return self.tree(self.nodes.pop()).dominating_set()
         if self.is_full_k_partite():
             if not self:
-                return [set()]
-            min_card = min(map(len, cliques := [comp.nodes for comp in self.complementary().connection_components()]))
-            return [s for s in cliques if len(s) == min_card]
+                return set()
+            return min([comp.nodes for comp in self.complementary().connection_components()], key=len)
         nodes, isolated = self.nodes, set()
         for n in nodes:
             if not self.degrees(n):
                 isolated.add(n), nodes.remove(n)
         return helper(isolated, isolated)
 
-    def independentSet(self) -> list[set[Node]]:
+    def independentSet(self) -> set[Node]:
         if not self.connected():
-            r = [comp.independentSet() for comp in self.connection_components()]
-            result = r[0]
-            for i_s in r[1:]:
-                result = [a.union(b) for a in result for b in i_s]
-            return result
+            return reduce(lambda x, y: x.union(y), [comp.independentSet() for comp in self.connection_components()])
         if len(self.nodes) == len(self.links) + 1:
             return self.tree(self.nodes.pop()).independent_set()
         if self.is_full_k_partite():
             if not self:
-                return [set()]
-            max_card = max(map(len, cliques := [comp.nodes for comp in self.complementary().connection_components()]))
-            return [s for s in cliques if len(s) == max_card]
-        return self.complementary().maxCliques()
+                return set()
+            return max([comp.nodes for comp in self.complementary().connection_components()], key=len)
+        return self.complementary().maxCliques()[0]
 
     def loopWithLength(self, length: int) -> list[Node]:
-        if abs(length) < 3:
+        if (length := abs(length)) < 3:
             return []
+        if length == 3:
+            return self.loop_with_length_3()
         for l in (tmp := UndirectedGraph.copy(self)).links:
-            res = tmp.disconnect(u := l.u, v := l.v).pathWithLength(v, u, abs(length) - 1)
+            res = tmp.disconnect(u := l.u, v := l.v).pathWithLength(v, u, length - 1)
             tmp.connect(u, v)
             if res:
                 return res
@@ -593,8 +592,6 @@ class UndirectedGraph(Graph):
             raise Exception("Unrecognized node(s).")
         if v in self.neighboring(u):
             return True if all(n in {u, v} for n in self.nodes) else self.hamiltonTourExists()
-        if s := self.interval_sort():
-            return {u, v}.issubset({s[0], s[-1], None})
         return UndirectedGraph.copy(self).connect(u, v).hamiltonTourExists()
 
     def hamiltonTour(self) -> list[Node]:
@@ -637,8 +634,6 @@ class UndirectedGraph(Graph):
             return []
 
         tmp = UndirectedGraph.copy(self)
-        if s := self.interval_sort():
-            return s if {u, v}.issubset({s[0], s[-1], None}) else []
         if u is None:
             if v is not None and v not in self:
                 raise Exception("Unrecognized node.")
@@ -799,31 +794,25 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         neighborhood = {n: (self.node_weights(n), {m: 0 for m in self.neighboring(n)}) for n in self.nodes}
         return WeightedUndirectedGraph(neighborhood).minimalPath(u, v)
 
-    def weightedVertexCover(self) -> list[set[Node]]:
-        return [self.nodes - curr for curr in self.weightedIndependentSet()]
+    def weightedVertexCover(self) -> set[Node]:
+        return self.nodes - self.weightedIndependentSet()
 
-    def weightedDominatingSet(self) -> list[set[Node]]:
+    def weightedDominatingSet(self) -> set[Node]:
         def helper(curr, total, total_weight, i=0):
             if total == self.nodes:
-                return [curr.copy()], total_weight
-            result, result_sum = [self.nodes], self.total_nodes_weight
+                return curr.copy(), total_weight
+            result, result_sum = self.nodes, self.total_nodes_weight
             for j, u in enumerate(list(nodes)[i:]):
                 cover, weight = helper(curr.union({u}), total.union({u, *self.neighboring(u)}), total_weight + self.node_weights(u), i + j + 1)
-                if weight == result_sum:
-                    result += cover
-                elif weight < result_sum:
+                if weight < result_sum:
                     result, result_sum = cover, weight
             return result, result_sum
 
         if not self.connected():
-            r = [comp.weightedDominatingSet() for comp in self.connection_components()]
-            final = r[0]
-            for i_s in r[1:]:
-                final = [a.union(b) for a in final for b in i_s]
-            return final
+            return reduce(lambda x, y: x.union(y), [comp.weightedDominatingSet() for comp in self.connection_components()])
         if len(self.nodes) == len(self.links) + bool(self):
             if not self:
-                return [set()]
+                return set()
             return self.weighted_tree(self.nodes.pop()).weighted_dominating_set()
         nodes, isolated, weights = self.nodes, set(), 0
         for n in nodes:
@@ -832,31 +821,25 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
                 weights += self.node_weights(n)
         return helper(isolated, isolated, weights)[0]
 
-    def weightedIndependentSet(self) -> list[set[Node]]:
+    def weightedIndependentSet(self) -> set[Node]:
         def helper(curr, res_sum=0.0, i=0):
             if not tmp.links:
-                return [curr.copy()], res_sum
-            result, result_sum = [nodes.copy()], weights
+                return curr.copy(), res_sum
+            result, result_sum = nodes.copy(), weights
             for j, u in enumerate(list(nodes)[i:]):
                 if neighbors := tmp.neighboring(u):
                     tmp.remove(u)
                     cover, weight = helper(curr.union({u}), res_sum + (w := tmp.node_weights(u)), i + j + 1)
                     tmp.add((u, w), *neighbors)
-                    if weight == result_sum:
-                        result.update(cover)
-                    elif weight > result_sum:
+                    if weight > result_sum:
                         result, result_sum = cover, weight
             return result, result_sum
 
         if not self.connected():
-            r = [comp.weightedIndependentSet() for comp in self.connection_components()]
-            final = r[0]
-            for i_s in r[1:]:
-                final = [a.union(b) for a in final for b in i_s]
-            return final
+            return reduce(lambda x, y: x.union(y), [comp.independentSet() for comp in self.connection_components()])
         if len(self.nodes) == len(self.links) + bool(self):
             if not self:
-                return [set()]
+                return set()
             return self.weighted_tree(self.nodes.pop()).weighted_independent_set()
         nodes, weights, tmp = self.nodes, self.total_nodes_weight, WeightedNodesUndirectedGraph.copy(self)
         for n in self.nodes:
