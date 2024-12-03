@@ -54,7 +54,7 @@ Undirected graph classes further have methods for:
 22) listing out all minimum by cardinality dominating sets of the grpah;
 23) listing out all maximum by cardinality independent sets of the graph;
 
-The unique methods for directed graph classes are:
+Unique methods for directed graph classes are:
 1) listing out the previous nodes of a given one (if such is gives, otherwise it shows this for all nodes);
 2) listing out the next nodes of a given one (if such is gives, otherwise it shows this for all nodes);
 3) listing out the sources (nodes, that aren't pointed by any node) and the sinks (nodes, that don't point to any node) of the graph;
@@ -119,7 +119,7 @@ The tree class in the project has methods for:
 9) returning the height of the tree;
 10) getting the path from the root to a given node;
 11) returning all minimum by cardinality vertex covers of the nodes of the tree;
-12) returning a minimum by cardinality dominating set of the nodes of the tree;
+12) returning all minimum by cardinality dominating sets of the nodes of the tree;
 13) returning all maximum by cardinality independent sets of the nodes of the tree;
 14) checking whether the tree is isomorphic with another tree and if so, returning an isomorphic function between the nodes of the trees;
 15) checking whether the tree has nodes;
@@ -132,5 +132,5 @@ The weighted tree class in particular has methods for:
 1) returning the weight of a node, if such is given, otherwise returns the same for all nodes;
 2) setting the weight of a node to a given real numerical value;
 3) returning all minimum by sum of the weights vertex covers of the nodes of the tree;
-4) returning a minimum by sum of the weights dominating set of the nodes of the tree;
+4) returning all minimum by sum of the weights dominating sets of the nodes of the tree;
 5) returning all maximum by sum of the weights independent sets of the nodes of the tree.
