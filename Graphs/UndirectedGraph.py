@@ -505,6 +505,19 @@ class UndirectedGraph(Graph):
                     result = res
             return result
 
+        if not self.connected():
+            r = [comp.dominatingSet() for comp in self.connection_components()]
+            result = r[0]
+            for i_s in r[1:]:
+                result = [a.union(b) for a in result for b in i_s]
+            return result
+        if len(self.nodes) == len(self.links) + 1:
+            return self.tree(self.nodes.pop()).dominating_set()
+        if self.is_full_k_partite():
+            if not self:
+                return [set()]
+            min_card = min(map(len, cliques := [comp.nodes for comp in self.complementary().connection_components()]))
+            return [s for s in cliques if len(s) == min_card]
         nodes, isolated = self.nodes, set()
         for n in nodes:
             if not self.degrees(n):
@@ -518,13 +531,13 @@ class UndirectedGraph(Graph):
             for i_s in r[1:]:
                 result = [a.union(b) for a in result for b in i_s]
             return result
+        if len(self.nodes) == len(self.links) + 1:
+            return self.tree(self.nodes.pop()).independent_set()
         if self.is_full_k_partite():
             if not self:
                 return [set()]
             max_card = max(map(len, cliques := [comp.nodes for comp in self.complementary().connection_components()]))
-            return list(filter(lambda x: len(x) == max_card, cliques))
-        if self.is_tree():
-            return self.tree(self.nodes.pop()).independent_set()
+            return [s for s in cliques if len(s) == max_card]
         return self.complementary().maxCliques()
 
     def loopWithLength(self, length: int) -> list[Node]:
@@ -802,6 +815,16 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
                     result, result_sum = cover, weight
             return result, result_sum
 
+        if not self.connected():
+            r = [comp.weightedDominatingSet() for comp in self.connection_components()]
+            final = r[0]
+            for i_s in r[1:]:
+                final = [a.union(b) for a in final for b in i_s]
+            return final
+        if len(self.nodes) == len(self.links) + bool(self):
+            if not self:
+                return [set()]
+            return self.weighted_tree(self.nodes.pop()).weighted_dominating_set()
         nodes, isolated, weights = self.nodes, set(), 0
         for n in nodes:
             if not self.degrees(n):
@@ -831,7 +854,9 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
             for i_s in r[1:]:
                 final = [a.union(b) for a in final for b in i_s]
             return final
-        if len(self.nodes) == len(self.links) + 1:
+        if len(self.nodes) == len(self.links) + bool(self):
+            if not self:
+                return [set()]
             return self.weighted_tree(self.nodes.pop()).weighted_independent_set()
         nodes, weights, tmp = self.nodes, self.total_nodes_weight, WeightedNodesUndirectedGraph.copy(self)
         for n in self.nodes:
