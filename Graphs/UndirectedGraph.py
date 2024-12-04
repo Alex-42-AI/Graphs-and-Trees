@@ -297,15 +297,12 @@ class UndirectedGraph(Graph):
 
     def interval_sort(self) -> list[Node]:
         def consecutive_1s(ll):
-            for u in self.nodes:
+            for i, u in enumerate(self.nodes):
                 j = -1
-                ll.pop(jj := ll.index(u))
-                for j, v in enumerate(ll[:-1]):
-                    if u not in self.neighboring(ll[j + 1]) and u in self.neighboring(v):
-                        ll.insert(jj, u)
+                for j, v in enumerate(sort[i + 1:-1]):
+                    if u not in self.neighboring(sort[i + j + 2]) and u in self.neighboring(v):
                         break
-                ll.insert(jj, u)
-                for i, v in enumerate(ll[j + 2:]):
+                for v in sort[i + j + 3:]:
                     if u in self.neighboring(v):
                         return False
             return True
