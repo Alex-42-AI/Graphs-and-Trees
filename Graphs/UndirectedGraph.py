@@ -169,7 +169,7 @@ class UndirectedGraph(Graph):
         return []
 
     def planar(self) -> bool:
-        return len(self.links) <= (2 + bool(self.loop_with_length_3())) * (len(self.nodes) - 2)
+        return all(len(tmp.links) <= (2 + bool(tmp.loop_with_length_3())) * (len(tmp.nodes) - 2) for tmp in self.connection_components())
 
     def reachable(self, u: Node, v: Node) -> bool:
         if u not in self or v not in self:
