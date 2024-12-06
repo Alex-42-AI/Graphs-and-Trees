@@ -532,6 +532,12 @@ class UndirectedGraph(Graph):
             if not self:
                 return set()
             return max([comp.nodes for comp in self.complementary().connection_components()], key=len)
+        if sort := reversed(self.interval_sort()):
+            result = set()
+            for u in sort:
+                if self.neighboring(u).isdisjoint(result):
+                    result.add(u)
+            return result
         return self.complementary().maxCliques()[0]
 
     def loopWithLength(self, length: int) -> list[Node]:
