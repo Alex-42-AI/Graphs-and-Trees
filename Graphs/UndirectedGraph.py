@@ -303,12 +303,12 @@ class UndirectedGraph(Graph):
 
     def interval_sort(self) -> list[Node]:
         def consecutive_1s(sort):
-            for i, u in enumerate(self.nodes):
+            for i, u in enumerate(sort):
                 j = -1
-                for j, v in enumerate(sort[i + 1:-1]):
-                    if u not in self.neighboring(sort[i + j + 2]) and u in self.neighboring(v):
+                for j, v in enumerate(sort[i:-1]):
+                    if u not in self.neighboring(sort[i + j + 1]) and u in self.neighboring(v).union({v}):
                         break
-                for v in sort[i + j + 3:]:
+                for v in sort[i + j + 2:]:
                     if u in self.neighboring(v):
                         return False
             return True
@@ -320,8 +320,7 @@ class UndirectedGraph(Graph):
                 neighborhood = defaultdict(set)
                 for v in (neighbors := graph.neighboring(u).intersection(labels)):
                     neighborhood[v] = graph.neighboring(v) - set(order).union({u})
-                    if v in labels:
-                        labels[v] += 1
+                    labels[v] += 1
                 comps, total, final = [], set(), set()
                 for v in neighbors:
                     if v not in total:
@@ -576,7 +575,7 @@ class UndirectedGraph(Graph):
             if not self:
                 return set()
             return max([comp.nodes for comp in self.complementary().connection_components()], key=len)
-        if sort := reversed(self.interval_sort()):
+        if sort := list(reversed(self.interval_sort())):
             result = set()
             for u in sort:
                 if self.neighboring(u).isdisjoint(result):
