@@ -4,9 +4,9 @@ from collections import defaultdict
 
 from itertools import permutations, combinations, product
 
-from ..__init__ import *
+from __init__ import *
 
-from .Tree import Tree, WeightedTree
+from Graphs.Tree import Tree, WeightedTree
 
 
 class Link:
