@@ -1,5 +1,3 @@
-from typing import Iterable
-
 from functools import reduce
 
 from collections import defaultdict
