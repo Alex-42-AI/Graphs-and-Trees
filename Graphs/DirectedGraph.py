@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from itertools import permutations, product
 
-from Graphs.General import *
+from ..__init__ import *
 
 
 class DirectedGraph(Graph):
