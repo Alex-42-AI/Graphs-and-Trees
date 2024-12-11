@@ -1,8 +1,8 @@
-from Graphs.UndirectedGraph import *
+from .UndirectedGraph import *
 
-from Graphs.DirectedGraph import *
+from .DirectedGraph import *
 
-from Graphs.Tree import *
+from .Tree import *
 
 
 def clique_to_SAT(cnf: list[list[tuple[str, bool]]]):
@@ -263,7 +263,7 @@ with open("Petersen graph.txt", "w") as file:
     file.write(f"Vertex cover: {petersen_graph.vertexCover()}\n")
     file.write(f"Independent set: {petersen_graph.independentSet()}\n")
     file.write(f"Shortest path from 0 to 7: {petersen_graph.get_shortest_path(n0, n7)}\n")
-with open("Undirected graphs.txt", "w", encoding="utf-8") as file:
+with open("Undirected .txt", "w", encoding="utf-8") as file:
     file.write(f"Graph 1: {ug0}\nGraph 2: {ug1}\n")
     file.write(f"Graph 2 width: {ug1.diameter()}\n")
     file.write(f"Is graph 1 a tree: {ug0.is_tree()}\nIs graph 2 a tree: {ug1.is_tree()}\n")
@@ -299,7 +299,7 @@ with open("Tree.txt", "w", encoding="utf-8") as file:
     file.write(f"Vertex cover: {tree.vertex_cover()}\n")
     file.write(f"Dominating set: {tree.dominating_set()}\n")
     file.write(f"Independent set: {tree.independent_set()}\n")
-with open("Directed graphs.txt", "w") as file:
+with open("Directed .txt", "w") as file:
     file.write(f"Graph 1: {dg0}\nGraph 2: {dg1}\n")
     file.write(f"Graph 1:\nsources: {dg0.sources}\nsinks: {dg0.sinks}\n")
     file.write(f"Graph 2:\nsources: {dg1.sources}\nsinks: {dg1.sinks}\n")
