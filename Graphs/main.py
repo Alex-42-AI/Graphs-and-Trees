@@ -1,8 +1,8 @@
-from .UndirectedGraph import *
+from Graphs.UndirectedGraph import *
 
-from .DirectedGraph import *
+from Graphs.DirectedGraph import *
 
-from .Tree import *
+from Graphs.Tree import *
 
 
 def clique_to_SAT(cnf: list[list[tuple[str, bool]]]):
@@ -215,7 +215,7 @@ with open("Morse code.txt", "w", encoding="utf-8") as file:
         file.write(f"Traversal type {traversal}: {morse_code.traverse(traversal)}\n")
     file.write(f"Morse code of '4': {morse_code.code_in_morse('4')}\n")
     file.write(f"Total nodes: {morse_code.count_nodes()}\n")
-    file.write(f"All leaves: {morse_code.leaves()}\n")
+    file.write(f"All leaves: {morse_code.leaves}\n")
     file.write(f"Tree height: {morse_code.height()}\n")
     file.write(f"Nodes on level 6: {morse_code.nodes_on_level(6)}\n")
     file.write(f"Tree width: {morse_code.width()}\n")
