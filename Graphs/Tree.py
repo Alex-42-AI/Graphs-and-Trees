@@ -2,7 +2,7 @@ from collections import defaultdict
 
 from itertools import permutations, product
 
-from ..__init__ import Node, Iterable
+from __init__ import Node, Iterable
 
 
 class BinTree:
@@ -31,6 +31,17 @@ class BinTree:
     @property
     def right(self) -> "BinTree":
         return self.__right
+
+    @property
+    def leaves(self) -> set[Node]:
+        def dfs(tree):
+            if not tree:
+                return set()
+            if not (tree.left or tree.right):
+                return {tree.root}
+            return dfs(tree.left).union(dfs(tree.right))
+
+        return dfs(self)
 
     def copy(self) -> "BinTree":
         if self:
@@ -79,16 +90,6 @@ class BinTree:
             if not tree:
                 return -1
             return 1 + max(dfs(tree.left), dfs(tree.right))
-
-        return dfs(self)
-
-    def leaves(self) -> set[Node]:
-        def dfs(tree):
-            if not tree:
-                return set()
-            if not (tree.left or tree.right):
-                return {tree.root}
-            return dfs(tree.left).union(dfs(tree.right))
 
         return dfs(self)
 
