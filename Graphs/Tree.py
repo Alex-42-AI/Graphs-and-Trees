@@ -1,10 +1,8 @@
-from typing import Iterable
-
 from collections import defaultdict
 
 from itertools import permutations, product
 
-from ..__init__ import Node
+from ..__init__ import Node, Iterable
 
 
 class BinTree:
