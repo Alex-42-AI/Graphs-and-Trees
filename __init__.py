@@ -1,3 +1,5 @@
+from typing import Iterable
+
 from abc import ABC, abstractmethod
 
 
@@ -75,7 +77,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def component(self, n: Node) -> "Graph":
+    def component(self, u_or_s: Node | Iterable[Node]) -> "Graph":
         pass
 
     @abstractmethod
