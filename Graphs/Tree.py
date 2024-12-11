@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from itertools import permutations, product
 
-from Graphs.General import Node
+from ..__init__ import Node
 
 
 class BinTree:
