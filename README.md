@@ -3,7 +3,7 @@ A graph is a data structure, consisting of nodes and links between some of them.
 
 This project is an implementation of an unweighted undirected graph, a weighted undirected graph, an unweighted directed graph and a weighted directed graph, as well as of a tree, a weighted tree and a binary tree. Weighted graphs can have weights on the nodes, on the links or on both. Weighted trees can only have weights on the nodes.
 
-In file General.py, there's an implementation of a node and an implementation of an abstract base class Graph. It implements the following methods, that are common for both direted and undirected graphs:
+In file \_\_init__.py, there's an implementation of a node and an implementation of an abstract base class Graph. It implements the following methods, that are common for both direted and undirected graphs:
 1) nodes, links and degrees getters;
 2) remove nodes;
 3) returning a copy of the graph;
@@ -19,11 +19,11 @@ In file General.py, there's an implementation of a node and an implementation of
 13) actually finding an Euler tour, an Euler walk, a Hamilton tour and a Hamilton walk;
 14) checking whether the graph is isomorphic to another graph and if so, returning the bijection between the sets of nodes of the graphs;
 15) returning the reverse (complementary) graph of the original one;
-16) defining __bool__ as whether the graph has any nodes;
+16) defining \_\_bool__ as whether the graph has any nodes;
 17) checking whether a node is present in the graph;
 18) checking whether two graphs are equal;
 19) combining two graphs into one (addition);
-20) representing the graph (__str__ and __repr__).
+20) representing the graph (\_\_str__ and \_\_repr__).
 
 All graphs also have methods for adding a node to already present nodes, connecting a node to already present nodes and disconnecting a node from already present nodes, but they're implemented differently in undirected graps and directed graphs.
 
@@ -102,11 +102,11 @@ The binary tree in this project has:
 10) a method for encrypting a message into morse code;
 11) a method to get an inverted copy of the tree;
 12) traverse method, where the traversal type can be specified;
-13) __contains__ and __eq__ methods;
-14) __invert__ for inverting the tree;
-15) __bool__, asking whether the tree has a root;
-16) __str__ method, which basically draws the tree;
-17) __repr__ method, that returns the same as method traverse with default traversal type in-order.
+13) \_\_contains__ and \_\_eq__ methods;
+14) \_\_invert__ for inverting the tree;
+15) \_\_bool__, asking whether the tree has a root;
+16) \_\_str__ method, which basically draws the tree;
+17) \_\_repr__ method, that returns the same as method traverse with default traversal type in-order.
 
 The tree class in the project has methods for:
 1) getting the root, the nodes, the links, the leaves and the hierarchy in the tree;
@@ -126,8 +126,8 @@ The tree class in the project has methods for:
 15) checking whether the tree has nodes;
 16) checking whether a node is in the tree;
 17) comparing the tree with another one;
-18) drawing the tree (__str__);
-19) representing the tree (__repr__).
+18) drawing the tree (\_\_str__);
+19) representing the tree (\_\_repr__).
 
 The weighted tree class in particular has methods for:
 1) returning the weight of a node, if such is given, otherwise returns the same for all nodes;
