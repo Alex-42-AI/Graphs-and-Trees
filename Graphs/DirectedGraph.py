@@ -1,5 +1,3 @@
-from typing import Iterable
-
 from collections import defaultdict
 
 from itertools import permutations, product
