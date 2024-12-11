@@ -335,7 +335,9 @@ class UndirectedGraph(Graph):
                                         if final:
                                             return []
                                         this_final = True
-                                    comp.add(_v), total.add(_v)
+                                    comp.add(_v)
+                                    if _v in neighbors:
+                                        total.add(_v)
                                     labels[_v] += 1
                         if this_final:
                             final = comp
@@ -480,14 +482,12 @@ class UndirectedGraph(Graph):
         return result
 
     def chromaticNodesPartition(self) -> list[set[Node]]:
-        def anti_cliques(curr, ii=0):
-            max_by_inclusion = True
+        def anti_cliques(curr, result=set(), ii=0):
             for j, n in enumerate(list(self.nodes)[ii:]):
                 if curr.isdisjoint(self.neighboring(n)):
-                    max_by_inclusion = False
-                    for res in anti_cliques(curr.union({n}), ii + j + 1):
+                    for res in anti_cliques(curr.union({n}), result.union({n}.union(self.neighboring(n))), ii + j + 1):
                         yield res
-            if max_by_inclusion:
+            if result == self.nodes:
                 yield curr
 
         def helper(partition, union=set(), ii=0):
@@ -495,8 +495,8 @@ class UndirectedGraph(Graph):
                 return partition
             res = list(map(lambda x: {x}, self.nodes))
             for j, s in enumerate(independent_sets[ii:]):
-                if s.isdisjoint(union):
-                    if len(curr := helper(partition + [s], union.union(s), ii + j + 1)) == 2:
+                if union.union(s) == self.nodes or s.isdisjoint(union):
+                    if len(curr := helper(partition + [s - union], union.union(s), ii + j + 1)) == 2:
                         return curr
                     res = min(res, curr, key=len)
             return res
@@ -533,7 +533,7 @@ class UndirectedGraph(Graph):
                     sort.remove(u)
                 result.append(current)
             return result
-        independent_sets = [i_s for i_s in anti_cliques(set())][1:]
+        independent_sets = [i_s for i_s in anti_cliques(set())]
         return helper([])
 
     def chromaticLinksPartition(self) -> list[set[Node]]:
