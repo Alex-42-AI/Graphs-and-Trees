@@ -2,7 +2,7 @@ from collections import defaultdict
 
 from itertools import permutations, product
 
-from ..__init__ import *
+from __init__ import *
 
 
 class DirectedGraph(Graph):
