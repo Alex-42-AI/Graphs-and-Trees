@@ -5,7 +5,7 @@ from Graphs.DirectedGraph import *
 from Graphs.Tree import *
 
 
-def clique_to_SAT(cnf: list[list[tuple[str, bool]]]):
+def clique_to_SAT(cnf: list[list[tuple[str, bool]]]) -> list[set[tuple[str, bool]]]:
     def compatible(var1, var2):
         return var1[0] != var2[0] or var1[1] == var2[1]
 
@@ -34,7 +34,7 @@ def clique_to_SAT(cnf: list[list[tuple[str, bool]]]):
             cnf.pop(i)
         i += 1
     if not cnf:
-        return [[]]
+        return [set()]
     graph, node_vars, i, independent_sets = UndirectedGraph(), {}, 0, []
     for clause in cnf:
         j = i
@@ -50,12 +50,12 @@ def clique_to_SAT(cnf: list[list[tuple[str, bool]]]):
                 graph.connect(u, v)
     result, n = [], len(cnf)
     for u in min(independent_sets, key=len):
-        if len((curr := graph.maxCliquesNode(u))[0]) == n:
+        if len((curr := graph.max_cliques_node(u))[0]) == n:
             result += [set(map(node_vars.__getitem__, clique)) for clique in curr]
     return result
 
 
-def make_undirected_from_directed(graph: DirectedGraph):
+def make_undirected_from_directed(graph: DirectedGraph) -> UndirectedGraph:
     if isinstance(graph, WeightedDirectedGraph):
         res = WeightedUndirectedGraph()
         for u in graph.nodes:
@@ -144,7 +144,7 @@ def build_heap(ll: list[int], h: int = 0):
         heapify(0, h, i)
 
 
-def binary_heap(l: list):
+def binary_heap(l: list) -> BinTree:
     build_heap(l, len(l))
 
     def helper(curr_root, rest, i=1):
@@ -235,37 +235,37 @@ tree = Tree(n0, {n1: [n3, n4, n5], n2: [n6, n7], n3: [n8, n9], n5: [n10, n11]})
 with open("K_3_3.txt", "w") as file:
     file.write(f"{k_3_3}\n")
     file.write(f"Is full bipartite: {k_3_3.is_full_k_partite(2)}\n")
-    file.write(f"Chromatic nodes partition: {k_3_3.chromaticNodesPartition()}\n")
-    file.write(f"Chromatic links partition: {k_3_3.chromaticLinksPartition()}\n")
-    file.write(f"Hamilton tour: {k_3_3.hamiltonTour()}\n")
+    file.write(f"Chromatic nodes partition: {k_3_3.chromatic_nodes_partition()}\n")
+    file.write(f"Chromatic links partition: {k_3_3.chromatic_links_partition()}\n")
+    file.write(f"Hamilton tour: {k_3_3.hamilton_tour()}\n")
     file.write(f"Interval sort: {k_3_3.interval_sort()}\n")
-    file.write(f"Dominating set: {k_3_3.dominatingSet()}\n")
-    file.write(f"Vertex cover: {k_3_3.vertexCover()} \n")
-    file.write(f"Independent set: {k_3_3.independentSet()}\n")
+    file.write(f"Dominating set: {k_3_3.dominating_set()}\n")
+    file.write(f"Vertex cover: {k_3_3.vertex_cover()} \n")
+    file.write(f"Independent set: {k_3_3.independent_set()}\n")
 with open("K_5.txt", "w") as file:
     file.write(f"{k_5}\n")
     file.write(f"Is full: {k_5.full()}\n")
     file.write(f"3-cliques: {k_5.cliques(3)}\n")
-    file.write(f"Chromatic links partition: {k_5.chromaticLinksPartition()}\n")
+    file.write(f"Chromatic links partition: {k_5.chromatic_links_partition()}\n")
     file.write(f"Euler tour: {k_5.euler_tour()}\n")
     file.write(f"Interval sort: {k_5.interval_sort()}\n")
-    file.write(f"Dominating set: {k_5.dominatingSet()}\n")
-    file.write(f"Vertex cover: {k_5.vertexCover()}\n")
-    file.write(f"Independent set: {k_5.independentSet()}\n")
+    file.write(f"Dominating set: {k_5.dominating_set()}\n")
+    file.write(f"Vertex cover: {k_5.vertex_cover()}\n")
+    file.write(f"Independent set: {k_5.independent_set()}\n")
 with open("Petersen graph.txt", "w") as file:
     file.write(f"{petersen_graph}\n")
     file.write(f"Is full k-partite: {petersen_graph.is_full_k_partite()}\n")
-    file.write(f"Chromatic nodes partition: {petersen_graph.chromaticNodesPartition()}\n")
-    file.write(f"Chromatic links partition: {petersen_graph.chromaticLinksPartition()}\n")
-    file.write(f"Hamilton walk: {petersen_graph.hamiltonWalk()}\n")
+    file.write(f"Chromatic nodes partition: {petersen_graph.chromatic_nodes_partition()}\n")
+    file.write(f"Chromatic links partition: {petersen_graph.chromatic_links_partition()}\n")
+    file.write(f"Hamilton walk: {petersen_graph.hamilton_walk()}\n")
     file.write(f"Interval sort: {petersen_graph.interval_sort()}\n")
-    file.write(f"Dominating set: {petersen_graph.dominatingSet()}\n")
-    file.write(f"Vertex cover: {petersen_graph.vertexCover()}\n")
-    file.write(f"Independent set: {petersen_graph.independentSet()}\n")
+    file.write(f"Dominating set: {petersen_graph.dominating_set()}\n")
+    file.write(f"Vertex cover: {petersen_graph.vertex_cover()}\n")
+    file.write(f"Independent set: {petersen_graph.independent_set()}\n")
     file.write(f"Shortest path from 0 to 7: {petersen_graph.get_shortest_path(n0, n7)}\n")
-with open("Undirected .txt", "w", encoding="utf-8") as file:
+with open("Undirected graphs.txt", "w", encoding="utf-8") as file:
     file.write(f"Graph 1: {ug0}\nGraph 2: {ug1}\n")
-    file.write(f"Graph 2 width: {ug1.diameter()}\n")
+    file.write(f"Graph 2 diameter: {ug1.diameter()}\n")
     file.write(f"Is graph 1 a tree: {ug0.is_tree()}\nIs graph 2 a tree: {ug1.is_tree()}\n")
     file.write(f"Graph 1 tree with root 2:\n{ug0.tree(n2)}\n")
     file.write(f"Graph 2 tree with root 0:\n{ug1.tree(n0)}\n")
@@ -273,21 +273,21 @@ with open("Undirected .txt", "w", encoding="utf-8") as file:
     file.write(f"Euler walk from 2 to 1 in graph 1: {ug0.euler_walk(n2, n1)}\n")
     file.write(f"Shortest path from 10 to 3 in graph 2: {ug1.get_shortest_path(n10, n3)}\n")
     file.write(f"3-cliques in graph 1: {ug0.cliques(3)}\n")
-    file.write(f"Chromatic nodes partition of graph 1: {ug0.chromaticNodesPartition()}\n")
-    file.write(f"Chromatic links partition of graph 1: {ug0.chromaticLinksPartition()}\n")
-    file.write(f"Chromatic nodes partition of graph 2: {ug1.chromaticNodesPartition()}\n")
-    file.write(f"Chromatic links partition of graph 2: {ug1.chromaticLinksPartition()}\n")
-    file.write(f"Path with a length of 4 in graph 1 between 4 and 5: {ug0.pathWithLength(n4, n5, 4)}\n")
-    file.write(f"Loop with a length of 5 in graph 1: {ug0.loopWithLength(5)}\n")
-    file.write(f"Graph 1 optimal vertex cover: {ug0.vertexCover()}\n")
-    file.write(f"Graph 1 optimal dominating set: {ug0.dominatingSet()}\n")
-    file.write(f"Graph 1 optimal independent set: {ug0.independentSet()}\n")
-    file.write(f"Graph 2 optimal vertex cover: {ug1.vertexCover()}\n")
-    file.write(f"Graph 2 optimal dominating set: {ug1.dominatingSet()}\n")
-    file.write(f"Graph 2 optimal independent set: {ug1.independentSet()}\n")
-    file.write(f"Graph 1 Hamilton walk: {ug0.hamiltonWalk()}\n")
+    file.write(f"Chromatic nodes partition of graph 1: {ug0.chromatic_nodes_partition()}\n")
+    file.write(f"Chromatic links partition of graph 1: {ug0.chromatic_links_partition()}\n")
+    file.write(f"Chromatic nodes partition of graph 2: {ug1.chromatic_nodes_partition()}\n")
+    file.write(f"Chromatic links partition of graph 2: {ug1.chromatic_links_partition()}\n")
+    file.write(f"Path with a length of 4 in graph 1 between 4 and 5: {ug0.path_with_length(n4, n5, 4)}\n")
+    file.write(f"Loop with a length of 5 in graph 1: {ug0.loop_with_length(5)}\n")
+    file.write(f"Graph 1 optimal vertex cover: {ug0.vertex_cover()}\n")
+    file.write(f"Graph 1 optimal dominating set: {ug0.dominating_set()}\n")
+    file.write(f"Graph 1 optimal independent set: {ug0.independent_set()}\n")
+    file.write(f"Graph 2 optimal vertex cover: {ug1.vertex_cover()}\n")
+    file.write(f"Graph 2 optimal dominating set: {ug1.dominating_set()}\n")
+    file.write(f"Graph 2 optimal independent set: {ug1.independent_set()}\n")
+    file.write(f"Graph 1 Hamilton walk: {ug0.hamilton_walk()}\n")
     file.write(f"Helper: {tmp}\n")
-    file.write(f"Isomorphic function between graph 1 and helper: {ug0.isomorphicFunction(tmp)}\n")
+    file.write(f"Isomorphic function between graph 1 and helper: {ug0.isomorphic_function(tmp)}\n")
 with open("Tree.txt", "w", encoding="utf-8") as file:
     file.write(f"{tree}\n")
     file.write(f"Height: {tree.height()}\n")
@@ -299,7 +299,7 @@ with open("Tree.txt", "w", encoding="utf-8") as file:
     file.write(f"Vertex cover: {tree.vertex_cover()}\n")
     file.write(f"Dominating set: {tree.dominating_set()}\n")
     file.write(f"Independent set: {tree.independent_set()}\n")
-with open("Directed .txt", "w") as file:
+with open("Directed graphs.txt", "w") as file:
     file.write(f"Graph 1: {dg0}\nGraph 2: {dg1}\n")
     file.write(f"Graph 1:\nsources: {dg0.sources}\nsinks: {dg0.sinks}\n")
     file.write(f"Graph 2:\nsources: {dg1.sources}\nsinks: {dg1.sinks}\n")
@@ -308,4 +308,4 @@ with open("Directed .txt", "w") as file:
     file.write(f"Is graph 1 a dag: {dg0.dag()}\n")
     file.write(f"Is graph 2 a dag: {dg1.dag()}\n")
     file.write(f"Graph 2 toposort: {dg1.toposort()}\n")
-    file.write(f"Graph 1 hamilton walk: {dg0.hamiltonWalk()}\n")
+    file.write(f"Graph 1 hamilton walk: {dg0.hamilton_walk()}\n")
