@@ -3,7 +3,7 @@ A graph is a data structure, consisting of nodes and links between some of them.
 
 This project is an implementation of an unweighted undirected graph, a weighted undirected graph, an unweighted directed graph and a weighted directed graph, as well as of a tree, a weighted tree and a binary tree. Weighted graphs can have weights on the nodes, on the links or on both. Weighted trees can only have weights on the nodes.
 
-In file \_\_init__.py, there's an implementation of a node and an implementation of an abstract base class Graph. It implements the following methods, that are common for both direted and undirected graphs:
+In file General.py, there's an implementation of a node and an implementation of an abstract base class Graph. It implements the following methods, that are common for both direted and undirected graphs:
 1) nodes, links and degrees getters;
 2) remove nodes;
 3) returning a copy of the graph;
