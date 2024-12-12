@@ -563,7 +563,10 @@ class UndirectedGraph(Graph):
         if self.is_full_k_partite():
             if not self:
                 return set()
-            return min([comp.nodes for comp in self.complementary().connection_components()], key=len)
+            res = {u := self.nodes.pop()}
+            if neighbors := self.neighboring(u):
+                res.add(neighbors.pop())
+            return res
         nodes, isolated = self.nodes, set()
         for n in nodes:
             if not self.degrees(n):
