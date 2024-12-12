@@ -378,7 +378,7 @@ class Tree:
         dfs(self.root)
         return dp[self.root][0] if len(dp[self.root][0]) > len(dp[self.root][1]) else dp[self.root][1]
 
-    def isomorphicFunction(self, other: "Tree") -> dict[Node, Node]:
+    def isomorphic_function(self, other: "Tree") -> dict[Node, Node]:
         if isinstance(other, Tree):
             if len(self.nodes) != len(other.nodes) or len(self.leaves) != len(other.leaves) or len(self.descendants(self.root)) != len(other.descendants(other.root)):
                 return {}
@@ -539,7 +539,7 @@ class WeightedTree(Tree):
         dfs(self.root)
         return root_val[0] if sum(map(self.weights, (root_val := dp[self.root])[0])) > sum(map(self.weights, root_val[1])) else root_val[1]
 
-    def isomorphicFunction(self, other: Tree) -> dict[Node, Node]:
+    def isomorphic_function(self, other: Tree) -> dict[Node, Node]:
         if isinstance(other, WeightedTree):
             if len(self.nodes) != len(other.nodes) or len(self.leaves) != len(other.leaves) or len(self.descendants(self.root)) != len(other.descendants(other.root)):
                 return {}
@@ -584,7 +584,7 @@ class WeightedTree(Tree):
                 if possible:
                     return map_dict
             return {}
-        return super().isomorphicFunction(other)
+        return super().isomorphic_function(other)
 
     def __eq__(self, other: "WeightedTree"):
         if type(other) == WeightedTree:
@@ -605,4 +605,4 @@ class WeightedTree(Tree):
     def __repr__(self):
         inheritance = {k: (self.weights(k), v) for k, v in self.hierarchy().items()}
         inheritance.pop(self.root)
-        return f"WeightedNodesTree({(self.root, self.weights(self.root))}, {inheritance})"
+        return f"WeightedTree({(self.root, self.weights(self.root))}, {inheritance})"
