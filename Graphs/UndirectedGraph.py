@@ -347,25 +347,29 @@ class UndirectedGraph(Graph):
                 if final:
                     comps.remove(final)
                 for comp in comps:
-                    for v in comp:
-                        if curr := lex_bfs(graph.component(comp), v):
-                            order += curr
-                            for m in neighbors.intersection(curr):
-                                labels.pop(m)
-                            break
+                    if not (curr := self.component(comp).interval_sort()):
+                        return []
+                    order += curr
+                    for m in neighbors.intersection(curr):
+                        labels.pop(m)
+                    break
                 if not labels:
                     return order
                 final_neighbors = {n for n in neighbors.intersection(final) if (graph.neighboring(n) - {u}).issubset(neighbors)}
                 if not final_neighbors:
                     final_neighbors = neighbors.intersection(final)
+                found = False
                 while final_neighbors:
                     v = max(final_neighbors, key=lambda x: len(neighborhood[x]))
-                    if curr := lex_bfs(graph.component(final), v):
+                    if consecutive_1s(curr := lex_bfs(graph.component(final), v)):
+                        found = True
                         order += curr
                         for m in curr:
                             labels.pop(m)
                         break
                     final_neighbors.remove(v)
+                if not found:
+                    return []
                 if not labels:
                     return order
                 u = max(labels, key=labels.get)
