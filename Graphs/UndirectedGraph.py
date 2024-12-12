@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from itertools import permutations, combinations, product
 
-from __init__ import *
+from Graphs.General import *
 
 from Graphs.Tree import Tree, WeightedTree
 
