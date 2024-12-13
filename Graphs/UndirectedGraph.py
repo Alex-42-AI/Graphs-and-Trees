@@ -349,7 +349,7 @@ class UndirectedGraph(Graph):
                 if final:
                     comps.remove(final)
                 for comp in comps:
-                    if not (curr := self.component(comp).interval_sort()):
+                    if not (curr := graph.component(comp).interval_sort()):
                         return []
                     order += curr
                     for m in neighbors.intersection(curr):
