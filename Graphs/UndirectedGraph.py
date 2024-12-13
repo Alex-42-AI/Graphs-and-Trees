@@ -302,6 +302,15 @@ class UndirectedGraph(Graph):
         return UndirectedGraph(neighborhood)
 
     def interval_sort(self) -> list[Node]:
+        def extract(i_s, pred):
+            first, second = [], []
+            for u in i_s:
+                if pred(u):
+                    first.append(u)
+                else:
+                    second.append(u)
+            return first + second
+
         def consecutive_1s(sort):
             if not sort:
                 return False
@@ -316,12 +325,16 @@ class UndirectedGraph(Graph):
             return True
 
         def lex_bfs(graph, u):
-            labels, order = {node: int(node == u) for node in graph.nodes}, [u]
+            labels, order = {node: 0 for node in graph.nodes}, [u]
             labels.pop(u)
             while labels:
+                if not (neighbors := graph.neighboring(u).intersection(labels)):
+                    u = max(labels, key=labels.get)
+                    labels.pop(u), order.append(u)
+                    continue
                 neighborhood = defaultdict(set)
-                for v in (neighbors := graph.neighboring(u).intersection(labels)):
-                    neighborhood[v] = graph.neighboring(v) - set(order).union({u})
+                for v in neighbors:
+                    neighborhood[v] = graph.neighboring(v) - set(order)
                     labels[v] += 1
                 comps, total, final = [], set(), set()
                 for v in neighbors:
@@ -329,18 +342,21 @@ class UndirectedGraph(Graph):
                         total.add(v)
                         stack, comp, this_final = {v}, {v}, False
                         while stack:
-                            for _v in graph.neighboring(stack.pop()):
-                                if _v in set(labels) - total:
-                                    if _v in neighbors:
-                                        stack.add(_v)
+                            for _u in graph.neighboring(_ := stack.pop()):
+                                if _u in set(labels) - total:
+                                    if _u in neighbors:
+                                        stack.add(_u)
                                     else:
                                         if final:
                                             return []
                                         this_final = True
-                                    comp.add(_v)
-                                    if _v in neighbors:
-                                        total.add(_v)
-                                    labels[_v] += 1
+                                    comp.add(_u)
+                                    if _u in neighbors:
+                                        total.add(_u)
+                                    labels[_u] += 1
+                                    for _v in graph.neighboring(_u):
+                                        if _v in labels:
+                                            labels[_v] += 1
                         if this_final:
                             final = comp
                         comps.append(comp)
@@ -352,9 +368,8 @@ class UndirectedGraph(Graph):
                     if not (curr := graph.component(comp).interval_sort()):
                         return []
                     order += curr
-                    for m in neighbors.intersection(curr):
+                    for m in curr:
                         labels.pop(m)
-                    break
                 if not labels:
                     return order
                 final_neighbors = {n for n in neighbors.intersection(final) if (graph.neighboring(n) - {u}).issubset(neighbors)}
@@ -362,7 +377,7 @@ class UndirectedGraph(Graph):
                     final_neighbors = neighbors.intersection(final)
                 found = False
                 for v in final_neighbors:
-                    if consecutive_1s(curr := lex_bfs(graph.component(final), v)):
+                    if consecutive_1s(curr := extract(lex_bfs(graph.component(final), v), lambda x: x in neighbors)):
                         found = True
                         order += curr
                         for m in curr:
