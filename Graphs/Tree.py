@@ -68,13 +68,13 @@ class BinTree:
 
         return dfs(self)
 
-    def nodes_on_level(self, level: int) -> set[Node]:
+    def nodes_on_level(self, level: int) -> list[Node]:
         def dfs(l, tree):
             if not tree:
-                return set()
+                return []
             if not l:
-                return {tree.root}
-            return dfs(l - 1, tree.left).union(dfs(l - 1, tree.right))
+                return [tree.root]
+            return dfs(l - 1, tree.left) + dfs(l - 1, tree.right)
 
         return dfs(abs(level), self)
 
