@@ -4,9 +4,9 @@ from collections import defaultdict
 
 from itertools import permutations, combinations, product
 
-from Graphs.General import *
+fromGraphs.General import *
 
-from Graphs.Tree import Tree, WeightedTree
+fromGraphs.Tree import Tree, WeightedTree
 
 
 class Link:
@@ -317,7 +317,7 @@ class UndirectedGraph(Graph):
             for i, u in enumerate(sort):
                 j = -1
                 for j, v in enumerate(sort[i:-1]):
-                    if u not in self.neighboring(sort[i + j + 1]) and u in self.neighboring(v).union({v}):
+                    if u not in self.neighboring(sort[i + j + 1]) and u in {v, *self.neighboring(v)}:
                         break
                 for v in sort[i + j + 2:]:
                     if u in self.neighboring(v):
@@ -504,7 +504,7 @@ class UndirectedGraph(Graph):
         def anti_cliques(curr, result=set(), ii=0):
             for j, n in enumerate(list(self.nodes)[ii:]):
                 if curr.isdisjoint(self.neighboring(n)):
-                    for res in anti_cliques(curr.union({n}), result.union(self.neighboring(n).union({n})), ii + j + 1):
+                    for res in anti_cliques({n, *curr}, {n, *self.neighboring(n), *result}, ii + j + 1):
                         yield res
             if result == self.nodes:
                 yield curr
@@ -514,9 +514,9 @@ class UndirectedGraph(Graph):
                 return partition
             res, entered = list(map(lambda x: {x}, self.nodes)), False
             for j, s in enumerate(independent_sets[ii:]):
-                if union.union(s) == self.nodes or s.isdisjoint(union):
+                if {s, *union} == self.nodes or s.isdisjoint(union):
                     entered = True
-                    if len(curr := helper(partition + [s - union], union.union(s), ii + j + 1)) == 2:
+                    if len(curr := helper(partition + [s - union], {s, *union}, ii + j + 1)) == 2:
                         return curr
                     res = min(res, curr, key=len)
             if not entered:
@@ -570,7 +570,7 @@ class UndirectedGraph(Graph):
                 return curr.copy()
             result = self.nodes
             for j, u in enumerate(list(nodes)[i:]):
-                if len((res := helper(curr.union({u}), total.union({u, *self.neighboring(u)}), i + j + 1))) < len(result):
+                if len((res := helper({u, *curr}, {u, *self.neighboring(u), *total}, i + j + 1))) < len(result):
                     result = res
             return result
 
@@ -582,7 +582,7 @@ class UndirectedGraph(Graph):
             if not self:
                 return set()
             res = {u := self.nodes.pop()}
-            if neighbors := self.neighboring(u):
+            if (neighbors := self.neighboring(u)) and {u, *neighbors} != self.nodes:
                 res.add(neighbors.pop())
             return res
         nodes, isolated = self.nodes, set()
@@ -720,7 +720,7 @@ class UndirectedGraph(Graph):
             raise Exception("Unrecognized node(s).")
         return dfs(u, [u])
 
-    def isomorphic_function(self, other) -> dict[Node, Node]:
+    def isomorphic_bijection(self, other) -> dict[Node, Node]:
         if isinstance(other, UndirectedGraph):
             if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
                 return {}
@@ -876,13 +876,13 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
                 return curr.copy(), total_weight
             result, result_sum = self.nodes, self.total_nodes_weight
             for j, u in enumerate(list(nodes)[i:]):
-                cover, weight = helper(curr.union({u}), total.union({u, *self.neighboring(u)}), total_weight + self.node_weights(u), i + j + 1)
+                cover, weight = helper({u, *curr}, {u, *self.neighboring(u), *total}, total_weight + self.node_weights(u), i + j + 1)
                 if weight < result_sum:
                     result, result_sum = cover, weight
             return result, result_sum
 
         if not self.connected():
-            return reduce(lambda x, y: x.union(y), [comp.weightedDominatingSet() for comp in self.connection_components()])
+            return reduce(lambda x, y: x.union(y), [comp.weighted_dominating_set() for comp in self.connection_components()])
         if len(self.nodes) == len(self.links) + bool(self):
             if not self:
                 return set()
@@ -902,7 +902,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
             for j, u in enumerate(list(nodes)[i:]):
                 if neighbors := tmp.neighboring(u):
                     tmp.remove(u)
-                    cover, weight = helper(curr.union({u}), res_sum + (w := tmp.node_weights(u)), i + j + 1)
+                    cover, weight = helper({u, *curr}, res_sum + (w := tmp.node_weights(u)), i + j + 1)
                     tmp.add((u, w), *neighbors)
                     if weight > result_sum:
                         result, result_sum = cover, weight
@@ -921,7 +921,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
                 weights -= self.node_weights(n)
         return helper(set())[0]
 
-    def isomorphic_function(self, other: UndirectedGraph) -> dict[Node, Node]:
+    def isomorphic_bijection(self, other: UndirectedGraph) -> dict[Node, Node]:
         if isinstance(other, WeightedNodesUndirectedGraph):
             if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
                 return {}
@@ -960,7 +960,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
                 if possible:
                     return map_dict
             return {}
-        return super().isomorphic_function(other)
+        return super().isomorphic_bijection(other)
 
     def __add__(self, other: UndirectedGraph) -> "WeightedNodesUndirectedGraph":
         if not isinstance(other, UndirectedGraph):
@@ -1156,7 +1156,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
     def minimal_path_links(self, u: Node, v: Node) -> list[Node]:
         return WeightedUndirectedGraph({n: (0, self.link_weights(n)) for n in self.nodes}).minimal_path(u, v)
 
-    def isomorphic_function(self, other: UndirectedGraph) -> dict[Node, Node]:
+    def isomorphic_bijection(self, other: UndirectedGraph) -> dict[Node, Node]:
         if isinstance(other, WeightedLinksUndirectedGraph):
             if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
                 return {}
@@ -1192,7 +1192,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
                 if possible:
                     return map_dict
             return {}
-        return super().isomorphic_function(other)
+        return super().isomorphic_bijection(other)
 
     def __add__(self, other: UndirectedGraph) -> "WeightedLinksUndirectedGraph":
         if not isinstance(other, UndirectedGraph):
@@ -1351,7 +1351,7 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
             return []
         raise ValueError('Unrecognized node(s)!')
 
-    def isomorphic_function(self, other: UndirectedGraph) -> dict[Node, Node]:
+    def isomorphic_bijection(self, other: UndirectedGraph) -> dict[Node, Node]:
         if isinstance(other, WeightedUndirectedGraph):
             if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
                 return {}
@@ -1396,8 +1396,8 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
                     return map_dict
             return {}
         if isinstance(other, (WeightedNodesUndirectedGraph, WeightedLinksUndirectedGraph)):
-            return type(other).isomorphic_function(other, self)
-        return UndirectedGraph.isomorphic_function(self, other)
+            return type(other).isomorphic_bijection(other, self)
+        return UndirectedGraph.isomorphic_bijection(self, other)
 
     def __add__(self, other: UndirectedGraph) -> "WeightedUndirectedGraph":
         if not isinstance(other, UndirectedGraph):
