@@ -24,6 +24,6 @@ Subtree from 1:
 Depth of 5: 2
 Depth of 9: 3
 Path to 11: [(0), (1), (5), (11)]
-Vertex covers: [[(1), (2), (3), (5)]]
-Dominating set: [(1), (3), (5), (2)]
-Independent sets: [[(0), (8), (9), (4), (10), (11), (6), (7)]]
+Vertex cover: {(1), (2), (3), (5)}
+Dominating set: {(1), (2), (3), (5)}
+Independent set: {(0), (4), (6), (7), (8), (9), (10), (11)}
