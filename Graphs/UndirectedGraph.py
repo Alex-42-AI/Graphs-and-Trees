@@ -512,12 +512,15 @@ class UndirectedGraph(Graph):
         def helper(partition, union=set(), ii=0):
             if union == self.nodes:
                 return partition
-            res = list(map(lambda x: {x}, self.nodes))
+            res, entered = list(map(lambda x: {x}, self.nodes)), False
             for j, s in enumerate(independent_sets[ii:]):
                 if union.union(s) == self.nodes or s.isdisjoint(union):
+                    entered = True
                     if len(curr := helper(partition + [s - union], union.union(s), ii + j + 1)) == 2:
                         return curr
                     res = min(res, curr, key=len)
+            if not entered:
+                res = partition + self.component(self.nodes - union).chromatic_nodes_partition()
             return res
 
         if not self.connected():
