@@ -178,7 +178,7 @@ class DirectedGraph(Graph):
                     return True
                 stack.remove(v)
             total.add(u)
-            return False
+            return total != self.nodes
 
         sources, total, stack = self.sources, set(), set()
         if not sources or not self.sinks:
