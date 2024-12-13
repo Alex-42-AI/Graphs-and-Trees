@@ -109,20 +109,21 @@ def make_undirected_from_directed(graph: DirectedGraph) -> UndirectedGraph:
                     res.add((v, graph.node_weights(v)))
                 if v not in res.neighboring(u):
                     res.connect(u, v)
-    res = UndirectedGraph()
-    for u in graph.nodes:
-        if u not in res:
-            res.add(u)
-        for v in graph.next(u):
-            if v not in res:
-                res.add(v)
-            if v not in res.neighboring(u):
-                res.connect(u, v)
-        for v in graph.prev(u):
-            if v not in res:
-                res.add(v)
-            if v not in res.neighboring(u):
-                res.connect(u, v)
+    else:
+        res = UndirectedGraph()
+        for u in graph.nodes:
+            if u not in res:
+                res.add(u)
+            for v in graph.next(u):
+                if v not in res:
+                    res.add(v)
+                if v not in res.neighboring(u):
+                    res.connect(u, v)
+            for v in graph.prev(u):
+                if v not in res:
+                    res.add(v)
+                if v not in res.neighboring(u):
+                    res.connect(u, v)
     return res
 
 
