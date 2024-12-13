@@ -504,7 +504,7 @@ class UndirectedGraph(Graph):
         def anti_cliques(curr, result=set(), ii=0):
             for j, n in enumerate(list(self.nodes)[ii:]):
                 if curr.isdisjoint(self.neighboring(n)):
-                    for res in anti_cliques(curr.union({n}), result.union({n}.union(self.neighboring(n))), ii + j + 1):
+                    for res in anti_cliques(curr.union({n}), result.union(self.neighboring(n).union({n})), ii + j + 1):
                         yield res
             if result == self.nodes:
                 yield curr
