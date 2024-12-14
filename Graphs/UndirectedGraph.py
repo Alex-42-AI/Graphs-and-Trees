@@ -137,7 +137,7 @@ class UndirectedGraph(Graph):
             res.disconnect(l.u, l.v)
         return res
 
-    def connection_components(self) -> "list[UndirectedGraph]":
+    def connection_components(self) -> list["UndirectedGraph"]:
         components, rest = [], self.nodes
         while rest:
             components.append(curr := self.component(rest.copy().pop()))
