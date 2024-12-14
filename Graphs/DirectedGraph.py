@@ -178,7 +178,7 @@ class DirectedGraph(Graph):
                     return True
                 stack.remove(v)
             total.add(u)
-            return total != self.nodes
+            return False
 
         sources, total, stack = self.sources, set(), set()
         if not sources or not self.sinks:
@@ -188,7 +188,7 @@ class DirectedGraph(Graph):
             if dfs(n):
                 return True
             stack.remove(n)
-        return False
+        return total != self.nodes
 
     def dag(self) -> bool:
         return not self.has_loop()
@@ -428,7 +428,7 @@ class DirectedGraph(Graph):
             raise Exception("Unrecognized node(s).")
         return dfs(u, [u])
 
-    def isomorphic_function(self, other: "DirectedGraph") -> dict[Node, Node]:
+    def isomorphic_bijection(self, other: "DirectedGraph") -> dict[Node, Node]:
         if isinstance(other, DirectedGraph):
             if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
                 return {}
@@ -590,7 +590,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
         neighborhood = {n: (self.node_weights(n), ({}, {m: 0 for m in self.next(n)})) for n in self.nodes}
         return WeightedDirectedGraph(neighborhood).minimal_path(u, v)
 
-    def isomorphic_function(self, other: DirectedGraph) -> dict[Node, Node]:
+    def isomorphic_bijection(self, other: DirectedGraph) -> dict[Node, Node]:
         if isinstance(other, WeightedNodesDirectedGraph):
             if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
                 return {}
@@ -629,7 +629,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
                 if possible:
                     return map_dict
             return {}
-        return super().isomorphic_function(other)
+        return super().isomorphic_bijection(other)
 
     def __add__(self, other: DirectedGraph) -> "WeightedNodesDirectedGraph":
         if not isinstance(other, DirectedGraph):
@@ -774,7 +774,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
     def minimal_path_links(self, u: Node, v: Node) -> list[Node]:
         return WeightedDirectedGraph({n: (0, ({}, self.link_weights(n))) for n in self.nodes}).minimal_path(u, v)
 
-    def isomorphic_function(self, other: DirectedGraph) -> dict[Node, Node]:
+    def isomorphic_bijection(self, other: DirectedGraph) -> dict[Node, Node]:
         if isinstance(other, WeightedLinksDirectedGraph):
             if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
                 return {}
@@ -810,7 +810,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                 if possible:
                     return map_dict
             return {}
-        return super().isomorphic_function(other)
+        return super().isomorphic_bijection(other)
 
     def __add__(self, other: DirectedGraph) -> "WeightedLinksDirectedGraph":
         if not isinstance(other, DirectedGraph):
@@ -983,7 +983,7 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
             return []
         raise ValueError('Unrecognized node(s)!')
 
-    def isomorphic_function(self, other: DirectedGraph) -> dict[Node, Node]:
+    def isomorphic_bijection(self, other: DirectedGraph) -> dict[Node, Node]:
         if isinstance(other, WeightedDirectedGraph):
             if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
                 return {}
@@ -1028,8 +1028,8 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
                     return map_dict
             return {}
         if isinstance(other, (WeightedNodesDirectedGraph, WeightedLinksDirectedGraph)):
-            return type(other).isomorphic_function(other, self)
-        return DirectedGraph.isomorphic_function(self, other)
+            return type(other).isomorphic_bijection(other, self)
+        return DirectedGraph.isomorphic_bijection(self, other)
 
     def __add__(self, other: DirectedGraph) -> "WeightedDirectedGraph":
         if not isinstance(other, DirectedGraph):
