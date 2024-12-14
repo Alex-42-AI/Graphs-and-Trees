@@ -4,9 +4,9 @@ from collections import defaultdict
 
 from itertools import permutations, combinations, product
 
-from Graphs.General import *
+from Graphs.general import *
 
-from Graphs.Tree import Tree, WeightedTree
+from Graphs.tree import Tree, WeightedTree
 
 
 class Link:
@@ -301,7 +301,7 @@ class UndirectedGraph(Graph):
         neighborhood = {Node(l0): [Node(l1) for l1 in self.links if (l1.u in l0) ^ (l1.v in l0)] for l0 in self.links}
         return UndirectedGraph(neighborhood)
 
-    def interval_sort(self) -> list[Node]:
+    def interval_sort(self, start: Node = None) -> list[Node]:
         def extract(i_s, pred):
             first, second = [], []
             for u in i_s:
@@ -392,11 +392,18 @@ class UndirectedGraph(Graph):
             return order
 
         if not self.connected():
-            return sum(map(lambda comp: comp.interval_sort(), self.connection_components()), [])
-        for n in self.nodes:
-            if consecutive_1s(result := lex_bfs(self, n)):
-                return result
-        return []
+            if start is None:
+                return sum(map(lambda comp: comp.interval_sort(), self.connection_components()), [])
+            components = extract(self.connection_components(), lambda g: start in g)
+            return [components[0].interval_sort(start)] + sum(map(lambda comp: comp.interval_sort(), components[1:]), [])
+        if start is None:
+            for n in self.nodes:
+                if consecutive_1s(result := lex_bfs(self, n)):
+                    return result
+            return []
+        if start not in self:
+            raise ValueError("Unrecognized node!")
+        return result if consecutive_1s(result := lex_bfs(self, start)) else []
 
     def is_full_k_partite(self, k: int = -1) -> bool:
         return k in {-1, len(comps := self.complementary().connection_components())} and all(c.full() for c in comps)
@@ -514,9 +521,9 @@ class UndirectedGraph(Graph):
                 return partition
             res, entered = list(map(lambda x: {x}, self.nodes)), False
             for j, s in enumerate(independent_sets[ii:]):
-                if {s, *union} == self.nodes or s.isdisjoint(union):
+                if {*s, *union} == self.nodes or s.isdisjoint(union):
                     entered = True
-                    if len(curr := helper(partition + [s - union], {s, *union}, ii + j + 1)) == 2:
+                    if len(curr := helper(partition + [s - union], {*s, *union}, ii + j + 1)) == 2:
                         return curr
                     res = min(res, curr, key=len)
             if not entered:
