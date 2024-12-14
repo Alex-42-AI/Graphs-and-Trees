@@ -1,8 +1,8 @@
-from Graphs.UndirectedGraph import *
+from Graphs.undirected_graph import *
 
-from Graphs.DirectedGraph import *
+from Graphs.directed_graph import *
 
-from Graphs.Tree import *
+from Graphs.tree import *
 
 
 def clique_to_SAT(cnf: list[list[tuple[str, bool]]]) -> list[set[tuple[str, bool]]]:
@@ -210,7 +210,7 @@ morse_code = BinTree('',
                                      BinTree('O',
                                              BinTree(left=BinTree('8', ':')),
                                              BinTree(None, '9', '0')))))
-with open("Morse code.txt", "w", encoding="utf-8") as file:
+with open("morse_code.txt", "w", encoding="utf-8") as file:
     file.write(f"{morse_code}\n")
     for traversal in ('preorder', 'in-order', 'post-order'):
         file.write(f"Traversal type {traversal}: {morse_code.traverse(traversal)}\n")
@@ -238,7 +238,7 @@ tmp = UndirectedGraph({n11: [n12, n13, n14], n12: [n10, n15], n15: [n10, n13, n1
 dg0 = DirectedGraph({n1: ([n3], [n0, n2, n4, n5]), n2: ([n0], [n3]), n5: ([n3], [n4])})
 dg1 = DirectedGraph({n1: ([n0, n2], [n3]), n2: ([n5], [n0, n3]), n3: ([n4], []), n5: ([n4, n6], [n0])})
 tree = Tree(n0, {n1: [n3, n4, n5], n2: [n6, n7], n3: [n8, n9], n5: [n10, n11]})
-with open("K_3_3.txt", "w") as file:
+with open("k_3_3.txt", "w") as file:
     file.write(f"{k_3_3}\n")
     file.write(f"Is full bipartite: {k_3_3.is_full_k_partite(2)}\n")
     file.write(f"Chromatic nodes partition: {k_3_3.chromatic_nodes_partition()}\n")
@@ -248,7 +248,7 @@ with open("K_3_3.txt", "w") as file:
     file.write(f"Dominating set: {k_3_3.dominating_set()}\n")
     file.write(f"Vertex cover: {k_3_3.vertex_cover()} \n")
     file.write(f"Independent set: {k_3_3.independent_set()}\n")
-with open("K_5.txt", "w") as file:
+with open("k_5.txt", "w") as file:
     file.write(f"{k_5}\n")
     file.write(f"Is full: {k_5.full()}\n")
     file.write(f"3-cliques: {k_5.cliques(3)}\n")
@@ -258,7 +258,7 @@ with open("K_5.txt", "w") as file:
     file.write(f"Dominating set: {k_5.dominating_set()}\n")
     file.write(f"Vertex cover: {k_5.vertex_cover()}\n")
     file.write(f"Independent set: {k_5.independent_set()}\n")
-with open("Petersen graph.txt", "w") as file:
+with open("petersen_graph.txt", "w") as file:
     file.write(f"{petersen_graph}\n")
     file.write(f"Is full k-partite: {petersen_graph.is_full_k_partite()}\n")
     file.write(f"Chromatic nodes partition: {petersen_graph.chromatic_nodes_partition()}\n")
@@ -269,7 +269,7 @@ with open("Petersen graph.txt", "w") as file:
     file.write(f"Vertex cover: {petersen_graph.vertex_cover()}\n")
     file.write(f"Independent set: {petersen_graph.independent_set()}\n")
     file.write(f"Shortest path from 0 to 7: {petersen_graph.get_shortest_path(n0, n7)}\n")
-with open("Undirected graphs.txt", "w", encoding="utf-8") as file:
+with open("undirected_graphs.txt", "w", encoding="utf-8") as file:
     file.write(f"Graph 1: {ug0}\nGraph 2: {ug1}\nGraph 3: {g0}\nGraph 4: {g1}\n")
     file.write(f"Graph 5: {g2}\nGraph 6: {g3}\nGraph 7: {g4}\n")
     file.write(f"Graph 2 diameter: {ug1.diameter()}\nGraph 7 diameter: {g4.diameter()}\n")
@@ -332,7 +332,7 @@ with open("Undirected graphs.txt", "w", encoding="utf-8") as file:
     file.write(f"Graph 4 Hamilton walk: {g1.hamilton_walk()}\n")
     file.write(f"Helper: {tmp}\n")
     file.write(f"Isomorphic function between graph 1 and helper: {ug0.isomorphic_bijection(tmp)}\n")
-with open("Tree.txt", "w", encoding="utf-8") as file:
+with open("tree.txt", "w", encoding="utf-8") as file:
     file.write(f"{tree}\n")
     file.write(f"Height: {tree.height()}\n")
     file.write(f"Descendants of 2: {tree.descendants(n2)}\n")
@@ -343,7 +343,7 @@ with open("Tree.txt", "w", encoding="utf-8") as file:
     file.write(f"Vertex cover: {tree.vertex_cover()}\n")
     file.write(f"Dominating set: {tree.dominating_set()}\n")
     file.write(f"Independent set: {tree.independent_set()}\n")
-with open("Directed graphs.txt", "w") as file:
+with open("directed_graphs.txt", "w") as file:
     file.write(f"Graph 1: {dg0}\nGraph 2: {dg1}\n")
     file.write(f"Graph 1:\nsources: {dg0.sources}\nsinks: {dg0.sinks}\n")
     file.write(f"Graph 2:\nsources: {dg1.sources}\nsinks: {dg1.sinks}\n")
