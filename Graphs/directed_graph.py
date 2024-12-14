@@ -132,29 +132,7 @@ class DirectedGraph(Graph):
             return True
         return v in self.subgraph(u)
 
-    def component(self, u_or_s: Node | Iterable[Node]) -> "DirectedGraph":
-        if isinstance(u_or_s, Node):
-            if u_or_s not in self:
-                raise ValueError("Unrecognized node!")
-            queue, res = [u_or_s], DirectedGraph({u_or_s: ([], [])})
-            while queue:
-                for n in self.next(v := queue.pop(0)):
-                    if n in res:
-                        res.connect(n, [v])
-                    else:
-                        res.add(n, [v]), queue.append(n)
-                for n in self.prev(v):
-                    if n in res:
-                        res.connect(v, [n])
-                    else:
-                        res.add(n, [], [v]), queue.append(n)
-            return res
-        return DirectedGraph({u: ([], self.next(u).intersection(u_or_s)) for u in u_or_s})
-
-    def full(self) -> bool:
-        return len(self.links) == (n := len(self.nodes)) * (n - 1)
-
-    def subgraph(self, u: Node) -> "DirectedGraph":
+    def component(self, u: Node) -> "DirectedGraph":
         if u not in self:
             raise ValueError("Unrecognized node!")
         queue, res = [u], DirectedGraph({u: ([], [])})
@@ -164,7 +142,29 @@ class DirectedGraph(Graph):
                     res.connect(n, [v])
                 else:
                     res.add(n, [v]), queue.append(n)
+            for n in self.prev(v):
+                if n in res:
+                    res.connect(v, [n])
+                else:
+                    res.add(n, [], [v]), queue.append(n)
         return res
+
+    def full(self) -> bool:
+        return len(self.links) == (n := len(self.nodes)) * (n - 1)
+
+    def subgraph(self, u_or_nodes: Node | Iterable[Node]) -> "DirectedGraph":
+        if isinstance(u_or_nodes, Node):
+            if u_or_nodes not in self:
+                raise ValueError("Unrecognized node!")
+            queue, res = [u_or_nodes], DirectedGraph({u_or_nodes: ([], [])})
+            while queue:
+                for n in self.next(v := queue.pop(0)):
+                    if n in res:
+                        res.connect(n, [v])
+                    else:
+                        res.add(n, [v]), queue.append(n)
+            return res
+        return DirectedGraph({u: ([], self.next(u).intersection(u_or_nodes)) for u in u_or_nodes})
 
     def has_loop(self) -> bool:
         def dfs(u):
@@ -555,26 +555,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
     def transposed(self) -> "WeightedNodesDirectedGraph":
         return WeightedNodesDirectedGraph({u: (self.node_weights(u), (self.next(u), [])) for u in self.nodes})
 
-    def component(self, u_or_s: Node | Iterable[Node]) -> "WeightedNodesDirectedGraph":
-        if isinstance(u_or_s, Node):
-            if u_or_s not in self:
-                raise ValueError("Unrecognized node!")
-            queue, res = [u_or_s], WeightedNodesDirectedGraph({u_or_s: (self.node_weights(u_or_s), ([], []))})
-            while queue:
-                for n in self.next(v := queue.pop(0)):
-                    if n in res:
-                        res.connect(n, [v])
-                    else:
-                        res.add((n, self.node_weights(n)), [v]), queue.append(n)
-                for n in self.prev(v):
-                    if n in res:
-                        res.connect(v, [n])
-                    else:
-                        res.add((n, self.node_weights(n)), [], [v]), queue.append(n)
-            return res
-        return WeightedNodesDirectedGraph({u: (self.node_weights(u), ([], self.next(u).intersection(u_or_s))) for u in u_or_s})
-
-    def subgraph(self, u: Node) -> "WeightedNodesDirectedGraph":
+    def component(self, u: Node) -> "WeightedNodesDirectedGraph":
         if u not in self:
             raise ValueError("Unrecognized node!")
         queue, res = [u], WeightedNodesDirectedGraph({u: (self.node_weights(u), ([], []))})
@@ -584,7 +565,26 @@ class WeightedNodesDirectedGraph(DirectedGraph):
                     res.connect(n, [v])
                 else:
                     res.add((n, self.node_weights(n)), [v]), queue.append(n)
+            for n in self.prev(v):
+                if n in res:
+                    res.connect(v, [n])
+                else:
+                    res.add((n, self.node_weights(n)), [], [v]), queue.append(n)
         return res
+
+    def subgraph(self, u_or_nodes: Node | Iterable[Node]) -> "WeightedNodesDirectedGraph":
+        if isinstance(u_or_nodes, Node):
+            if u_or_nodes not in self:
+                raise ValueError("Unrecognized node!")
+            queue, res = [u_or_nodes], WeightedNodesDirectedGraph({u_or_nodes: (self.node_weights(u_or_nodes), ([], []))})
+            while queue:
+                for n in self.next(v := queue.pop(0)):
+                    if n in res:
+                        res.connect(n, [v])
+                    else:
+                        res.add((n, self.node_weights(n)), [v]), queue.append(n)
+            return res
+        return WeightedNodesDirectedGraph({u: (self.node_weights(u), ([], self.next(u).intersection(u_or_nodes))) for u in u_or_nodes})
 
     def minimal_path_nodes(self, u: Node, v: Node) -> list[Node]:
         neighborhood = {n: (self.node_weights(n), ({}, {m: 0 for m in self.next(n)})) for n in self.nodes}
@@ -740,36 +740,36 @@ class WeightedLinksDirectedGraph(DirectedGraph):
     def copy(self) -> "WeightedLinksDirectedGraph":
         return WeightedLinksDirectedGraph({u: ({}, self.link_weights(u)) for u in self.nodes})
 
-    def component(self, u_or_s: Node | Iterable[Node]) -> "WeightedLinksDirectedGraph":
-        if isinstance(u_or_s, Node):
-            if u_or_s not in self:
-                raise ValueError("Unrecognized node!")
-            queue, res = [u_or_s], WeightedLinksDirectedGraph({u_or_s: ({}, {})})
-            while queue:
-                for n in self.next(v := queue.pop(0)):
-                    if n in res:
-                        res.connect(n, {v: self.link_weights((v, n))})
-                    else:
-                        res.add(n, {v: self.link_weights((v, n))}), queue.append(n)
-                for n in self.prev(v):
-                    if n in res:
-                        res.connect(v, {n: self.link_weights((n, v))})
-                    else:
-                        res.add(n, points_to_weights={v: self.link_weights((n, v))}), queue.append(n)
-            return res
-        return WeightedLinksDirectedGraph({u: ({}, {k: v for k, v in self.link_weights(u).items() if k in u_or_s}) for u in u_or_s})
-
-    def subgraph(self, u: Node) -> "WeightedLinksDirectedGraph":
+    def component(self, u: Node) -> "WeightedLinksDirectedGraph":
         if u not in self:
             raise ValueError("Unrecognized node!")
         queue, res = [u], WeightedLinksDirectedGraph({u: ({}, {})})
         while queue:
             for n in self.next(v := queue.pop(0)):
                 if n in res:
-                    res.connect(n, {v: self.link_weights(v, n)})
+                    res.connect(n, {v: self.link_weights((v, n))})
                 else:
-                    res.add(n, {v: self.link_weights(v, n)}), queue.append(n)
+                    res.add(n, {v: self.link_weights((v, n))}), queue.append(n)
+            for n in self.prev(v):
+                if n in res:
+                    res.connect(v, {n: self.link_weights((n, v))})
+                else:
+                    res.add(n, points_to_weights={v: self.link_weights((n, v))}), queue.append(n)
         return res
+
+    def subgraph(self, u_or_nodes: Node | Iterable[Node]) -> "WeightedLinksDirectedGraph":
+        if isinstance(u_or_nodes, Node):
+            if u_or_nodes not in self:
+                raise ValueError("Unrecognized node!")
+            queue, res = [u_or_nodes], WeightedLinksDirectedGraph({u_or_nodes: ({}, {})})
+            while queue:
+                for n in self.next(v := queue.pop(0)):
+                    if n in res:
+                        res.connect(n, {v: self.link_weights(v, n)})
+                    else:
+                        res.add(n, {v: self.link_weights(v, n)}), queue.append(n)
+            return res
+        return WeightedLinksDirectedGraph({u: ({}, {k: v for k, v in self.link_weights(u).items() if k in u_or_nodes}) for u in u_or_nodes})
 
     def minimal_path_links(self, u: Node, v: Node) -> list[Node]:
         return WeightedDirectedGraph({n: (0, ({}, self.link_weights(n))) for n in self.nodes}).minimal_path(u, v)
@@ -899,26 +899,7 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
         neighborhood = {u: (self.node_weights(u), ({}, self.link_weights(u))) for u in self.nodes}
         return WeightedDirectedGraph(neighborhood)
 
-    def component(self, u_or_s: Node | Iterable[Node]) -> "WeightedDirectedGraph":
-        if isinstance(u_or_s, Node):
-            if u_or_s not in self:
-                raise ValueError("Unrecognized node!")
-            queue, res = [u_or_s], WeightedDirectedGraph({u_or_s: (self.node_weights(u_or_s), ({}, {}))})
-            while queue:
-                for n in self.next(v := queue.pop(0)):
-                    if n in res:
-                        res.connect(n, {v: self.link_weights(v, n)})
-                    else:
-                        res.add((n, self.node_weights(n)), {v: self.link_weights((v, n))}), queue.append(n)
-                for n in self.prev(v):
-                    if n in res:
-                        res.connect(v, {n: self.link_weights(n, v)})
-                    else:
-                        res.add((n, self.node_weights(n)), points_to_weights={v: self.link_weights((n, v))}), queue.append(n)
-            return res
-        return WeightedDirectedGraph({u: (self.node_weights(u), ({}, {k: v for k, v in self.link_weights(u).items() if k in u_or_s})) for u in u_or_s})
-
-    def subgraph(self, u: Node) -> "WeightedDirectedGraph":
+    def component(self, u: Node) -> "WeightedDirectedGraph":
         if u not in self:
             raise ValueError("Unrecognized node!")
         queue, res = [u], WeightedDirectedGraph({u: (self.node_weights(u), ({}, {}))})
@@ -927,8 +908,27 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
                 if n in res:
                     res.connect(n, {v: self.link_weights(v, n)})
                 else:
-                    res.add((n, self.node_weights(n)), {v: self.link_weights(v, n)}), queue.append(n)
+                    res.add((n, self.node_weights(n)), {v: self.link_weights((v, n))}), queue.append(n)
+            for n in self.prev(v):
+                if n in res:
+                    res.connect(v, {n: self.link_weights(n, v)})
+                else:
+                    res.add((n, self.node_weights(n)), points_to_weights={v: self.link_weights((n, v))}), queue.append(n)
         return res
+
+    def subgraph(self, u_or_nodes: Node | Iterable[Node]) -> "WeightedDirectedGraph":
+        if isinstance(u_or_nodes, Node):
+            if u_or_nodes not in self:
+                raise ValueError("Unrecognized node!")
+            queue, res = [u_or_nodes], WeightedDirectedGraph({u_or_nodes: (self.node_weights(u_or_nodes), ({}, {}))})
+            while queue:
+                for n in self.next(v := queue.pop(0)):
+                    if n in res:
+                        res.connect(n, {v: self.link_weights(v, n)})
+                    else:
+                        res.add((n, self.node_weights(n)), {v: self.link_weights(v, n)}), queue.append(n)
+            return res
+        return WeightedDirectedGraph({u: (self.node_weights(u), ({}, {k: v for k, v in self.link_weights(u).items() if k in u_or_nodes})) for u in u_or_nodes})
 
     def minimal_path(self, u: Node, v: Node) -> list[Node]:
         def dfs(x, current_path, current_weight, total_negative, res_path=None, res_weight=0):
