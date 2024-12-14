@@ -8,7 +8,7 @@ In file General.py, there's an implementation of a node and an implementation of
 2) remove nodes;
 3) returning a copy of the graph;
 4) returning the complementary graph of the given one;
-5) returning the graph component of a given node (or if the given argument is an iterable of nodes, it returns the subgraph of it, the nodes of which are only the given nodes and links of which are the links between them in the graph);
+5) returning the graph component of a given node;
 6) listing out the connection components in the graph;
 7) checking whether the graph is connected;
 8) checking whether one node can reach another one in the graph;
@@ -25,7 +25,7 @@ In file General.py, there's an implementation of a node and an implementation of
 19) combining two graphs into one (addition);
 20) representing the graph (\_\_str__ and \_\_repr__).
 
-All graphs also have methods for adding a node to already present nodes, connecting a node to already present nodes and disconnecting a node from already present nodes, but they're implemented differently in undirected graps and directed graphs.
+All graphs also have methods for adding a node to already present nodes, connecting a node to already present nodes, disconnecting a node from already present nodes and returning the subgraph of the one via a given set of nodes, but they're implemented differently in undirected graps and directed graphs.
 
 In file UndirectedPath.py are implemented class Link for an undirected link and the undirected graph classes.
 
@@ -69,7 +69,7 @@ Unique methods for directed graph classes are:
 9) listing out all strongly-connected components in the graph;
 10) returning the dag of strongly-connected components of the original one (where each node represents a maximum by inclusion strongly connected component and a link exists from one node to another exactly when there's at least one link from a node in the first SCC to a node in the second SCC. This graph is always a DAG).
 
-Furthermore, the degrees method returns a pair of numbers, the first of which shows how many nodes point to a given one and the second one shows how many nodes it points to, if a node is given, otherwise it returns a dictionary of the same information for all nodes.
+Furthermore, the degrees method returns a pair of numbers, the first of which shows how many nodes point to a given one and the second one shows how many nodes it points to, if a node is given, otherwise it returns a dictionary of the same information for all nodes. Also, subgraph could take a node as a parameter, in which case it would return the graph, comprised by all nodes and links, reachable by the given node.
 
 Weighted graphs by nodes, in addition to their parental superclass, have methods for:
 1) returning the weight of a node, if such is given, otherwise returns the same for all nodes;
