@@ -1,10 +1,10 @@
 from unittest import TestCase, main
 
-from Graphs.UndirectedGraph import *
+from Graphs.undirected_graph import *
 
-from Graphs.DirectedGraph import *
+from Graphs.directed_graph import *
 
-from Graphs.Tree import *
+from Graphs.tree import *
 
 
 n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15 = Node(0), Node(1), Node(2), Node(3), Node(4), Node(5), Node(6), Node(7), Node(8), Node(9), Node(10), Node(11), Node(12), Node(13), Node(14), Node(15)
@@ -19,8 +19,8 @@ class TestUndirectedGraph(TestCase):
 
     def test_get_neighboring(self):
         self.assertFalse(self.g0.neighboring(n14))
-        self.assertListEqual(self.g0.neighboring(n2).value, [n0, n1, n3, n4, n5])
-        self.assertListEqual(self.g0.neighboring(n3).value, [n2, n6])
+        self.assertSetEqual(self.g0.neighboring(n2), {n0, n1, n3, n4, n5})
+        self.assertSetEqual(self.g0.neighboring(n3), {n2, n6})
 
     def test_get_degrees(self):
         self.assertEqual(self.g0.degrees(), {n0: 2, n1: 2, n2: 5, n3: 2, n4: 3, n5: 3, n6: 4, n7: 3, n8: 3, n9: 1, n10: 1, n11: 3, n12: 2, n13: 2, n14: 0})
@@ -47,8 +47,8 @@ class TestUndirectedGraph(TestCase):
         self.assertTrue(self.g3.connected())
 
     def test_is_tree(self):
-        self.assertFalse(self.g0.is_tree())
-        self.assertTrue(self.g3.is_tree())
+        self.assertFalse(self.g0.is_tree)
+        self.assertTrue(self.g3.is_tree)
 
     def test_tree(self):
         pass
@@ -72,39 +72,39 @@ class TestUndirectedGraph(TestCase):
         self.assertEqual(self.g3.component(n0), self.g3)
 
     def test_cut_nodes(self):
-        self.assertListEqual(list(sorted(self.g0.cut_nodes())), [n2, n7, n11])
-        self.assertListEqual(self.g1.cut_nodes(), [])
-        self.assertListEqual(self.g2.cut_nodes(), [n5])
-        self.assertListEqual(list(sorted(self.g3.cut_nodes())), [n0, n1, n2, n3, n5])
+        self.assertSetEqual(self.g0.cut_nodes(), {n2, n7, n11})
+        self.assertSetEqual(self.g1.cut_nodes(), set())
+        self.assertSetEqual(self.g2.cut_nodes(), {n5})
+        self.assertSetEqual(self.g3.cut_nodes(), {n0, n1, n2, n3, n5})
 
     def test_bridge_links(self):
-        self.assertListEqual(self.g0.bridge_links(), [Link(n7, n9), Link(n10, n11)])
-        self.assertListEqual(self.g1.bridge_links(), [])
-        self.assertListEqual(self.g2.bridge_links(), [Link(n5, n6)])
-        self.assertEqual(len(self.g3.bridge_links()), len(self.g3.links))
+        self.assertSetEqual(self.g0.bridge_links(), {Link(n7, n9), Link(n10, n11)})
+        self.assertSetEqual(self.g1.bridge_links(), set())
+        self.assertSetEqual(self.g2.bridge_links(), {Link(n5, n6)})
+        self.assertSetEqual(self.g3.bridge_links(), self.g3.links)
 
     def test_path_with_length(self):
-        self.assertTrue(self.g0.pathWithLength(n0, n5, 6))
-        self.assertTrue(self.g0.pathWithLength(n0, n5, 7))
-        self.assertTrue(self.g0.pathWithLength(n10, n12, 3) and self.g0.pathWithLength(n10, n13, 3))
-        self.assertTrue(self.g0.pathWithLength(n4, n8, 3))
+        self.assertTrue(self.g0.path_with_length(n0, n5, 6))
+        self.assertTrue(self.g0.path_with_length(n0, n5, 7))
+        self.assertTrue(self.g0.path_with_length(n10, n12, 3) and self.g0.path_with_length(n10, n13, 3))
+        self.assertTrue(self.g0.path_with_length(n4, n8, 3))
 
     def test_loop_with_length(self):
-        self.assertTrue(self.g0.loopWithLength(3))
-        self.assertTrue(self.g0.loopWithLength(4))
-        self.assertTrue(self.g0.loopWithLength(5))
-        self.assertTrue(self.g0.loopWithLength(6))
-        self.assertTrue(self.g0.loopWithLength(7))
-        self.assertTrue(self.g0.loopWithLength(8))
+        self.assertTrue(self.g0.loop_with_length(3))
+        self.assertTrue(self.g0.loop_with_length(4))
+        self.assertTrue(self.g0.loop_with_length(5))
+        self.assertTrue(self.g0.loop_with_length(6))
+        self.assertTrue(self.g0.loop_with_length(7))
+        self.assertTrue(self.g0.loop_with_length(8))
 
     def test_get_shortest_path(self):
         self.assertListEqual(self.g0.get_shortest_path(n0, n6), [n0, n2, n3, n6])
         self.assertListEqual(self.g0.get_shortest_path(n7, n5), [n7, n8, n5])
 
     def test_width(self):
-        self.assertEqual(self.g0.component(n0).width(), 5)
-        self.assertEqual(self.g1.width(), 2)
-        self.assertEqual(self.g2.width(), 3)
+        self.assertEqual(self.g0.component(n0).diameter(), 5)
+        self.assertEqual(self.g1.diameter(), 2)
+        self.assertEqual(self.g2.diameter(), 3)
 
     def test_links_graph(self):
         pass
@@ -119,17 +119,17 @@ class TestUndirectedGraph(TestCase):
         tmp = self.g0.copy()
         self.assertFalse(tmp.interval_sort())
         tmp.disconnect(n2, n3), tmp.disconnect(n5, n8), tmp.connect(n3, n7, n8)
-        res, total = tmp.interval_sort(), SortedList(f=tmp.f)
-        total.insert(res[0])
+        res, total = tmp.interval_sort(), set()
+        total.add(res[0])
         for i in range(len(res)):
             neighbors = tmp.neighboring(res[i])
             for v in total:
                 neighbors.remove(v)
             if i + 1 < len(res) and not neighbors and res[i + 1] not in total:
-                total.insert(res[i + 1])
+                total.add(res[i + 1])
             else:
                 for v in res[i + 1: i + len(neighbors) + 1]:
-                    self.assertIn(v, neighbors), total.insert(v)
+                    self.assertIn(v, neighbors), total.add(v)
 
     def test_full_k_partite(self):
         pass
@@ -143,56 +143,54 @@ class TestUndirectedGraph(TestCase):
 
     def test_hamilton_walk_and_tour_exist(self):
         tmp = self.g0.component(n0)
-        self.assertFalse(tmp.hamiltonWalkExists(n2, n9))
-        self.assertFalse(tmp.hamiltonTourExists())
-        self.assertTrue(tmp.hamiltonWalkExists(n0, n9))
-        self.assertTrue(tmp.hamiltonWalkExists(n1, n9))
-        tmp.connect(n0, n9), self.assertTrue(tmp.hamiltonTourExists())
+        self.assertFalse(tmp.hamilton_walk_exists(n2, n9))
+        self.assertFalse(tmp.hamilton_tour_exists())
+        self.assertTrue(tmp.hamilton_walk_exists(n0, n9))
+        self.assertTrue(tmp.hamilton_walk_exists(n1, n9))
+        tmp.connect(n0, n9), self.assertTrue(tmp.hamilton_tour_exists())
 
     def test_vertex_cover(self):
-        res = self.g0.vertexCover()
-        self.assertEqual(list(map(len, res)), [7] * 4)
+        res = self.g0.vertex_cover()
+        self.assertEqual(len(res), 7)
         for v_c in res:
             for l in self.g0.links:
                 self.assertTrue(l.u in v_c or l.v in v_c)
-        res = self.g1.vertexCover()
-        self.assertEqual(list(map(len, res)), [3] * 2)
+        res = self.g1.vertex_cover()
+        self.assertEqual(len(res), 3)
         for v_c in res:
             for l in self.g1.links:
                 self.assertTrue(l.u in v_c or l.v in v_c)
-        res = self.g2.vertexCover()
-        self.assertEqual(list(map(len, res)), [4] * 4)
+        res = self.g2.vertex_cover()
+        self.assertEqual(len(res), 4)
         for v_c in res:
             for l in self.g2.links:
                 self.assertTrue(l.u in v_c or l.v in v_c)
 
     def test_dominating_set(self):
-        self.assertListEqual(list(map(sorted, self.g0.dominatingSet())), [[n2, n7, n11, n14]])
-        res = self.g1.dominatingSet()
-        self.assertEqual(list(map(len, res)), [2] * 6)
-        for d_s in res:
-            for u in self.g1.nodes:
-                self.assertTrue(u in d_s or any(v in d_s for v in self.g1.neighboring(u)))
-        res = self.g2.dominatingSet()
-        self.assertEqual(list(map(len, res)), [2] * 3)
-        for d_s in res:
-            for u in self.g2.nodes:
-                self.assertTrue(u in d_s or any(v in d_s for v in self.g2.neighboring(u)))
+        self.assertSetEqual(self.g0.dominating_set(), {n2, n7, n11, n14})
+        res = self.g1.dominating_set()
+        self.assertEqual(len(res), 2)
+        for u in self.g1.nodes:
+            self.assertTrue(u in res or any(v in res for v in self.g1.neighboring(u)))
+        res = self.g2.dominating_set()
+        self.assertEqual(len(res), 2)
+        for u in self.g2.nodes:
+            self.assertTrue(u in res or any(v in res for v in self.g2.neighboring(u)))
 
     def test_independent_set(self):
-        res = self.g0.independentSet()
+        res = self.g0.independent_set()
         self.assertListEqual(list(map(len, res)), [8] * 4)
         for i_s in res:
             for i, u in enumerate(i_s):
                 for v in i_s[i + 1:]:
                     self.assertFalse(u in self.g0.neighboring(v))
-        res = self.g1.independentSet()
+        res = self.g1.independent_set()
         self.assertListEqual(list(map(len, res)), [3] * 2)
         for i_s in res:
             for i, u in enumerate(i_s):
                 for v in i_s[i + 1:]:
                     self.assertFalse(u in self.g1.neighboring(v))
-        res = self.g2.independentSet()
+        res = self.g2.independent_set()
         self.assertListEqual(list(map(len, res)), [3] * 4)
         for i_s in res:
             for i, u in enumerate(i_s):
@@ -220,14 +218,14 @@ class TestUndirectedGraph(TestCase):
 
     def test_hamilton_walk_and_tour(self):
         tmp = self.g0.component(n0)
-        res = tmp.hamiltonWalk()
+        res = tmp.hamilton_walk()
         n = len(res)
         self.assertEqual(n, len(tmp.nodes))
         self.assertIn(n9, (res[0], res[-1]))
         tmp.disconnect(n4, n5)
-        self.assertFalse(tmp.hamiltonWalk())
+        self.assertFalse(tmp.hamilton_walk())
         tmp.connect(n4, n5), tmp.connect(n0, n9)
-        res1 = tmp.hamiltonTour()
+        res1 = tmp.hamilton_tour()
         self.assertIn(res1[0], tmp.neighboring(res1[-1]))
         for i in range(n - 1):
             self.assertIn(res[i], tmp.neighboring(res[i + 1]))
@@ -253,7 +251,7 @@ class TestUndirectedGraph(TestCase):
         tmp = self.g0.component(n0)
         tmp.disconnect(n2, n3), tmp.disconnect(n5, n8), tmp.connect(n3, n7, n8)
         tmp_copy, g0, g3 = tmp.copy(), self.g0.copy(), self.g3.copy()
-        res = tmp.chromaticNodesPartition()
+        res = tmp.chromatic_nodes_partition()
         self.assertEqual(len(res), 4)
         self.assertEqual(sum(map(len, res)), len(tmp.nodes))
         for c in res:
@@ -267,7 +265,7 @@ class TestUndirectedGraph(TestCase):
             tmp_sum += c
         for n in tmp.nodes:
             self.assertIn(n, tmp_sum)
-        res = self.g3.chromaticNodesPartition()
+        res = self.g3.chromatic_nodes_partition()
         self.assertEqual(len(res), 2)
         self.assertEqual(sum(map(len, res)), len(self.g3.nodes))
         for c in res:
@@ -281,7 +279,7 @@ class TestUndirectedGraph(TestCase):
             tmp_sum += c
         for n in self.g3.nodes:
             self.assertIn(n, tmp_sum)
-        res = self.g0.chromaticNodesPartition()
+        res = self.g0.chromatic_nodes_partition()
         self.assertEqual(len(res), 3)
         self.assertEqual(sum(map(len, res)), len(self.g0.nodes))
         for c in res:
@@ -299,7 +297,7 @@ class TestUndirectedGraph(TestCase):
 
     def test_chromatic_number_links(self):
         g1 = self.g1.copy()
-        res = self.g1.chromaticLinksPartition()
+        res = self.g1.chromatic_links_partition()
         self.assertEqual(len(res), 4)
         self.assertEqual(sum(map(len, res)), len(self.g1.links))
         for c in res:
@@ -312,14 +310,14 @@ class TestUndirectedGraph(TestCase):
 
     def test_isomorphic_function(self):
         tmp = UndirectedGraph({n11: [n12, n13, n14], n12: [n10, n15], n15: [n10, n13, n14]})
-        func = self.g1.isomorphicFunction(tmp)
+        func = self.g1.isomorphic_bijection(tmp)
         self.assertTrue(func)
         for n, m in func.items():
             neighbors = self.g1.neighboring(n)
             for v in tmp.nodes:
                 self.assertEqual(v in map(func.__getitem__, neighbors), v in tmp.neighboring(m))
         tmp.disconnect(n11, n13)
-        self.assertFalse(self.g1.isomorphicFunction(tmp))
+        self.assertFalse(self.g1.isomorphic_bijection(tmp))
 
     def test_equal(self):
         g1, g2 = self.g1.copy(), self.g2.copy()
@@ -369,7 +367,7 @@ class TestWeightedNodesUndirectedGraph(TestUndirectedGraph):
         self.assertEqual(WeightedNodesUndirectedGraph({n0: (7, [n1, n2]), n1: (3, []), n2: (5, [n1, n3, n4, n5]), n3: (2, [n6]), n4: (8, [n5, n6]), n5: (4, []), n6: (6, []), n7: (2, [n6, n8, n9]), n8: (0, [n5, n6]), n9: (5, [])}), self.g0.component(n0))
 
     def test_min_path_nodes(self):
-        res = self.g1.minimalPathNodes(n0, n1)
+        res = self.g1.minimal_path_nodes(n0, n1)
         self.assertEqual(res[1], 9)
         self.assertListEqual(res[0], [n0, n2, n1])
 
@@ -378,7 +376,7 @@ class TestWeightedNodesUndirectedGraph(TestUndirectedGraph):
 
     def test_weighted_vertex_cover(self):
         g0 = self.g0.copy()
-        res = self.g0.weightedVertexCover()
+        res = self.g0.weighted_vertex_cover()
         self.assertEqual(sum(map(g0.node_weights, res[0])), 23)
         for i in range(len(res)):
             self.assertEqual(sum(map(self.g0.node_weights, res[i])), 23)
@@ -386,14 +384,14 @@ class TestWeightedNodesUndirectedGraph(TestUndirectedGraph):
         self.assertEqual(g0, self.g0)
 
     def test_weighted_dominating_set(self):
-        res = self.g0.weightedDominatingSet()
+        res = self.g0.weighted_dominating_set()
         for i in range(len(res) - 1):
             self.assertEqual(sum(map(self.g0.node_weights, res[i])), sum(map(self.g0.node_weights, res[i + 1])))
         self.assertEqual(sum(map(self.g0.node_weights, res[0])), 15)
 
     def test_isomorphic_function(self):
         tmp = WeightedNodesUndirectedGraph({n10: (3, [n12, n15]), n11: (2, [n12, n13, n14]), n12: (4, []), n13: (6, []), n14: (5, []), n15: (1, [n12, n13, n14])})
-        func = self.g1.isomorphicFunction(tmp)
+        func = self.g1.isomorphic_bijection(tmp)
         self.assertTrue(func)
         for n, m in func.items():
             self.assertEqual(self.g1.node_weights(n), tmp.node_weights(m))
@@ -480,7 +478,7 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
 
     def test_component(self):
         self.assertEqual(self.g0.component(n0), WeightedLinksUndirectedGraph({n0: {n1: 3, n2: 1}, n2: {n1: -4, n3: 6, n4: 2, n5: 4}, n3: {n6: 3}, n4: {n5: 3, n6: 7}, n7: {n6: 2, n8: 1, n9: 3}, n8: {n5: 5, n6: 4}}))
-        self.assertEqual(self.g0.component(n10), WeightedLinksUndirectedGraph({n11: {n10: 2, n12: 3, n13: 4}, n12: {n13: 1}}))
+        self.assertEqual(self.g0.component(n10),WeightedLinksUndirectedGraph({n11: {n10: 2, n12: 3, n13: 4}, n12: {n13: 1}}))
         self.assertEqual(self.g1.component(n0), self.g1)
         self.assertEqual(self.g2.component(n0), self.g2)
         self.assertEqual(self.g3.component(n0), self.g3)
@@ -502,7 +500,7 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
                         g.add(l.v, l.u)
                     else:
                         g.connect(l.u, l.v)
-            self.assertTrue(g.is_tree())
+            self.assertTrue(all(_g.is_tree for _g in g.connection_components()))
         res = self.g1.minimal_spanning_tree()
         self.assertEqual(res[1], 10)
         g = UndirectedGraph()
@@ -515,7 +513,7 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
                     g.add(l.v, l.u)
                 else:
                     g.connect(l.u, l.v)
-        self.assertTrue(g.is_tree())
+        self.assertTrue(g.is_tree)
         res = self.g2.minimal_spanning_tree()
         self.assertEqual(res[1], 1)
         g = UndirectedGraph()
@@ -528,7 +526,7 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
                     g.add(l.v, l.u)
                 else:
                     g.connect(l.u, l.v)
-        self.assertTrue(g.is_tree())
+        self.assertTrue(g.is_tree)
         res = self.g3.minimal_spanning_tree()
         self.assertEqual(res[1], 30)
         g = UndirectedGraph()
@@ -541,34 +539,34 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
                     g.add(l.v, l.u)
                 else:
                     g.connect(l.u, l.v)
-        self.assertTrue(g.is_tree())
+        self.assertTrue(g.is_tree)
 
     def test_links_graph(self):
         pass
 
     def test_min_path_links(self):
-        res = self.g0.minimalPathLinks(n0, n8)
+        res = self.g0.minimal_path_links(n0, n8)
         u = res[0][0]
         self.assertEqual(u, n0)
         for v in res[0][1:]:
             self.assertIn(u, self.g0.neighboring(v))
             u = v
         self.assertEqual(res[1], 8)
-        res = self.g1.minimalPathLinks(n0, n4)
+        res = self.g1.minimal_path_links(n0, n4)
         u = res[0][0]
         self.assertEqual(u, n0)
         for v in res[0][1:]:
             self.assertIn(u, self.g1.neighboring(v))
             u = v
         self.assertEqual(res[1], 5)
-        res = self.g2.minimalPathLinks(n0, n5)
+        res = self.g2.minimal_path_links(n0, n5)
         u = res[0][0]
         self.assertEqual(u, n0)
         for v in res[0][1:]:
             self.assertIn(u, self.g2.neighboring(v))
             u = v
         self.assertEqual(res[1], -2)
-        res = self.g2.minimalPathLinks(n0, n1)
+        res = self.g2.minimal_path_links(n0, n1)
         u = res[0][0]
         self.assertEqual(u, n0)
         for v in res[0][1:]:
@@ -577,38 +575,38 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
         self.assertEqual(res[1], -8)
 
     def test_path_with_length(self):
-        self.assertTrue(self.g0.pathWithLength(n0, n5, 6))
-        self.assertTrue(self.g0.pathWithLength(n0, n5, 7))
-        self.assertTrue(self.g0.pathWithLength(n10, n12, 3) and self.g0.pathWithLength(n10, n13, 3))
-        self.assertTrue(self.g0.pathWithLength(n4, n8, 3))
+        self.assertTrue(self.g0.path_with_length(n0, n5, 6))
+        self.assertTrue(self.g0.path_with_length(n0, n5, 7))
+        self.assertTrue(self.g0.path_with_length(n10, n12, 3) and self.g0.path_with_length(n10, n13, 3))
+        self.assertTrue(self.g0.path_with_length(n4, n8, 3))
 
     def test_loop_with_length(self):
-        self.assertTrue(self.g0.loopWithLength(3))
-        self.assertTrue(self.g0.loopWithLength(4))
-        self.assertTrue(self.g0.loopWithLength(5))
-        self.assertTrue(self.g0.loopWithLength(6))
-        self.assertTrue(self.g0.loopWithLength(7))
-        self.assertTrue(self.g0.loopWithLength(8))
+        self.assertTrue(self.g0.loop_with_length(3))
+        self.assertTrue(self.g0.loop_with_length(4))
+        self.assertTrue(self.g0.loop_with_length(5))
+        self.assertTrue(self.g0.loop_with_length(6))
+        self.assertTrue(self.g0.loop_with_length(7))
+        self.assertTrue(self.g0.loop_with_length(8))
 
     def test_interval_sort(self):
         tmp = self.g0.copy()
         self.assertFalse(tmp.interval_sort())
         tmp.disconnect(n2, n3), tmp.disconnect(n5, n8), tmp.connect(n3, {n7: 0, n8: 0})
-        res, total = tmp.interval_sort(), SortedList(f=tmp.f)
-        total.insert(res[0])
+        res, total = tmp.interval_sort(), set()
+        total.add(res[0])
         for i in range(len(res)):
             neighbors = tmp.neighboring(res[i])
             for v in total: neighbors.remove(v)
             if i + 1 < len(res) and not neighbors and res[i + 1] not in total:
-                total.insert(res[i + 1])
+                total.add(res[i + 1])
             else:
                 for v in res[i + 1: i + len(neighbors) + 1]:
-                    self.assertIn(v, neighbors), total.insert(v)
+                    self.assertIn(v, neighbors), total.add(v)
 
     def test_chromatic_number_nodes(self):
         tmp = self.g0.component(n0)
         tmp.disconnect(n2, n3), tmp.disconnect(n5, n8), tmp.connect(n3, {n7: 0, n8: 0})
-        res = tmp.chromaticNodesPartition()
+        res = tmp.chromatic_nodes_partition()
         self.assertEqual(len(res), 4)
         self.assertEqual(sum(map(len, res)), len(tmp.nodes))
         for c in res:
@@ -622,7 +620,7 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
             tmp_sum += c
         for n in tmp.nodes:
             self.assertIn(n, tmp_sum)
-        res = self.g3.chromaticNodesPartition()
+        res = self.g3.chromatic_nodes_partition()
         self.assertEqual(len(res), 2)
         self.assertEqual(sum(map(len, res)), len(self.g3.nodes))
         for c in res:
@@ -636,7 +634,7 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
             tmp_sum += c
         for n in self.g3.nodes:
             self.assertIn(n, tmp_sum)
-        res = self.g0.chromaticNodesPartition()
+        res = self.g0.chromatic_nodes_partition()
         self.assertEqual(len(res), 3)
         self.assertEqual(sum(map(len, res)), len(self.g0.nodes))
         for c in res:
@@ -660,11 +658,11 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
 
     def test_hamilton_walk_and_tour_exist(self):
         tmp = self.g0.component(n0)
-        self.assertFalse(tmp.hamiltonWalkExists(n2, n9))
-        self.assertFalse(tmp.hamiltonTourExists())
-        self.assertTrue(tmp.hamiltonWalkExists(n0, n9))
-        self.assertTrue(tmp.hamiltonWalkExists(n1, n9))
-        tmp.connect(n0, {n9: 0}), self.assertTrue(tmp.hamiltonTourExists())
+        self.assertFalse(tmp.hamilton_walk_exists(n2, n9))
+        self.assertFalse(tmp.hamilton_tour_exists())
+        self.assertTrue(tmp.hamilton_walk_exists(n0, n9))
+        self.assertTrue(tmp.hamilton_walk_exists(n1, n9))
+        tmp.connect(n0, {n9: 0}), self.assertTrue(tmp.hamilton_tour_exists())
 
     def test_euler_walk_and_tour(self):
         tmp = self.g0.component(n0)
@@ -687,14 +685,14 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
 
     def test_hamilton_walk_and_tour(self):
         tmp = self.g0.component(n0)
-        res = tmp.hamiltonWalk()
+        res = tmp.hamilton_walk()
         n = len(res)
         self.assertEqual(n, len(tmp.nodes))
         self.assertIn(n9, (res[0], res[-1]))
         tmp.disconnect(n4, n5)
-        self.assertFalse(tmp.hamiltonWalk())
+        self.assertFalse(tmp.hamilton_walk())
         tmp.connect(n4, {n5: 0}), tmp.connect(n0, {n9: 0})
-        res1 = tmp.hamiltonTour()
+        res1 = tmp.hamilton_tour()
         self.assertIn(res1[0], tmp.neighboring(res1[-1]))
         for i in range(n - 1):
             self.assertIn(res[i], tmp.neighboring(res[i + 1]))
@@ -703,7 +701,7 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
 
     def test_isomorphic_function(self):
         tmp = WeightedLinksUndirectedGraph({n11: {n12: 5, n13: 2, n14: 4}, n12: {n10: 2, n15: 1}, n15: {n10: 4, n13: 3, n14: 2}})
-        func = self.g1.isomorphicFunction(tmp)
+        func = self.g1.isomorphic_bijection(tmp)
         self.assertTrue(func)
         for n, m in func.items():
             neighbors = self.g1.neighboring(n)
@@ -763,16 +761,16 @@ class TestWeightedUndirectedGraph(TestWeightedNodesUndirectedGraph, TestWeighted
         pass
 
     def test_minimal_path(self):
-        self.assertEqual(self.g0.minimalPath(n13, n11), ([n13, n11], 9))
-        self.assertEqual(self.g0.minimalPath(n1, n13), ([], 0))
-        self.assertEqual(self.g0.minimalPath(n1, n6), ([n1, n2, n3, n6], 21))
-        self.assertEqual(self.g1.minimalPath(n2, n4), ([n2, n5, n4], 13))
-        self.assertEqual(self.g2.minimalPath(n4, n6), ([n4, n5, n6], 21))
-        self.assertEqual(self.g2.minimalPath(n0, n4), ([n0, n2, n1, n3, n4], 16))
+        self.assertEqual(self.g0.minimal_path(n13, n11), ([n13, n11], 9))
+        self.assertEqual(self.g0.minimal_path(n1, n13), ([], 0))
+        self.assertEqual(self.g0.minimal_path(n1, n6), ([n1, n2, n3, n6], 21))
+        self.assertEqual(self.g1.minimal_path(n2, n4), ([n2, n5, n4], 13))
+        self.assertEqual(self.g2.minimal_path(n4, n6), ([n4, n5, n6], 21))
+        self.assertEqual(self.g2.minimal_path(n0, n4), ([n0, n2, n1, n3, n4], 16))
 
     def test_isomorphic_function(self):
         tmp = WeightedUndirectedGraph({n10: (3, {}), n11: (2, {n12: 5, n13: 2, n14: 4}), n12: (4, {n10: 2, n15: 1}), n13: (6, {}), n14: (5, {}), n15: (1, {n10: 4, n13: 3, n14: 2})})
-        func = self.g1.isomorphicFunction(tmp)
+        func = self.g1.isomorphic_bijection(tmp)
         self.assertTrue(func)
         for n, m in func.items():
             self.assertEqual(self.g1.node_weights(n), tmp.node_weights(m))
@@ -814,10 +812,10 @@ class TestDirectedGraph(TestCase):
         self.assertEqual((self.g0, self.g1, self.g2, self.g3), (self.g0.copy(), self.g1.copy(), self.g2.copy(), self.g3.copy()))
 
     def test_transposed(self):
-        self.assertEqual(self.g0.transposed(), DirectedGraph({u: (self.g0.next(u), self.g0.prev(u)) for u in self.g0.nodes}, self.g0.f))
-        self.assertEqual(self.g1.transposed(), DirectedGraph({u: (self.g1.next(u), self.g1.prev(u)) for u in self.g1.nodes}, self.g1.f))
-        self.assertEqual(self.g2.transposed(), DirectedGraph({u: (self.g2.next(u), self.g2.prev(u)) for u in self.g2.nodes}, self.g2.f))
-        self.assertEqual(self.g3.transposed(), DirectedGraph({u: (self.g3.next(u), self.g3.prev(u)) for u in self.g3.nodes}, self.g3.f))
+        self.assertEqual(self.g0.transposed(), DirectedGraph({u: (self.g0.next(u), self.g0.prev(u)) for u in self.g0.nodes}))
+        self.assertEqual(self.g1.transposed(), DirectedGraph({u: (self.g1.next(u), self.g1.prev(u)) for u in self.g1.nodes}))
+        self.assertEqual(self.g2.transposed(), DirectedGraph({u: (self.g2.next(u), self.g2.prev(u)) for u in self.g2.nodes}))
+        self.assertEqual(self.g3.transposed(), DirectedGraph({u: (self.g3.next(u), self.g3.prev(u)) for u in self.g3.nodes}))
 
     def test_connection_components(self):
         res = self.g0.connection_components()
@@ -878,6 +876,9 @@ class TestDirectedGraph(TestCase):
                 for v in s:
                     self.assertTrue(self.g3.reachable(u, v))
 
+    def test_scc_dag(self):
+        pass
+
     def test_has_loop(self):
         self.assertTrue(self.g0.has_loop())
         self.assertTrue(self.g1.has_loop())
@@ -911,19 +912,19 @@ class TestDirectedGraph(TestCase):
             self.assertFalse(self.g0.reachable(n14, u))
 
     def test_path_with_length(self):
-        self.assertTrue(self.g0.pathWithLength(n0, n1, 9))
-        self.assertFalse(self.g0.pathWithLength(n0, n1, 10))
-        self.assertTrue(self.g0.pathWithLength(n0, n5, 6))
-        self.assertTrue(self.g0.pathWithLength(n10, n13, 3))
-        self.assertTrue(self.g0.pathWithLength(n4, n8, 4))
+        self.assertTrue(self.g0.path_with_length(n0, n1, 9))
+        self.assertFalse(self.g0.path_with_length(n0, n1, 10))
+        self.assertTrue(self.g0.path_with_length(n0, n5, 6))
+        self.assertTrue(self.g0.path_with_length(n10, n13, 3))
+        self.assertTrue(self.g0.path_with_length(n4, n8, 4))
 
     def test_loop_with_length(self):
-        self.assertTrue(self.g0.loopWithLength(3))
-        self.assertTrue(self.g0.loopWithLength(4))
-        self.assertFalse(self.g0.loopWithLength(6))
-        self.assertFalse(self.g0.loopWithLength(9))
-        self.assertTrue(self.g1.loopWithLength(3))
-        self.assertTrue(self.g1.loopWithLength(4))
+        self.assertTrue(self.g0.loop_with_length(3))
+        self.assertTrue(self.g0.loop_with_length(4))
+        self.assertFalse(self.g0.loop_with_length(6))
+        self.assertFalse(self.g0.loop_with_length(9))
+        self.assertTrue(self.g1.loop_with_length(3))
+        self.assertTrue(self.g1.loop_with_length(4))
 
     def test_get_shortest_path(self):
         self.assertListEqual(self.g0.get_shortest_path(n0, n6), [n0, n2, n4, n5, n6])
@@ -945,20 +946,20 @@ class TestDirectedGraph(TestCase):
 
     def test_hamilton_walk_and_tour_exist(self):
         tmp = DirectedGraph.subgraph(self.g0, n0)
-        self.assertFalse(self.g0.hamiltonTourExists())
-        self.assertTrue(tmp.hamiltonWalkExists(n0, n9))
-        self.assertTrue(self.g0.component(n10).hamiltonWalkExists(n10, n13))
-        tmp.connect(n0, [n9]), self.assertTrue(tmp.hamiltonTourExists())
+        self.assertFalse(self.g0.hamilton_tour_exists())
+        self.assertTrue(tmp.hamilton_walk_exists(n0, n9))
+        self.assertTrue(self.g0.component(n10).hamilton_walk_exists(n10, n13))
+        tmp.connect(n0, [n9]), self.assertTrue(tmp.hamilton_tour_exists())
         tmp = DirectedGraph.copy(self.g1)
-        self.assertFalse(tmp.hamiltonTourExists())
-        self.assertTrue(tmp.hamiltonWalkExists(n1, n4))
+        self.assertFalse(tmp.hamilton_tour_exists())
+        self.assertTrue(tmp.hamilton_walk_exists(n1, n4))
         tmp.connect(n1, [n4])
-        self.assertTrue(tmp.hamiltonTourExists())
+        self.assertTrue(tmp.hamilton_tour_exists())
         for n in [n0, n1, n2, n3, n4, n5]:
-            self.assertFalse(self.g2.hamiltonWalkExists(n6, n))
+            self.assertFalse(self.g2.hamilton_walk_exists(n6, n))
         tmp = DirectedGraph.copy(self.g2)
         tmp.connect(n4, [n5]), tmp.connect(n2, [n3])
-        self.assertTrue(tmp.hamiltonWalkExists(n6, n1))
+        self.assertTrue(tmp.hamilton_walk_exists(n6, n1))
 
     def test_euler_walk_and_tour(self):
         tmp = DirectedGraph.subgraph(self.g0, n0)
@@ -981,14 +982,14 @@ class TestDirectedGraph(TestCase):
 
     def test_hamilton_walk_and_tour(self):
         tmp = DirectedGraph.subgraph(self.g0, n0)
-        res = tmp.hamiltonWalk()
+        res = tmp.hamilton_walk()
         n = len(res)
         self.assertEqual(n, len(tmp.nodes))
         self.assertEqual(n9, res[-1])
         tmp.disconnect(n5, [n4])
-        self.assertFalse(tmp.hamiltonWalk())
+        self.assertFalse(tmp.hamilton_walk())
         tmp.connect(n5, [n4]), tmp.connect(n0, [n9])
-        res1 = tmp.hamiltonTour()
+        res1 = tmp.hamilton_tour()
         self.assertIn(res1[0], tmp.next(res1[-1]))
         for i in range(n - 1):
             self.assertIn(res[i], tmp.prev(res[i + 1]))
@@ -1230,22 +1231,22 @@ class TestWeightedDirectedGraph(TestWeightedNodesDirectedGraph, TestWeightedLink
         self.assertEqual(self.g3.subgraph(n10), WeightedDirectedGraph({n9: (4, ({}, {})), n10: (5, ({}, {n9: 4, n11: 1})), n11: (8, ({}, {}))}))
 
     def test_minimal_path(self):
-        res, s = self.g0.minimalPath(n2, n5), self.g0.node_weights(n2)
+        res, s = self.g0.minimal_path(n2, n5), self.g0.node_weights(n2)
         for i in range(len(res[0]) - 1):
             self.assertIn(res[0][i + 1], self.g0.next(res[0][i]))
             s += self.g0.node_weights(res[0][i + 1]) + self.g0.link_weights(res[0][i], res[0][i + 1])
         self.assertEqual(res[1], s), self.assertEqual(s, 9)
-        res, s = self.g1.minimalPath(n0, n4), self.g1.node_weights(n0)
+        res, s = self.g1.minimal_path(n0, n4), self.g1.node_weights(n0)
         for i in range(len(res[0]) - 1):
             self.assertIn(res[0][i + 1], self.g1.next(res[0][i]))
             s += self.g1.node_weights(res[0][i + 1]) + self.g1.link_weights(res[0][i], res[0][i + 1])
         self.assertEqual(res[1], s), self.assertEqual(s, 22)
-        res, s = self.g2.minimalPath(n5, n1), self.g2.node_weights(n5)
+        res, s = self.g2.minimal_path(n5, n1), self.g2.node_weights(n5)
         for i in range(len(res[0]) - 1):
             self.assertIn(res[0][i + 1], self.g2.next(res[0][i]))
             s += self.g2.node_weights(res[0][i + 1]) + self.g2.link_weights(res[0][i], res[0][i + 1])
         self.assertEqual(res[1], s), self.assertEqual(s, 22)
-        res, s = self.g3.minimalPath(n6, n9), self.g3.node_weights(n6)
+        res, s = self.g3.minimal_path(n6, n9), self.g3.node_weights(n6)
         for i in range(len(res[0]) - 1):
             self.assertIn(res[0][i + 1], self.g3.next(res[0][i]))
             s += self.g3.node_weights(res[0][i + 1]) + self.g3.link_weights(res[0][i], res[0][i + 1])
