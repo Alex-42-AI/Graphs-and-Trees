@@ -107,7 +107,7 @@ class DirectedGraph(Graph):
     def transposed(self) -> "DirectedGraph":
         return DirectedGraph({u: (self.next(u), []) for u in self.nodes})
 
-    def connection_components(self) -> "list[DirectedGraph]":
+    def connection_components(self) -> list["DirectedGraph"]:
         components, rest = [], self.nodes
         while rest:
             components.append(curr := self.component(rest.copy().pop()))
