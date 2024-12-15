@@ -12,15 +12,9 @@ class DirectedGraph(Graph):
         for u, (prev_nodes, next_nodes) in neighborhood.items():
             self.add(u)
             for v in prev_nodes:
-                if v in self:
-                    self.connect(u, [v])
-                else:
-                    self.add(v, points_to=[u])
+                self.add(v, points_to=[u]), self.connect(u, [v])
             for v in next_nodes:
-                if v in self:
-                    self.connect(v, [u])
-                else:
-                    self.add(v, [u])
+                self.add(v, [u]), self.connect(v, [u])
 
     @property
     def nodes(self) -> set[Node]:
@@ -318,6 +312,18 @@ class DirectedGraph(Graph):
                             result.connect(v, [u])
         return result
 
+    def loop_with_length(self, length: int) -> list[Node]:
+        if abs(length) < 2:
+            return []
+        tmp = DirectedGraph.copy(self)
+        for l in tmp.links:
+            u, v = l
+            res = tmp.disconnect(v, [u]).path_with_length(v, u, length - 1)
+            if res:
+                return res
+            tmp.connect(v, [u])
+        return []
+
     def path_with_length(self, u: Node, v: Node, length: int) -> list[Node]:
         def dfs(x: Node, l: int, stack):
             if not l:
@@ -334,18 +340,6 @@ class DirectedGraph(Graph):
         if length + 1 == k:
             return tmp
         return dfs(u, length, [])
-
-    def loop_with_length(self, length: int) -> list[Node]:
-        if abs(length) < 2:
-            return []
-        tmp = DirectedGraph.copy(self)
-        for l in tmp.links:
-            u, v = l
-            res = tmp.disconnect(v, [u]).path_with_length(v, u, length - 1)
-            tmp.connect(v, [u])
-            if res:
-                return res
-        return []
 
     def hamilton_tour_exists(self) -> bool:
         def dfs(x):
@@ -497,22 +491,16 @@ class DirectedGraph(Graph):
 
 
 class WeightedNodesDirectedGraph(DirectedGraph):
-    def __init__(self, neighborhood: dict[Node, tuple[float, tuple[list[Node] | set[Node], list[Node] | set[Node]]]] = {}):
+    def __init__(self, neighborhood: dict[Node, tuple[float, tuple[Iterable[Node], Iterable[Node]]]] = {}):
         super().__init__()
         self.__node_weights = {}
         for n, (w, _) in neighborhood.items():
             self.add((n, w))
         for u, (_, (prev_u, next_u)) in neighborhood.items():
             for v in prev_u:
-                if v in self:
-                    self.connect(u, [v])
-                else:
-                    self.add((v, 0), points_to=[u])
+                self.add((v, 0), points_to=[u]), self.connect(u, [v])
             for v in next_u:
-                if v in self:
-                    self.connect(v, [u])
-                else:
-                    self.add((v, 0), [u])
+                self.add((v, 0), [u]), self.connect(v, [u])
 
     def node_weights(self, n: Node = None) -> dict[Node, float] | float:
         return self.__node_weights.copy() if n is None else self.__node_weights.get(n)
@@ -667,15 +655,9 @@ class WeightedLinksDirectedGraph(DirectedGraph):
             if u not in self:
                 self.add(u)
             for v, w in prev_pairs.items():
-                if v not in self:
-                    self.add(v, points_to_weights={u: w})
-                elif v not in self.prev(u):
-                    self.connect(u, {v: w})
+                self.add(v, points_to_weights={u: w}), self.connect(u, {v: w})
             for v, w in next_pairs.items():
-                if v not in self:
-                    self.add(v, {u: w})
-                elif v not in self.next(u):
-                    self.connect(v, {u: w})
+                self.add(v, {u: w}), self.connect(v, {u: w})
 
     def link_weights(self, u_or_l: Node | tuple = None, v: Node = None) -> dict[Node, float] | dict[tuple[Node, Node], float] | float:
         if u_or_l is None:
@@ -846,15 +828,9 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
             self.add((n, w))
         for u, (_, (prev_u, next_u)) in neighborhood.items():
             for v, w in prev_u.items():
-                if v in self:
-                    self.connect(u, {v: w})
-                else:
-                    self.add((v, 0), points_to_weights={u: w})
+                self.add((v, 0), points_to_weights={u: w}), self.connect(u, {v: w})
             for v, w in next_u.items():
-                if v in self:
-                    self.connect(v, {u: w})
-                else:
-                    self.add((v, 0), {u: w})
+                self.add((v, 0), {u: w}), self.connect(v, {u: w})
 
     @property
     def total_weight(self) -> float:
