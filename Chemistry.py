@@ -159,8 +159,20 @@ class Atom(Node):
 
 
 class Bond(Link):
-    pass
+    def __init__(self, atom0: Atom, atom1: Atom):
+        super().__init__(atom0, atom1)
 
 
 class Molecule(WeightedLinksUndirectedGraph):
-    pass
+    def __init__(self, connections: dict[Atom, dict[Atom, float]]):
+        super().__init__(connections)
+
+    def add(self, a: Atom, atoms_weights: dict[Atom, float] = {}) -> "Molecule":
+        return super().add({k: v for k, v in atoms_weights.items() if v > 0})
+
+    def connect(self, a: Atom, atoms_weights: dict[Atom, float] = {}) -> "Molecule":
+        return super().connect(a, {k: v for k, v in atoms_weights if v > 0})
+
+    set_weight = None
+
+    increase_weight = None
