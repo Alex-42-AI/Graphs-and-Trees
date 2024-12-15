@@ -46,10 +46,7 @@ class UndirectedGraph(Graph):
             if u not in self:
                 self.add(u)
             for v in neighbors:
-                if v in self:
-                    self.connect(u, v)
-                else:
-                    self.add(v, u)
+                self.add(v, u), self.connect(u, v)
 
     @property
     def nodes(self) -> set[Node]:
@@ -303,9 +300,9 @@ class UndirectedGraph(Graph):
         return UndirectedGraph(neighborhood)
 
     def interval_sort(self, start: Node = None) -> list[Node]:
-        def extract(i_s, pred):
+        def extract(nodes, pred):
             first, second = [], []
-            for u in i_s:
+            for u in nodes:
                 if pred(u):
                     first.append(u)
                 else:
@@ -803,10 +800,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
             self.add((n, p[0]))
         for u, p in neighborhood.items():
             for v in p[1]:
-                if v in self:
-                    self.connect(u, v)
-                else:
-                    self.add((v, 0), u)
+                self.add((v, 0), u), self.connect(u, v)
 
     def node_weights(self, u: Node = None) -> dict[Node, float] | float:
         return self.__node_weights.copy() if u is None else self.__node_weights.get(u)
@@ -1008,13 +1002,9 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         super().__init__()
         self.__link_weights = {}
         for u, neighbors in neighborhood.items():
-            if u not in self:
-                self.add(u)
+            self.add(u)
             for v, w in neighbors.items():
-                if v not in self:
-                    self.add(v, {u: w})
-                elif v not in self.neighboring(u):
-                    self.connect(u, {v: w})
+                self.add(v, {u: w}), self.connect(v, {u: w})
 
     def link_weights(self, u_or_l: Node | Link = None, v: Node = None) -> dict[Node, float] | dict[Link, float] | float:
         if u_or_l is None:
@@ -1242,10 +1232,7 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
             self.add((n, p[0]))
         for u, p in neighborhood.items():
             for v, w in p[1].items():
-                if v in self:
-                    self.connect(u, {v: w})
-                else:
-                    self.add((v, 0), {u: w})
+                self.add((v, 0), {u: w}), self.connect(u, {v: w})
 
     @property
     def total_weight(self) -> float:
