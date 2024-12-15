@@ -521,14 +521,6 @@ class UndirectedGraph(Graph):
         return result
 
     def chromatic_nodes_partition(self) -> list[set[Node]]:
-        def anti_cliques(curr, result=set(), ii=0):
-            for j, n in enumerate(list(self.nodes)[ii:]):
-                if curr.isdisjoint(self.neighboring(n)):
-                    for res in anti_cliques({n, *curr}, {n, *self.neighboring(n), *result}, ii + j + 1):
-                        yield res
-            if result == self.nodes:
-                yield curr
-
         def helper(partition, union=set(), ii=0):
             if union == self.nodes:
                 return partition
@@ -575,7 +567,7 @@ class UndirectedGraph(Graph):
                     sort.remove(u)
                 result.append(current)
             return result
-        independent_sets = [i_s for i_s in anti_cliques(set())]
+        independent_sets = [set(clique.value) for clique in self.complementary().cliques_graph().nodes]
         return helper([])
 
     def chromatic_links_partition(self) -> list[set[Node]]:
@@ -635,9 +627,9 @@ class UndirectedGraph(Graph):
             return self.loop_with_length_3()
         for l in (tmp := UndirectedGraph.copy(self)).links:
             res = tmp.disconnect(u := l.u, v := l.v).path_with_length(v, u, length - 1)
-            tmp.connect(u, v)
             if res:
                 return res
+            tmp.connect(u, v)
         return []
 
     def path_with_length(self, u: Node, v: Node, length: int) -> list[Node]:
@@ -902,11 +894,11 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
                     result, result_sum = cover, weight
             return result, result_sum
 
+        if not self:
+            return set()
         if not self.connected():
             return reduce(lambda x, y: x.union(y), [comp.weighted_dominating_set() for comp in self.connection_components()])
-        if len(self.nodes) == len(self.links) + bool(self):
-            if not self:
-                return set()
+        if len(self.nodes) == len(self.links) + 1:
             return self.weighted_tree(self.nodes.pop()).weighted_dominating_set()
         nodes, isolated, weights = self.nodes, set(), 0
         for n in nodes:
@@ -929,11 +921,11 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
                         result, result_sum = cover, weight
             return result, result_sum
 
+        if not self:
+            return set()
         if not self.connected():
             return reduce(lambda x, y: x.union(y), [comp.independent_set() for comp in self.connection_components()])
-        if len(self.nodes) == len(self.links) + bool(self):
-            if not self:
-                return set()
+        if len(self.nodes) == len(self.links) + 1:
             return self.weighted_tree(self.nodes.pop()).weighted_independent_set()
         nodes, weights, tmp = self.nodes, self.total_nodes_weight, WeightedNodesUndirectedGraph.copy(self)
         for n in self.nodes:
