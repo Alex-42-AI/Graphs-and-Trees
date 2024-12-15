@@ -1,4 +1,4 @@
-from .UndirectedGraph import Node, Link, WeightedLinksUndirectedGraph
+from Graphs.undirected_graph import Node, Link, WeightedLinksUndirectedGraph
 
 atoms = ["H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar",
          "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "ge", "As", "Se", "Br",
