@@ -378,7 +378,7 @@ class UndirectedGraph(Graph):
                     final_neighbors = neighbors.intersection(final)
                 found = False
                 for v in final_neighbors:
-                    if consecutive_1s(curr := extract(lex_bfs(graph.subgraph(final), v), lambda x: x in neighbors)):
+                    if curr := extract(graph.subgraph(final).interval_sort(v), lambda x: x in neighbors):
                         found = True
                         order += curr
                         for m in curr:
