@@ -418,8 +418,8 @@ class UndirectedGraph(Graph):
             raise ValueError("Unrecognized node!")
         return result if consecutive_1s(result := lex_bfs(self, start)) else []
 
-    def is_full_k_partite(self, k: int = -1) -> bool:
-        return k in {-1, len(comps := self.complementary().connection_components())} and all(c.full() for c in comps)
+    def is_full_k_partite(self, k: int = None) -> bool:
+        return k in {None, len(comps := self.complementary().connection_components())} and all(c.full() for c in comps)
 
     def clique(self, n: Node, *nodes: Node) -> bool:
         if {n, *nodes} == self.nodes:
