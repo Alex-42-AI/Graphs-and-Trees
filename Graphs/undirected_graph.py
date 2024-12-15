@@ -394,9 +394,21 @@ class UndirectedGraph(Graph):
 
         if not self.connected():
             if start is None:
-                return sum(map(lambda comp: comp.interval_sort(), self.connection_components()), [])
+                result = []
+                for component in self.connection_components():
+                    if not (curr := component.interval_sort()):
+                        return []
+                    result += curr
+                return result
             components = extract(self.connection_components(), lambda g: start in g)
-            return [components[0].interval_sort(start)] + sum(map(lambda comp: comp.interval_sort(), components[1:]), [])
+            if not components[0].interval_sort(start):
+                return []
+            result = []
+            for component in components[1:]:
+                if not (curr := component.interval_sort()):
+                    return []
+                result += curr
+            return result
         if start is None:
             for n in self.nodes:
                 if consecutive_1s(result := lex_bfs(self, n)):
