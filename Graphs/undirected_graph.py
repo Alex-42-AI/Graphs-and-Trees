@@ -300,10 +300,10 @@ class UndirectedGraph(Graph):
         return UndirectedGraph(neighborhood)
 
     def interval_sort(self, start: Node = None) -> list[Node]:
-        def extract(nodes, pred):
+        def extract(nodes, predicate):
             first, second = [], []
             for u in nodes:
-                if pred(u):
+                if predicate(u):
                     first.append(u)
                 else:
                     second.append(u)
@@ -323,68 +323,58 @@ class UndirectedGraph(Graph):
             return True
 
         def lex_bfs(graph, u):
-            labels, order = {node: 0 for node in graph.nodes}, [u]
+            if self.nodes == {u}:
+                return [u]
+            labels, order = {node: 0 for node in self.nodes}, [u]
             labels.pop(u)
-            while labels:
-                if not (neighbors := graph.neighboring(u).intersection(labels)):
-                    u = max(labels, key=labels.get)
-                    labels.pop(u), order.append(u)
-                    continue
-                neighborhood = defaultdict(set)
-                for v in neighbors:
-                    neighborhood[v] = graph.neighboring(v) - set(order)
-                    labels[v] += 1
-                comps, total, final = [], set(), set()
-                for v in neighbors:
-                    if v not in total:
-                        total.add(v)
-                        stack, comp, this_final = {v}, {v}, False
-                        while stack:
-                            for _u in graph.neighboring(_ := stack.pop()):
-                                if _u in set(labels) - total:
-                                    if _u in neighbors:
-                                        stack.add(_u)
-                                    else:
-                                        if final:
-                                            return []
-                                        this_final = True
-                                    comp.add(_u)
-                                    if _u in neighbors:
-                                        total.add(_u)
-                                    labels[_u] += 1
-                                    for _v in graph.neighboring(_u):
-                                        if _v in labels:
-                                            labels[_v] += 1
-                        if this_final:
-                            final = comp
-                        comps.append(comp)
-                for v in neighborhood:
-                    neighborhood[v] -= neighbors
-                if final:
-                    comps.remove(final)
-                for comp in comps:
-                    if not (curr := graph.subgraph(comp).interval_sort()):
-                        return []
+            neighbors, neighborhood = self.neighboring(u).intersection(labels), defaultdict(set)
+            for v in neighbors:
+                neighborhood[v] = self.neighboring(v) - set(order)
+                labels[v] += 1
+            comps, total, final = [], set(), set()
+            for v in neighbors:
+                if v not in total:
+                    total.add(v)
+                    stack, comp, this_final = {v}, {v}, False
+                    while stack:
+                        for _u in self.neighboring(_ := stack.pop()):
+                            if _u in set(labels) - total:
+                                stack.add(_u)
+                                if _u not in neighbors:
+                                    if final:
+                                        return []
+                                    this_final = True
+                                comp.add(_u), total.add(_u)
+                                labels[_u] += 1
+                                for _v in self.neighboring(_u):
+                                    if _v in labels:
+                                        labels[_v] += 1
+                    if this_final:
+                        final = comp
+                    comps.append(comp)
+            for v in neighborhood:
+                neighborhood[v] -= neighbors
+            if final:
+                comps.remove(final)
+            for comp in comps:
+                if not (curr := self.subgraph(comp).interval_sort()):
+                    return []
+                order += curr
+                for m in curr:
+                    labels.pop(m)
+            if not labels:
+                return order
+            final_neighbors = {n for n in neighbors.intersection(final) if (self.neighboring(n) - {u}).issubset(neighbors)}
+            if not final_neighbors:
+                final_neighbors = neighbors.intersection(final)
+            for v in final_neighbors:
+                if consecutive_1s(curr := extract(self.subgraph(final).interval_sort(v), lambda x: x in neighbors)):
                     order += curr
                     for m in curr:
                         labels.pop(m)
-                if not labels:
-                    return order
-                final_neighbors = {n for n in neighbors.intersection(final) if (graph.neighboring(n) - {u}).issubset(neighbors)}
-                if not final_neighbors:
-                    final_neighbors = neighbors.intersection(final)
-                for v in final_neighbors:
-                    if curr := extract(graph.subgraph(final).interval_sort(v), lambda x: x in neighbors):
-                        order += curr
-                        for m in curr:
-                            labels.pop(m)
-                        break
-                else:
-                    return []
-                if not labels:
-                    return order
-                u = max(labels, key=labels.get)
-                labels.pop(u), order.append(u)
+                    break
+            else:
+                return []
             return order
 
         if not self.connected():
@@ -406,12 +396,12 @@ class UndirectedGraph(Graph):
             return result
         if start is None:
             for n in self.nodes:
-                if consecutive_1s(result := lex_bfs(self, n)):
+                if consecutive_1s(result := lex_bfs(n)):
                     return result
             return []
         if start not in self:
             raise ValueError("Unrecognized node!")
-        return result if consecutive_1s(result := lex_bfs(self, start)) else []
+        return lex_bfs(start)
 
     def is_full_k_partite(self, k: int = None) -> bool:
         return k in {None, len(comps := self.complementary().connection_components())} and all(c.full() for c in comps)
