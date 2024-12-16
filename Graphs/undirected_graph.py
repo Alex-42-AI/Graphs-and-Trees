@@ -192,7 +192,7 @@ class UndirectedGraph(Graph):
         return res
 
     def subgraph(self, nodes: Iterable[Node]) -> "UndirectedGraph":
-        return UndirectedGraph({u: self.neighboring(u).intersection(nodes) for u in nodes})
+        return UndirectedGraph({u: self.neighboring(u).intersection(nodes) for u in self.nodes.intersection(nodes)})
 
     def cut_nodes(self) -> set[Node]:
         def dfs(u: Node, l: int):
@@ -322,7 +322,7 @@ class UndirectedGraph(Graph):
                         return False
             return True
 
-        def lex_bfs(graph, u):
+        def lex_bfs(u):
             if self.nodes == {u}:
                 return [u]
             labels, order = {node: 0 for node in self.nodes}, [u]
@@ -396,7 +396,7 @@ class UndirectedGraph(Graph):
             return result
         if start is None:
             for n in self.nodes:
-                if consecutive_1s(result := lex_bfs(n)):
+                if result := lex_bfs(n):
                     return result
             return []
         if start not in self:
@@ -493,14 +493,21 @@ class UndirectedGraph(Graph):
                         break
             cliques, result = list(new), new.copy()
 
+    def max_independent_sets(self):
+        def generator(curr=set(), total=set(), i=0):
+            for j, n in enumerate(list(self.nodes)[i:]):
+                if curr.isdisjoint(self.neighboring(n)):
+                    for res in generator({n, *curr}, {n, *self.neighboring(n), *total}, i + j + 1):
+                        yield res
+            if total == self.nodes:
+                yield curr
+
+        return [i_s for i_s in generator()]
+
     def cliques_graph(self) -> "UndirectedGraph":
-        result, total = UndirectedGraph(), set()
-        for n in filter(lambda x: x not in total, self.nodes):
-            total.update(*(curr := self.all_maximal_cliques_node(n)))
-            for clique in curr:
-                result.add(Node(frozenset(clique)))
-        for i, u in enumerate(result.nodes):
-            for v in list(result.nodes)[i + 1:]:
+        result, independent_sets = UndirectedGraph(), self.complementary().max_independent_sets()
+        for i, u in enumerate(independent_sets):
+            for v in independent_sets[i + 1:]:
                 if u.value.intersection(v.value):
                     result.connect(u, v)
         return result
@@ -552,7 +559,7 @@ class UndirectedGraph(Graph):
                     sort.remove(u)
                 result.append(current)
             return result
-        independent_sets = [set(clique.value) for clique in self.complementary().cliques_graph().nodes]
+        independent_sets = self.max_independent_sets()
         return helper([])
 
     def chromatic_links_partition(self) -> list[set[Node]]:
@@ -848,7 +855,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         return res
 
     def subgraph(self, nodes: Iterable[Node]) -> "WeightedNodesUndirectedGraph":
-        return WeightedNodesUndirectedGraph({u: (self.node_weights(u), self.neighboring(u).intersection(nodes)) for u in nodes})
+        return WeightedNodesUndirectedGraph({u: (self.node_weights(u), self.neighboring(u).intersection(nodes)) for u in self.nodes.intersection(nodes)})
 
     def links_graph(self) -> "WeightedLinksUndirectedGraph":
         result = WeightedLinksUndirectedGraph({Node(l): {} for l in self.links})
@@ -890,13 +897,13 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         return helper(isolated, isolated, weights)[0]
 
     def weighted_independent_set(self) -> set[Node]:
-                def helper(curr, total=set(), res_sum=0.0):
+        def helper(curr, total=set(), res_sum=0.0, i=0):
             if total == self.nodes:
                 return curr, res_sum
             result, result_sum = nodes.copy(), weights
-            for u in nodes:
+            for j, u in enumerate(list(nodes)[i:]):
                 if u not in total and self.node_weights(u) > 0 and (neighbors := self.neighboring(u) - total):
-                    cover, weight = helper({u, *curr}, {u, *total, *neighbors}, res_sum + self.node_weights(u))
+                    cover, weight = helper({u, *curr}, {u, *total, *neighbors}, res_sum + self.node_weights(u), i + j + 1)
                     if weight > result_sum:
                         result, result_sum = cover, weight
             return result, result_sum
@@ -907,7 +914,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
             return reduce(lambda x, y: x.union(y), [comp.independent_set() for comp in self.connection_components()])
         if len(self.nodes) == len(self.links) + 1:
             return self.weighted_tree(self.nodes.pop()).weighted_independent_set()
-        nodes, weights, tmp = self.nodes, self.total_nodes_weight, WeightedNodesUndirectedGraph.copy(self)
+        nodes, weights = self.nodes, self.total_nodes_weight
         for n in self.nodes:
             if not self.degrees(n):
                 nodes.remove(n)
@@ -1062,7 +1069,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         return res
 
     def subgraph(self, nodes: Iterable[Node]) -> "WeightedLinksUndirectedGraph":
-        return WeightedLinksUndirectedGraph({u: {k: v for k, v in self.link_weights(u).items() if k in nodes} for u in nodes})
+        return WeightedLinksUndirectedGraph({u: {k: v for k, v in self.link_weights(u).items() if k in nodes} for u in self.nodes.intersection(nodes)})
 
     def minimal_spanning_tree(self) -> set[Link]:
         def insert(x):
@@ -1276,7 +1283,7 @@ class WeightedUndirectedGraph(WeightedNodesUndirectedGraph, WeightedLinksUndirec
         return res
 
     def subgraph(self, nodes: Iterable[Node]) -> "WeightedUndirectedGraph":
-        return WeightedUndirectedGraph({u: (self.node_weights(u), {k: v for k, v in self.link_weights(u).items() if k in nodes}) for u in nodes})
+        return WeightedUndirectedGraph({u: (self.node_weights(u), {k: v for k, v in self.link_weights(u).items() if k in nodes}) for u in self.nodes.intersection(nodes)})
 
     def links_graph(self) -> "WeightedUndirectedGraph":
         result = WeightedUndirectedGraph({Node(l): (self.link_weights(l), {}) for l in self.links})
