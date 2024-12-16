@@ -513,14 +513,14 @@ class UndirectedGraph(Graph):
         return result
 
     def chromatic_nodes_partition(self) -> list[set[Node]]:
-        def helper(partition, union=set(), ii=0):
+        def helper(partition, union=set(), i=0):
             if union == self.nodes:
                 return partition
             res, entered = list(map(lambda x: {x}, self.nodes)), False
-            for j, s in enumerate(independent_sets[ii:]):
+            for j, s in enumerate(independent_sets[i:]):
                 if {*s, *union} == self.nodes or s.isdisjoint(union):
                     entered = True
-                    if len(curr := helper(partition + [s - union], {*s, *union}, ii + j + 1)) == 2:
+                    if len(curr := helper(partition + [s - union], {*s, *union}, i + j + 1)) == 2:
                         return curr
                     res = min(res, curr, key=len)
             if not entered:
