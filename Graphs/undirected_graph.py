@@ -373,15 +373,13 @@ class UndirectedGraph(Graph):
                 final_neighbors = {n for n in neighbors.intersection(final) if (graph.neighboring(n) - {u}).issubset(neighbors)}
                 if not final_neighbors:
                     final_neighbors = neighbors.intersection(final)
-                found = False
                 for v in final_neighbors:
                     if curr := extract(graph.subgraph(final).interval_sort(v), lambda x: x in neighbors):
-                        found = True
                         order += curr
                         for m in curr:
                             labels.pop(m)
                         break
-                if not found:
+                else:
                     return []
                 if not labels:
                     return order
