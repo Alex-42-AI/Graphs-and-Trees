@@ -43,19 +43,20 @@ Undirected graph classes further have methods for:
 11) checking whether the graph is planar;
 12) listing out cut nodes in the graph (the nodes, which if removed, the graph has more connection components);
 13) listing out bridge links in the graph (similar to cut nodes);
-14) returning the links graph of the original one (a graph, which has the original graph's links as nodes and there're links between them exactly when the links they represent share a node);
-15) returning a possible interval sorting of the nodes of the graph if the graph is an interval graph (if there exists a set of intervals over the real numberline such, that the graph's nodes could represent the intervals in the sense, that there are only links between two nodes exactly when the intervals they represent intersent), otherwise returns the empty list. The sort is based on how early a given node's interval starts. There's an option to give a starting node such, that if no interval sort can be found, starting with this node, the method returns an empty list;
-16) checking whether the graph is full k-partite (whether it has k independent sets, where all nodes in one independent set are connected to all other nodes outside that independent set). k could be given, but it doesn't have to be;
-17) checking whether a given set of nodes is a clique in the graph;
-18) listing out the cliques of a given size k in the graph;
-19) listing all maximum by cardinality cliques in the graph, to which a given node belongs;
-20) listing out all maximum by cardinality cliques in the graph;
-21) listing out all maximal by inclusion (not cardinality) cliques in the graph, to which a given node belongs;
-22) returning the clique graph of the original one (where a node represents a maximal by inclusion clique in the original one and links represent clique intersections);
-23) partitioning the nodes/links of the graph into a set of independent sets (anti-cliques) such, that the partition has as few elements as possible;
-24) returning a minimum by cardinality vertex cover of the graph;
-25) returning a minimum by cardinality dominating set of the graph;
-26) returning a minimum by cardinality independent set of the graph.
+14) returning all maximal by inclusion independent sets in the graph;
+15) returning the links graph of the original one (a graph, which has the original graph's links as nodes and there're links between them exactly when the links they represent share a node);
+16) returning a possible interval sorting of the nodes of the graph if the graph is an interval graph (if there exists a set of intervals over the real numberline such, that the graph's nodes could represent the intervals in the sense, that there are only links between two nodes exactly when the intervals they represent intersent), otherwise returns the empty list. The sort is based on how early a given node's interval starts. There's an option to give a starting node such, that if no interval sort can be found, starting with this node, the method returns an empty list;
+17) checking whether the graph is full k-partite (whether it has k independent sets, where all nodes in one independent set are connected to all other nodes outside that independent set). k could be given, but it doesn't have to be;
+18) checking whether a given set of nodes is a clique in the graph;
+19) listing out the cliques of a given size k in the graph;
+20) listing all maximum by cardinality cliques in the graph, to which a given node belongs;
+21) listing out all maximum by cardinality cliques in the graph;
+22) listing out all maximal by inclusion (not cardinality) cliques in the graph, to which a given node belongs;
+23) returning the clique graph of the original one (where a node represents a maximal by inclusion clique in the original one and links represent clique intersections);
+24) partitioning the nodes/links of the graph into a set of independent sets (anti-cliques) such, that the partition has as few elements as possible;
+25) returning a minimum by cardinality vertex cover of the graph;
+26) returning a minimum by cardinality dominating set of the graph;
+27) returning a minimum by cardinality independent set of the graph.
 
 Unique methods for directed graph classes are:
 1) listing out the previous nodes of a given one (if such is gives, otherwise it shows this for all nodes);
