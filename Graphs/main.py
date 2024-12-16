@@ -227,6 +227,7 @@ dg1 = DirectedGraph({n1: ([n0, n2], [n3]), n2: ([n5], [n0, n3]), n3: ([n4], []),
 tree = Tree(n0, {n1: [n3, n4, n5], n2: [n6, n7], n3: [n8, n9], n5: [n10, n11]})
 
 if __name__ == "__main__":
+    print_zig_zag(morse_code)
     with open("morse_code.txt", "w", encoding="utf-8") as file:
         file.write(f"{morse_code}\n")
         for traversal in ('preorder', 'in-order', 'post-order'):
@@ -238,7 +239,6 @@ if __name__ == "__main__":
         file.write(f"Nodes on level 6: {morse_code.nodes_on_level(6)}\n")
         file.write(f"Tree width: {morse_code.width()}\n")
         file.write(f"Encoding message 'Testing encode.':\n{morse_code.encode('Testing encode.'.upper())}\n")
-    print_zig_zag(morse_code)
     with open("k_3_3.txt", "w") as file:
         file.write(f"{k_3_3}\n")
         file.write(f"Is full bipartite: {k_3_3.is_full_k_partite(2)}\n")
