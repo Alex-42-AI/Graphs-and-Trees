@@ -158,7 +158,7 @@ class DirectedGraph(Graph):
                     else:
                         res.add(n, [v]), queue.append(n)
             return res
-        return DirectedGraph({u: ([], self.next(u).intersection(u_or_nodes)) for u in u_or_nodes})
+        return DirectedGraph({u: ([], self.next(u).intersection(u_or_nodes)) for u in self.nodes.intersection(u_or_nodes)})
 
     def has_loop(self) -> bool:
         def dfs(u):
@@ -572,7 +572,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
                     else:
                         res.add((n, self.node_weights(n)), [v]), queue.append(n)
             return res
-        return WeightedNodesDirectedGraph({u: (self.node_weights(u), ([], self.next(u).intersection(u_or_nodes))) for u in u_or_nodes})
+        return WeightedNodesDirectedGraph({u: (self.node_weights(u), ([], self.next(u).intersection(u_or_nodes))) for u in self.nodes.intersection(u_or_nodes)})
 
     def minimal_path_nodes(self, u: Node, v: Node) -> list[Node]:
         neighborhood = {n: (self.node_weights(n), ({}, {m: 0 for m in self.next(n)})) for n in self.nodes}
@@ -751,7 +751,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                     else:
                         res.add(n, {v: self.link_weights(v, n)}), queue.append(n)
             return res
-        return WeightedLinksDirectedGraph({u: ({}, {k: v for k, v in self.link_weights(u).items() if k in u_or_nodes}) for u in u_or_nodes})
+        return WeightedLinksDirectedGraph({u: ({}, {k: v for k, v in self.link_weights(u).items() if k in u_or_nodes}) for u in self.nodes.intersection(u_or_nodes)})
 
     def minimal_path_links(self, u: Node, v: Node) -> list[Node]:
         return WeightedDirectedGraph({n: (0, ({}, self.link_weights(n))) for n in self.nodes}).minimal_path(u, v)
@@ -904,7 +904,7 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
                     else:
                         res.add((n, self.node_weights(n)), {v: self.link_weights(v, n)}), queue.append(n)
             return res
-        return WeightedDirectedGraph({u: (self.node_weights(u), ({}, {k: v for k, v in self.link_weights(u).items() if k in u_or_nodes})) for u in u_or_nodes})
+        return WeightedDirectedGraph({u: (self.node_weights(u), ({}, {k: v for k, v in self.link_weights(u).items() if k in u_or_nodes})) for u in self.nodes.intersection(u_or_nodes)})
 
     def minimal_path(self, u: Node, v: Node) -> list[Node]:
         def dfs(x, current_path, current_weight, total_negative, res_path=None, res_weight=0):
