@@ -902,15 +902,13 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         return helper(isolated, isolated, weights)[0]
 
     def weighted_independent_set(self) -> set[Node]:
-        def helper(curr, res_sum=0.0, i=0):
-            if not tmp.links:
-                return curr.copy(), res_sum
+                def helper(curr, total=set(), res_sum=0.0):
+            if total == self.nodes:
+                return curr, res_sum
             result, result_sum = nodes.copy(), weights
-            for j, u in enumerate(list(nodes)[i:]):
-                if neighbors := tmp.neighboring(u):
-                    tmp.remove(u)
-                    cover, weight = helper({u, *curr}, res_sum + (w := tmp.node_weights(u)), i + j + 1)
-                    tmp.add((u, w), *neighbors)
+            for u in nodes:
+                if u not in total and self.node_weights(u) > 0 and (neighbors := self.neighboring(u) - total):
+                    cover, weight = helper({u, *curr}, {u, *total, *neighbors}, res_sum + self.node_weights(u))
                     if weight > result_sum:
                         result, result_sum = cover, weight
             return result, result_sum
