@@ -1,8 +1,8 @@
-from Personal.DiscreteMath.Graphs.undirected_graph import *
+from Graphs.undirected_graph import *
 
-from Personal.DiscreteMath.Graphs.directed_graph import *
+from Graphs.directed_graph import *
 
-from Personal.DiscreteMath.Graphs.tree import *
+from Graphs.tree import *
 
 
 def clique_to_SAT(cnf: list[list[tuple[str, bool]]]) -> list[set[tuple[str, bool]]]:
