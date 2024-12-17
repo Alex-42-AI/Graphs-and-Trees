@@ -97,6 +97,12 @@ class UndirectedGraph(Graph):
                 self.__neighboring[u].add(n), self.__neighboring[n].add(u), self.__links.add(Link(u, n))
         return self
 
+    def connect_all(self, u: Node, *rest: Node) -> "UndirectedGraph":
+        if not rest:
+            return self
+        self.connect(u, *rest)
+        return self.connect_all(*rest)
+
     def disconnect(self, u: Node, v: Node, *rest: Node) -> "UndirectedGraph":
         for n in (v,) + rest:
             if n in self.neighboring(u):
@@ -325,30 +331,24 @@ class UndirectedGraph(Graph):
         def lex_bfs(u):
             if self.nodes == {u}:
                 return [u]
-            labels, order = {node: 0 for node in self.nodes}, [u]
-            labels.pop(u)
-            neighbors, neighborhood = self.neighboring(u).intersection(labels), defaultdict(set)
+            order = [u]
+            neighbors, neighborhood = self.neighboring(u), {}
             for v in neighbors:
                 neighborhood[v] = self.neighboring(v) - set(order)
-                labels[v] += 1
-            comps, total, final = [], set(), set()
+            comps, total, final = [], {u}, set()
             for v in neighbors:
                 if v not in total:
                     total.add(v)
                     rest, comp, this_final = {v}, {v}, False
                     while rest:
                         for _u in self.neighboring(_ := rest.pop()):
-                            if _u in set(labels) - total:
+                            if _u not in total:
                                 rest.add(_u)
                                 if _u not in neighbors:
                                     if final:
                                         return []
                                     this_final = True
                                 comp.add(_u), total.add(_u)
-                                labels[_u] += 1
-                                for _v in self.neighboring(_u):
-                                    if _v in labels:
-                                        labels[_v] += 1
                     if this_final:
                         final = comp
                     comps.append(comp)
@@ -356,13 +356,13 @@ class UndirectedGraph(Graph):
                 neighborhood[v] -= neighbors
             if final:
                 comps.remove(final)
+            rest = self.nodes - {u}
             for comp in comps:
                 if not (curr := self.subgraph(comp).interval_sort()):
                     return []
                 order += curr
-                for m in curr:
-                    labels.pop(m)
-            if not labels:
+                rest -= set(curr)
+            if not rest:
                 return order
             final_neighbors = {n for n in neighbors.intersection(final) if (self.neighboring(n) - {u}).issubset(neighbors)}
             if not final_neighbors:
@@ -370,8 +370,6 @@ class UndirectedGraph(Graph):
             for v in final_neighbors:
                 if consecutive_1s(curr := extract(self.subgraph(final).interval_sort(v), lambda x: x in neighbors)):
                     order += curr
-                    for m in curr:
-                        labels.pop(m)
                     break
             else:
                 return []
@@ -493,7 +491,7 @@ class UndirectedGraph(Graph):
                         break
             cliques, result = list(new), new.copy()
 
-    def max_independent_sets(self):
+    def maximal_independent_sets(self):
         def generator(curr=set(), total=set(), i=0):
             for j, n in enumerate(list(self.nodes)[i:]):
                 if curr.isdisjoint(self.neighboring(n)):
@@ -505,7 +503,7 @@ class UndirectedGraph(Graph):
         return [i_s for i_s in generator()]
 
     def cliques_graph(self) -> "UndirectedGraph":
-        result, independent_sets = UndirectedGraph(), self.complementary().max_independent_sets()
+        result, independent_sets = UndirectedGraph(), self.complementary().maximal_independent_sets()
         for i, u in enumerate(independent_sets):
             for v in independent_sets[i + 1:]:
                 if u.value.intersection(v.value):
@@ -559,7 +557,7 @@ class UndirectedGraph(Graph):
                     sort.remove(u)
                 result.append(current)
             return result
-        independent_sets = self.max_independent_sets()
+        independent_sets = self.maximal_independent_sets()
         return helper([])
 
     def chromatic_links_partition(self) -> list[set[Node]]:
@@ -1035,6 +1033,12 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
                 if Link(u, v) not in self.link_weights():
                     self.set_weight(Link(u, v), w)
         return self
+
+    def connect_all(self, u: Node, *rest: Node) -> "WeightedLinksUndirectedGraph":
+        if not rest:
+            return self
+        self.connect(u, {v: 0 for v in rest})
+        return self.connect_all(*rest)
 
     def disconnect(self, u: Node, v: Node, *rest: Node) -> "WeightedLinksUndirectedGraph":
         super().disconnect(u, v, *rest)
