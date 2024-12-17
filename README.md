@@ -6,24 +6,26 @@ This project is an implementation of an unweighted undirected graph, a weighted 
 In file General.py, there's an implementation of a node and an implementation of an abstract base class Graph. It implements the following methods, that are common for both direted and undirected graphs:
 1) nodes, links and degrees getters;
 2) remove nodes;
-3) returning a copy of the graph;
-4) returning the complementary graph of the given one;
-5) returning the graph component of a given node;
-6) listing out the connection components in the graph;
-7) checking whether the graph is connected;
-8) checking whether one node can reach another one in the graph;
-9) checking whether the graph is full (whether there are links between every two nodes in it);
-10) calculating the shortest path from one node to another in the graph;
-11) checking whether a path/loop with a given length exists between from one node to another;
-12) checking whether an Euler tour, an Euler walk, a Hamilton tour and a Hamilton walk exist;
-13) actually finding an Euler tour, an Euler walk, a Hamilton tour and a Hamilton walk;
-14) checking whether the graph is isomorphic to another graph and if so, returning the bijection between the sets of nodes of the graphs;
-15) returning the reverse (complementary) graph of the original one;
-16) defining \_\_bool__ as whether the graph has any nodes;
-17) checking whether a node is present in the graph;
-18) checking whether two graphs are equal;
-19) combining two graphs into one (addition);
-20) representing the graph (\_\_str__ and \_\_repr__).
+3) connect all given nodes;
+4) disconnect all goven nodes;
+5) returning a copy of the graph;
+6) returning the complementary graph of the given one;
+7) returning the graph component of a given node;
+8) listing out the connection components in the graph;
+9) checking whether the graph is connected;
+10) checking whether one node can reach another one in the graph;
+11) checking whether the graph is full (whether there are links between every two nodes in it);
+12) calculating the shortest path from one node to another in the graph;
+13) checking whether a path/loop with a given length exists between from one node to another;
+14) checking whether an Euler tour, an Euler walk, a Hamilton tour and a Hamilton walk exist;
+15) actually finding an Euler tour, an Euler walk, a Hamilton tour and a Hamilton walk;
+16) checking whether the graph is isomorphic to another graph and if so, returning the bijection between the sets of nodes of the graphs;
+17) returning the reverse (complementary) graph of the original one;
+18) defining \_\_bool__ as whether the graph has any nodes;
+19) checking whether a node is present in the graph;
+20) checking whether two graphs are equal;
+21) combining two graphs into one (addition);
+22) representing the graph (\_\_str__ and \_\_repr__).
 
 All graphs also have methods for adding a node to already present nodes, connecting a node to already present nodes, disconnecting a node from already present nodes and returning the subgraph of the one via a given set of nodes, but they're implemented differently in undirected graps and directed graphs.
 
@@ -70,7 +72,7 @@ Unique methods for directed graph classes are:
 9) listing out all strongly-connected components in the graph;
 10) returning the dag of strongly-connected components of the original one (where each node represents a maximum by inclusion strongly connected component and a link exists from one node to another exactly when there's at least one link from a node in the first SCC to a node in the second SCC. This graph is always a DAG).
 
-Furthermore, the degrees method returns a pair of numbers, the first of which shows how many nodes point to a given one and the second one shows how many nodes it points to, if a node is given, otherwise it returns a dictionary of the same information for all nodes. Also, subgraph could take a node as a parameter, in which case it would return the graph, comprised by all nodes and links, reachable by the given node.
+Furthermore, the degrees method returns a pair of numbers, the first of which shows how many nodes point to a given one and the second one shows how many nodes it points to, if a node is given, otherwise it returns a dictionary of the same information for all nodes. Also, subgraph could take a node as a parameter, in which case it would return the graph, comprised by all nodes and links, reachable by the given node. Finally, connect_all connects all nodes in both directions and disconnect_all works similarly.
 
 Weighted graphs by nodes, in addition to their parental superclass, have methods for:
 1) returning the weight of a node, if such is given, otherwise returns the same for all nodes;
@@ -89,7 +91,7 @@ Weighted graphs by links, in addition to their parental superclass, have methods
 4) finding the minimal spanning tree of the graph (for undirected graphs);
 5) finding the minimal (lightest) path between two nodes.
 
-On top of that, the methods for adding and connecting nodes differ such, that instead of accepting a positive number of nodes, which a given node is going to be connected to, they accept a dictionary of nodes and real numbers, where the number represents the value of the link between the two nodes.
+On top of that, the methods for adding and connecting nodes differ such, that instead of accepting a positive number of nodes, which a given node is going to be connected to, they accept a dictionary of nodes and real numbers, where the number represents the value of the link between the two nodes. Also, the connect_all method connects the nodes with default weights 0.
 
 Weighted graphs by nodes and links, in addition to their parental superclasses, have a method for finding the minimal (lightest in terms of sum of node and link weights) path between two nodes and for getting the total sum of all nodes and links.
 
