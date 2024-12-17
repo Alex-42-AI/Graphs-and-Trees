@@ -331,8 +331,7 @@ class UndirectedGraph(Graph):
         def lex_bfs(u):
             if self.nodes == {u}:
                 return [u]
-            order = [u]
-            neighbors, neighborhood = self.neighboring(u), {}
+            order, neighbors, neighborhood = [u], self.neighboring(u), {}
             for v in neighbors:
                 neighborhood[v] = self.neighboring(v) - set(order)
             comps, total, final = [], {u}, set()
