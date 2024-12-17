@@ -335,11 +335,11 @@ class UndirectedGraph(Graph):
             for v in neighbors:
                 if v not in total:
                     total.add(v)
-                    stack, comp, this_final = {v}, {v}, False
-                    while stack:
-                        for _u in self.neighboring(_ := stack.pop()):
+                    rest, comp, this_final = {v}, {v}, False
+                    while rest:
+                        for _u in self.neighboring(_ := rest.pop()):
                             if _u in set(labels) - total:
-                                stack.add(_u)
+                                rest.add(_u)
                                 if _u not in neighbors:
                                     if final:
                                         return []
