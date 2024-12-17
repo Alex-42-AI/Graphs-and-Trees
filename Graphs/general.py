@@ -69,6 +69,14 @@ class Graph(ABC):
         pass
 
     @abstractmethod
+    def connect_all(self, u: Node, *rest: Node) -> "Graph":
+        pass
+
+    @abstractmethod
+    def disconnect_all(self, u: Node, *rest: Node) -> "Graph":
+        pass
+
+    @abstractmethod
     def copy(self) -> "Graph":
         pass
 
