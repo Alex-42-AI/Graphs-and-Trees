@@ -75,6 +75,12 @@ class DirectedGraph(Graph):
                     self.__degrees[v][0] += 1
         return self
 
+    def connect_all(self, u: Node, *rest: Node) -> "DirectedGraph":
+        if not rest:
+            return self
+        self.connect(u, rest, rest)
+        return self.connect_all(*rest)
+
     def disconnect(self, u: Node, pointed_by: Iterable[Node] = (), points_to: Iterable[Node] = ()) -> "DirectedGraph":
         if u in self:
             for v in pointed_by:
@@ -88,6 +94,12 @@ class DirectedGraph(Graph):
                     self.__degrees[v][0] -= 1
                     self.__links.remove((u, v)), self.__next[u].remove(v), self.__prev[v].remove(u)
         return self
+
+    def disconnect_all(self, u: Node, *rest: Node) -> "DirectedGraph":
+        if not rest:
+            return self
+        self.disconnect(u, rest, rest)
+        return self.disconnect_all(*rest)
 
     def copy(self) -> "DirectedGraph":
         return DirectedGraph({n: ([], self.next(n)) for n in self.nodes})
@@ -696,6 +708,12 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                 if (u, v) not in self.link_weights():
                     self.set_weight((u, v), w)
         return self
+
+    def connect_all(self, u: Node, *rest: Node) -> "WeightedLinksDirectedGraph":
+        if not rest:
+            return self
+        self.connect(u, (d := {v: 0 for v in rest}), d)
+        return self.connect_all(*rest)
 
     def disconnect(self, u: Node, pointed_by: Iterable[Node] = (), points_to: Iterable[Node] = ()) -> "WeightedLinksDirectedGraph":
         if u in self:
