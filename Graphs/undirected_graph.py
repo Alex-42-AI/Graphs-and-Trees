@@ -350,11 +350,10 @@ class UndirectedGraph(Graph):
                                 comp.add(_u), total.add(_u)
                     if this_final:
                         final = comp
-                    comps.append(comp)
+                    else:
+                        comps.append(comp)
             for v in neighborhood:
                 neighborhood[v] -= neighbors
-            if final:
-                comps.remove(final)
             for comp in comps:
                 if not (curr := self.subgraph(comp).interval_sort()):
                     return []
