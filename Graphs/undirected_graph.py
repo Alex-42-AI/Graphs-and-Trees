@@ -328,7 +328,7 @@ class UndirectedGraph(Graph):
                         return False
             return True
 
-        def lex_bfs(u):
+        def helper(u):
             if self.nodes == {u}:
                 return [u]
             order, neighbors, neighborhood = [u], self.neighboring(u), {}
@@ -355,13 +355,11 @@ class UndirectedGraph(Graph):
                 neighborhood[v] -= neighbors
             if final:
                 comps.remove(final)
-            rest = self.nodes - {u}
             for comp in comps:
                 if not (curr := self.subgraph(comp).interval_sort()):
                     return []
                 order += curr
-                rest -= set(curr)
-            if not rest:
+            if set(order) == self.nodes:
                 return order
             final_neighbors = {n for n in neighbors.intersection(final) if (self.neighboring(n) - {u}).issubset(neighbors)}
             if not final_neighbors:
@@ -393,12 +391,12 @@ class UndirectedGraph(Graph):
             return result
         if start is None:
             for n in self.nodes:
-                if result := lex_bfs(n):
+                if result := helper(n):
                     return result
             return []
         if start not in self:
             raise ValueError("Unrecognized node!")
-        return lex_bfs(start)
+        return helper(start)
 
     def is_full_k_partite(self, k: int = None) -> bool:
         return k in {None, len(comps := self.complementary().connection_components())} and all(c.full() for c in comps)
