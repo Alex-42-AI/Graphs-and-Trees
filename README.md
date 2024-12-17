@@ -91,7 +91,7 @@ Weighted graphs by links, in addition to their parental superclass, have methods
 4) finding the minimal spanning tree of the graph (for undirected graphs);
 5) finding the minimal (lightest) path between two nodes.
 
-On top of that, the methods for adding and connecting nodes differ such, that instead of accepting a positive number of nodes, which a given node is going to be connected to, they accept a dictionary of nodes and real numbers, where the number represents the value of the link between the two nodes. Also, the connect_all method connects the nodes with default weights 0.
+On top of that, the methods for adding and connecting nodes differ such, that instead of accepting a positive number of nodes, which a given node is going to be connected to, they accept a dictionary of nodes and real numbers, where the number represents the value of the link between the two nodes. Also, the connect_all method connects the given nodes with default weights 0.
 
 Weighted graphs by nodes and links, in addition to their parental superclasses, have a method for finding the minimal (lightest in terms of sum of node and link weights) path between two nodes and for getting the total sum of all nodes and links.
 
