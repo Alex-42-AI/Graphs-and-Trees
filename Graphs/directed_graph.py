@@ -1,8 +1,4 @@
-from collections import defaultdict
-
-from itertools import permutations, product
-
-from Graphs.general import *
+from Graphs.undirected_graph import *
 
 
 class DirectedGraph(Graph):
@@ -112,6 +108,23 @@ class DirectedGraph(Graph):
 
     def transposed(self) -> "DirectedGraph":
         return DirectedGraph({u: (self.next(u), []) for u in self.nodes})
+
+    def undirected(self) -> UndirectedGraph:
+        res = UndirectedGraph()
+        for u in self.nodes:
+            if u not in res:
+                res.add(u)
+            for v in self.next(u):
+                if v not in res:
+                    res.add(v)
+                if v not in res.neighboring(u):
+                    res.connect(u, v)
+            for v in self.prev(u):
+                if v not in res:
+                    res.add(v)
+                if v not in res.neighboring(u):
+                    res.connect(u, v)
+        return res
 
     def connection_components(self) -> list["DirectedGraph"]:
         components, rest = [], self.nodes
@@ -521,9 +534,6 @@ class WeightedNodesDirectedGraph(DirectedGraph):
     def total_nodes_weight(self) -> float:
         return sum(self.node_weights().values())
 
-    def copy(self) -> "WeightedNodesDirectedGraph":
-        return WeightedNodesDirectedGraph({n: (self.node_weights(n), ([], self.next(n))) for n in self.nodes})
-
     def add(self, n_w: tuple[Node, float], pointed_by: Iterable[Node] = (), points_to: Iterable[Node] = ()) -> "WeightedNodesDirectedGraph":
         super().add(n_w[0], pointed_by, points_to)
         if n_w[0] not in self.node_weights():
@@ -546,6 +556,9 @@ class WeightedNodesDirectedGraph(DirectedGraph):
             self.set_weight(u, self.node_weights(u) + w)
         return self
 
+    def copy(self) -> "WeightedNodesDirectedGraph":
+        return WeightedNodesDirectedGraph({n: (self.node_weights(n), ([], self.next(n))) for n in self.nodes})
+
     def complementary(self) -> "WeightedNodesDirectedGraph":
         res = WeightedNodesDirectedGraph({n: (self.node_weights(n), ([], self.nodes)) for n in self.nodes})
         for l in self.links:
@@ -554,6 +567,23 @@ class WeightedNodesDirectedGraph(DirectedGraph):
 
     def transposed(self) -> "WeightedNodesDirectedGraph":
         return WeightedNodesDirectedGraph({u: (self.node_weights(u), (self.next(u), [])) for u in self.nodes})
+
+    def undirected(self) -> WeightedNodesUndirectedGraph:
+        res = WeightedNodesUndirectedGraph()
+        for u in self.nodes:
+            if u not in res:
+                res.add((u, self.node_weights(u)))
+            for v in self.next(u):
+                if v not in res:
+                    res.add((v, self.node_weights(v)))
+                if v not in res.neighboring(u):
+                    res.connect(u, v)
+            for v in self.prev(u):
+                if v not in res:
+                    res.add((v, self.node_weights(v)))
+                if v not in res.neighboring(u):
+                    res.connect(u, v)
+        return res
 
     def component(self, u: Node) -> "WeightedNodesDirectedGraph":
         if u not in self:
@@ -734,11 +764,32 @@ class WeightedLinksDirectedGraph(DirectedGraph):
             self.set_weight(l, self.link_weights(l) + w)
         return self
 
+    def copy(self) -> "WeightedLinksDirectedGraph":
+        return WeightedLinksDirectedGraph({u: ({}, self.link_weights(u)) for u in self.nodes})
+
     def transposed(self) -> "WeightedLinksDirectedGraph":
         return WeightedLinksDirectedGraph({u: (self.link_weights(u), {}) for u in self.nodes})
 
-    def copy(self) -> "WeightedLinksDirectedGraph":
-        return WeightedLinksDirectedGraph({u: ({}, self.link_weights(u)) for u in self.nodes})
+    def undirected(self) -> WeightedLinksUndirectedGraph:
+        res = WeightedLinksUndirectedGraph()
+        for u in self.nodes:
+            if u not in res:
+                res.add(u)
+            for v in self.next(u):
+                if v not in res:
+                    res.add(v)
+                if v in res.neighboring(u):
+                    res.set_weight(Link(u, v), res.link_weights(u, v) + self.link_weights(u, v))
+                else:
+                    res.connect(u, {v: self.link_weights(u, v)})
+            for v in self.prev(u):
+                if v not in res:
+                    res.add(v)
+                if v in res.neighboring(u):
+                    res.set_weight(Link(u, v), res.link_weights(u, v) + self.link_weights(v, u))
+                else:
+                    res.connect(u, {v: self.link_weights(v, u)})
+        return res
 
     def component(self, u: Node) -> "WeightedLinksDirectedGraph":
         if u not in self:
@@ -885,13 +936,34 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
             self.set_weight(el, self.link_weights(el) + w)
         return self
 
+    def copy(self) -> "WeightedDirectedGraph":
+        neighborhood = {u: (self.node_weights(u), ({}, self.link_weights(u))) for u in self.nodes}
+        return WeightedDirectedGraph(neighborhood)
+
     def transposed(self) -> "WeightedDirectedGraph":
         neighborhood = {u: (self.node_weights(u), (self.link_weights(u), {})) for u in self.nodes}
         return WeightedDirectedGraph(neighborhood)
 
-    def copy(self) -> "WeightedDirectedGraph":
-        neighborhood = {u: (self.node_weights(u), ({}, self.link_weights(u))) for u in self.nodes}
-        return WeightedDirectedGraph(neighborhood)
+    def undirected(self) -> WeightedUndirectedGraph:
+        res = WeightedUndirectedGraph()
+        for u in self.nodes:
+            if u not in res:
+                res.add((u, self.node_weights(u)))
+            for v in self.next(u):
+                if v not in res:
+                    res.add((v, self.node_weights(v)))
+                if v in res.neighboring(u):
+                    res.set_weight(Link(u, v), res.link_weights(u, v) + self.link_weights(u, v))
+                else:
+                    res.connect(u, {v: self.link_weights(u, v)})
+            for v in self.prev(u):
+                if v not in res:
+                    res.add((v, self.node_weights(v)))
+                if v in res.neighboring(u):
+                    res.set_weight(Link(u, v), res.link_weights(u, v) + self.link_weights(v, u))
+                else:
+                    res.connect(u, {v: self.link_weights(v, u)})
+        return res
 
     def component(self, u: Node) -> "WeightedDirectedGraph":
         if u not in self:
