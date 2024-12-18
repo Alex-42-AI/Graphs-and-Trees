@@ -272,7 +272,7 @@ class Tree:
                 res.add(v, n), queue.append(n)
         return res
 
-    def graph(self) -> UndirectedGraph:
+    def graph(self) -> "UndirectedGraph":
         return UndirectedGraph(self.hierarchy())
 
     def add(self, curr: Node, u: Node, *rest: Node) -> "Tree":
@@ -480,7 +480,7 @@ class WeightedTree(Tree):
                 res.add(v, {n: self.weights(n)}), queue.append(n)
         return res
 
-    def graph(self) -> WeightedNodesUndirectedGraph:
+    def graph(self) -> "WeightedNodesUndirectedGraph":
         return WeightedNodesUndirectedGraph({n: (self.weights(n), self.descendants(n)) for n in self.nodes})
 
     def add(self, curr: Node, rest: dict[Node, float] = {}) -> "WeightedTree":
