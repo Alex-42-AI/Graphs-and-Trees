@@ -214,6 +214,7 @@ if __name__ == "__main__":
         file.write(f"Graph 7 cut nodes: {ug6.cut_nodes()}\nGraph 7 bridge links: {ug6.bridge_links()}\n")
         file.write(f"Euler walk from 2 to 1 in graph 1: {ug0.euler_walk(n2, n1)}\n")
         file.write(f"Shortest path from 10 to 3 in graph 2: {ug1.get_shortest_path(n10, n3)}\n")
+        file.write(f"Shortest path from 3 to 9 in graph 6: {ug5.get_shortest_path(n3, n9)}\n")
         file.write(f"3-cliques in graph 1: {ug0.cliques(3)}\n3-cliques in graph 3: {ug2.cliques(3)}\n")
         file.write(f"3-cliques in graph 4: {ug3.cliques(3)}\n4-cliques in graph 4: {ug3.cliques(4)}\n")
         file.write(f"3-cliques in graph 6: {ug5.cliques(3)}\n4-cliques in graph 6: {ug5.cliques(4)}\n")
