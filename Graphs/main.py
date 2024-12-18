@@ -1,5 +1,3 @@
-from Graphs.undirected_graph import *
-
 from Graphs.directed_graph import *
 
 from Graphs.tree import *
@@ -53,78 +51,6 @@ def clique_to_SAT(cnf: list[list[tuple[str, bool]]]) -> list[set[tuple[str, bool
         if len((curr := graph.max_cliques_node(u))[0]) == n:
             result += [set(map(node_vars.__getitem__, clique)) for clique in curr]
     return result
-
-
-def make_undirected_from_directed(graph: DirectedGraph) -> UndirectedGraph:
-    if isinstance(graph, WeightedDirectedGraph):
-        res = WeightedUndirectedGraph()
-        for u in graph.nodes:
-            if u not in res:
-                res.add((u, graph.node_weights(u)))
-            for v in graph.next(u):
-                if v not in res:
-                    res.add((v, graph.node_weights(v)))
-                if v in res.neighboring(u):
-                    res.set_weight(Link(u, v), res.link_weights(u, v) + graph.link_weights(u, v))
-                else:
-                    res.connect(u, {v: graph.link_weights(u, v)})
-            for v in graph.prev(u):
-                if v not in res:
-                    res.add((v, graph.node_weights(v)))
-                if v in res.neighboring(u):
-                    res.set_weight(Link(u, v), res.link_weights(u, v) + graph.link_weights(v, u))
-                else:
-                    res.connect(u, {v: graph.link_weights(v, u)})
-    elif isinstance(graph, WeightedLinksDirectedGraph):
-        res = WeightedLinksUndirectedGraph()
-        for u in graph.nodes:
-            if u not in res:
-                res.add(u)
-            for v in graph.next(u):
-                if v not in res:
-                    res.add(v)
-                if v in res.neighboring(u):
-                    res.set_weight(Link(u, v), res.link_weights(u, v) + graph.link_weights(u, v))
-                else:
-                    res.connect(u, {v: graph.link_weights(u, v)})
-            for v in graph.prev(u):
-                if v not in res:
-                    res.add(v)
-                if v in res.neighboring(u):
-                    res.set_weight(Link(u, v), res.link_weights(u, v) + graph.link_weights(v, u))
-                else:
-                    res.connect(u, {v: graph.link_weights(v, u)})
-    elif isinstance(graph, WeightedNodesDirectedGraph):
-        res = WeightedNodesUndirectedGraph()
-        for u in graph.nodes:
-            if u not in res:
-                res.add((u, graph.node_weights(u)))
-            for v in graph.next(u):
-                if v not in res:
-                    res.add((v, graph.node_weights(v)))
-                if v not in res.neighboring(u):
-                    res.connect(u, v)
-            for v in graph.prev(u):
-                if v not in res:
-                    res.add((v, graph.node_weights(v)))
-                if v not in res.neighboring(u):
-                    res.connect(u, v)
-    else:
-        res = UndirectedGraph()
-        for u in graph.nodes:
-            if u not in res:
-                res.add(u)
-            for v in graph.next(u):
-                if v not in res:
-                    res.add(v)
-                if v not in res.neighboring(u):
-                    res.connect(u, v)
-            for v in graph.prev(u):
-                if v not in res:
-                    res.add(v)
-                if v not in res.neighboring(u):
-                    res.connect(u, v)
-    return res
 
 
 def build_heap(ll: list[int], h: int = 0):
