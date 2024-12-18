@@ -66,11 +66,12 @@ Unique methods for directed graph classes are:
 3) listing out the sources (nodes, that aren't pointed by any node) and the sinks (nodes, that don't point to any node) of the graph;
 4) checking whether a given node is a source and whether it's a sink;
 5) returning the transpposed graph of the original (where each link points in the exact opposite direction);
-6) checking whether the graph has a loop and whether it's a DAG (directed acyclic graph);
-7) returning a topological sort of the graph if it's a DAG, otherwise - an empty list;
-8) returning the strongly connected component of a given node in the graph (a maximum by cardinality set of nodes, where there exists a path from any node in it to any other node in it);
-9) listing out all strongly-connected components in the graph;
-10) returning the dag of strongly-connected components of the original one (where each node represents a maximum by inclusion strongly connected component and a link exists from one node to another exactly when there's at least one link from a node in the first SCC to a node in the second SCC. This graph is always a DAG).
+6) returning the undirected version of the graph (if there are 2 links in opposite directions, they still become 1 undirected link);
+7) checking whether the graph has a loop and whether it's a DAG (directed acyclic graph);
+8) returning a topological sort of the graph if it's a DAG, otherwise - an empty list;
+9) returning the strongly connected component of a given node in the graph (a maximum by cardinality set of nodes, where there exists a path from any node in it to any other node in it);
+10) listing out all strongly-connected components in the graph;
+11) returning the dag of strongly-connected components of the original one (where each node represents a maximum by inclusion strongly connected component and a link exists from one node to another exactly when there's at least one link from a node in the first SCC to a node in the second SCC. This graph is always a DAG).
 
 Furthermore, the degrees method returns a pair of numbers, the first of which shows how many nodes point to a given one and the second one shows how many nodes it points to, if a node is given, otherwise it returns a dictionary of the same information for all nodes. Also, subgraph could take a node as a parameter, in which case it would return the graph, comprised by all nodes and links, reachable by the given node. Finally, connect_all connects all nodes in both directions and disconnect_all works similarly.
 
@@ -91,7 +92,7 @@ Weighted graphs by links, in addition to their parental superclass, have methods
 4) finding the minimal spanning tree of the graph (for undirected graphs);
 5) finding the minimal (lightest) path between two nodes.
 
-On top of that, the methods for adding and connecting nodes differ such, that instead of accepting a positive number of nodes, which a given node is going to be connected to, they accept a dictionary of nodes and real numbers, where the number represents the value of the link between the two nodes. Also, the connect_all method connects the given nodes with default weights 0.
+On top of that, the methods for adding and connecting nodes differ such, that instead of accepting a positive number of nodes, which a given node is going to be connected to, they accept a dictionary of nodes and real numbers, where the number represents the value of the link between the two nodes. Also, the connect_all method connects the given nodes with default weights 0. Finally, when there are 2 links in opposite directions, their weights are combined.
 
 Weighted graphs by nodes and links, in addition to their parental superclasses, have a method for finding the minimal (lightest in terms of sum of node and link weights) path between two nodes and for getting the total sum of all nodes and links.
 
@@ -100,44 +101,49 @@ The binary tree in this project has:
 2) copy() methed;
 3) rotate_left and rotate_right methods;
 4) a method to get the subtree with a given node as a root in the tree;
-5) a method to return the height of the tree (in terms of links);
-6) a method to return all nodes on a certain level in the tree and a method, that returns the width of the tree;
-7) a method to return the leaves of the tree;
-8) a method for counting the nodes of the tree;
-9) a method for finding the Morse code of a node with a given value in the tree (left is dot and right is dash);
-10) a method for encrypting a message into morse code;
-11) a method to get an inverted copy of the tree;
-12) traverse method, where the traversal type can be specified;
-13) \_\_contains__ and \_\_eq__ methods;
-14) \_\_invert__ for inverting the tree;
-15) \_\_bool__, asking whether the tree has a root;
-16) \_\_str__ method, which basically draws the tree;
-17) \_\_repr__ method, that returns the same as method traverse with default traversal type in-order.
+5) a method, that returns the analogous object of type Tree with the same hierarchy as the given tree;
+6) a method to return the height of the tree (in terms of links);
+7) a method to return all nodes on a certain level in the tree and a method, that returns the width of the tree;
+8) a method to return the leaves of the tree;
+9) a method for counting the nodes of the tree;
+10) a method for finding the Morse code of a node with a given value in the tree (left is dot and right is dash);
+11) a method for encrypting a message into morse code;
+12) a method to get an inverted copy of the tree;
+13) traverse method, where the traversal type can be specified;
+14) \_\_contains__ and \_\_eq__ methods;
+15) \_\_invert__ for inverting the tree;
+16) \_\_bool__, asking whether the tree has a root;
+17) \_\_str__ method, which basically draws the tree;
+18) \_\_repr__ method, that returns the same as method traverse with default traversal type in-order.
 
 The tree class in the project has methods for:
 1) getting the root, the nodes, the links, the leaves and the hierarchy in the tree;
 2) getting the descendants of a given node in the tree;
 3) making a copy of the tree;
-4) adding new nodes to one already in the tree;
-5) extending the tree with another one on a given node;
-6) removing a node with or without its subtree;
-7) returning the parent node of a given one;
-8) returning the depth of a given node;
-9) returning the height of the tree;
-10) getting the path from the root to a given node;
-11) returning a minimum by cardinality vertex cover of the tree;
-12) returning a minimum by cardinality dominating set of the tree;
-13) returning a minimum by cardinality independent set of the tree;
-14) checking whether the tree is isomorphic with another tree and if so, returning an isomorphic function between the nodes of the trees;
-15) checking whether the tree has nodes;
-16) checking whether a node is in the tree;
-17) comparing the tree with another one;
-18) drawing the tree (\_\_str__);
-19) representing the tree (\_\_repr__).
+4) returning a subtree of a given node in the tree;
+5) returning the undirected graph, which the tree corresponds to;
+6) adding new nodes to one already in the tree;
+7) extending the tree with another one on a given node;
+8) removing a node with or without its subtree;
+9) returning the parent node of a given one;
+10) returning the depth of a given node;
+11) returning the height of the tree;
+12) getting the path from the root to a given node;
+13) returning a minimum by cardinality vertex cover of the tree;
+14) returning a minimum by cardinality dominating set of the tree;
+15) returning a minimum by cardinality independent set of the tree;
+16) checking whether the tree is isomorphic with another tree and if so, returning an isomorphic function between the nodes of the trees;
+17) checking whether the tree has nodes;
+18) checking whether a node is in the tree;
+19) comparing the tree with another one;
+20) drawing the tree (\_\_str__);
+21) representing the tree (\_\_repr__).
 
 The weighted tree class in particular has methods for:
 1) returning the weight of a node, if such is given, otherwise returns the same for all nodes;
-2) setting the weight of a node to a given real numerical value;
+2) setting/increasing the weight of a node to a given real numerical value;
 3) returning a minimum by total sum of the weights of the nodes vertex cover of the tree;
 4) returning a minimum by total sum of the weights of the nodes dominating set of the tree;
 5) returning a maximum by total sum of the weights of the nodes independent set of the tree.
+
+Furthermore, the graph method of class WeightedTree returns a weighted by nodes undirected graph.
