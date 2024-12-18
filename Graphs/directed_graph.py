@@ -117,12 +117,12 @@ class DirectedGraph(Graph):
             for v in self.next(u):
                 if v not in res:
                     res.add(v)
-                if v not in res.neighboring(u):
+                if v not in res.neighbors(u):
                     res.connect(u, v)
             for v in self.prev(u):
                 if v not in res:
                     res.add(v)
-                if v not in res.neighboring(u):
+                if v not in res.neighbors(u):
                     res.connect(u, v)
         return res
 
@@ -576,12 +576,12 @@ class WeightedNodesDirectedGraph(DirectedGraph):
             for v in self.next(u):
                 if v not in res:
                     res.add((v, self.node_weights(v)))
-                if v not in res.neighboring(u):
+                if v not in res.neighbors(u):
                     res.connect(u, v)
             for v in self.prev(u):
                 if v not in res:
                     res.add((v, self.node_weights(v)))
-                if v not in res.neighboring(u):
+                if v not in res.neighbors(u):
                     res.connect(u, v)
         return res
 
@@ -778,14 +778,14 @@ class WeightedLinksDirectedGraph(DirectedGraph):
             for v in self.next(u):
                 if v not in res:
                     res.add(v)
-                if v in res.neighboring(u):
+                if v in res.neighbors(u):
                     res.set_weight(Link(u, v), res.link_weights(u, v) + self.link_weights(u, v))
                 else:
                     res.connect(u, {v: self.link_weights(u, v)})
             for v in self.prev(u):
                 if v not in res:
                     res.add(v)
-                if v in res.neighboring(u):
+                if v in res.neighbors(u):
                     res.set_weight(Link(u, v), res.link_weights(u, v) + self.link_weights(v, u))
                 else:
                     res.connect(u, {v: self.link_weights(v, u)})
@@ -952,14 +952,14 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
             for v in self.next(u):
                 if v not in res:
                     res.add((v, self.node_weights(v)))
-                if v in res.neighboring(u):
+                if v in res.neighbors(u):
                     res.set_weight(Link(u, v), res.link_weights(u, v) + self.link_weights(u, v))
                 else:
                     res.connect(u, {v: self.link_weights(u, v)})
             for v in self.prev(u):
                 if v not in res:
                     res.add((v, self.node_weights(v)))
-                if v in res.neighboring(u):
+                if v in res.neighbors(u):
                     res.set_weight(Link(u, v), res.link_weights(u, v) + self.link_weights(v, u))
                 else:
                     res.connect(u, {v: self.link_weights(v, u)})
