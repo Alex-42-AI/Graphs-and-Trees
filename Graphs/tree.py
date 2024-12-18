@@ -1,8 +1,4 @@
-from collections import defaultdict
-
-from itertools import permutations, product
-
-from Graphs.general import Node, Iterable
+from Graphs.undirected_graph import *
 
 
 class BinTree:
@@ -67,6 +63,14 @@ class BinTree:
                 return r
 
         return dfs(self)
+
+    def tree(self) -> "Tree":
+        res = Tree(self.root, {self.root: {self.left.root, self.right.root}})
+        if self.left:
+            res.add_tree(self.left.tree())
+        if self.right:
+            res.add_tree(self.right.tree())
+        return res
 
     def nodes_on_level(self, level: int) -> list[Node]:
         def dfs(l, tree):
@@ -231,11 +235,11 @@ class Tree:
 
     @property
     def nodes(self) -> set[Node]:
-        return self.__nodes
+        return self.__nodes.copy()
 
     @property
     def leaves(self) -> set[Node]:
-        return self.__leaves
+        return self.__leaves.copy()
 
     def leaf(self, n) -> bool:
         return n in self.leaves
@@ -247,10 +251,10 @@ class Tree:
         return helper(self.root)
 
     def parent(self, u: Node = None) -> dict[Node, Node] | Node:
-        return self.__parent if u is None else self.__parent[u]
+        return (self.__parent if u is None else self.__parent[u]).copy()
 
     def hierarchy(self, u: Node = None) -> dict[Node, set[Node]] | set[Node]:
-        return self.__hierarchy if u is None else self.__hierarchy[u]
+        return (self.__hierarchy if u is None else self.__hierarchy[u]).copy()
 
     def descendants(self, n: Node) -> set[Node]:
         return self.hierarchy(n)
@@ -268,6 +272,9 @@ class Tree:
             for n in self.descendants(v := queue.pop(0)):
                 res.add(v, n), queue.append(n)
         return res
+
+    def graph(self) -> UndirectedGraph:
+        return UndirectedGraph(self.hierarchy())
 
     def add(self, curr: Node, u: Node, *rest: Node) -> "Tree":
         if curr not in self:
@@ -447,7 +454,7 @@ class WeightedTree(Tree):
                 self.add(u, {v: inheritance[v][0] if v in inheritance else 0 for v in desc})
 
     def weights(self, u: Node = None) -> dict[Node, float] | float:
-        return self.__weights if u is None else self.__weights.get(u)
+        return self.__weights.copy() if u is None else self.__weights.get(u)
 
     def set_weight(self, u: Node, w: float) -> "WeightedTree":
         if u in self:
@@ -473,6 +480,9 @@ class WeightedTree(Tree):
             for n in self.descendants(v := queue.pop(0)):
                 res.add(v, {n: self.weights(n)}), queue.append(n)
         return res
+
+    def graph(self) -> WeightedNodesUndirectedGraph:
+        return WeightedNodesUndirectedGraph({n: (self.weights(n), self.descendants(n)) for n in self.nodes})
 
     def add(self, curr: Node, rest: dict[Node, float] = {}) -> "WeightedTree":
         if curr not in self:
