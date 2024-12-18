@@ -80,11 +80,11 @@ full_e_c = ["1s", "1s2", "1s2|2s", "1s2|2s2", "1s2|2s2|2p", "1s2|2s2|2p2", "1s2|
             "1s2|2s2|2p6|3s2|3p6|3d10|4s2|4p6|4d10|5s2|5p6|4f14|5d10|6s2|6p6|5f14|7s2|7p4"]
 
 class Atom(Node):
-    ID = 0
+    __ID = 0
 
     def __init__(self, protons: int, neutrons: int, electrons: int):
-        super().__init__(Atom.ID)
-        Atom.ID += 1
+        super().__init__(Atom.__ID)
+        Atom.__ID += 1
         self.__protons = (protons - 1) % 116 + 1
         self.__name = atoms[self.protons - 1]
         self.__neutrons = abs(neutrons)
