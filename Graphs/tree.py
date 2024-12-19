@@ -214,7 +214,7 @@ class BinTree:
 
         return helper(self)
 
-    __repr__ = traverse
+    __repr__ = in_order
 
 
 class Tree:
