@@ -51,7 +51,7 @@ class DirectedGraph(Graph):
         return self
 
     def remove(self, u: Node, *rest: Node) -> "DirectedGraph":
-        for n in (u,) + rest:
+        for n in (u, *rest):
             if n in self:
                 DirectedGraph.disconnect(self, n, self.prev(n), self.next(n))
                 self.__nodes.remove(n), self.__degrees.pop(n), self.__prev.pop(n), self.__next.pop(n)
@@ -128,7 +128,7 @@ class DirectedGraph(Graph):
         while queue:
             for v in filter(lambda x: x not in total, self.next(u := queue.pop(0)).union(self.prev(u))):
                 total.add(v), queue.append(v)
-        return len(total) == len(self.nodes)
+        return total == self.nodes
 
     def reachable(self, u: Node, v: Node) -> bool:
         if u not in self or v not in self:
@@ -169,7 +169,8 @@ class DirectedGraph(Graph):
                     else:
                         res.add(n, [v]), queue.append(n)
             return res
-        return DirectedGraph({u: ([], self.next(u).intersection(u_or_nodes)) for u in self.nodes.intersection(u_or_nodes)})
+        neighborhood = {u: ([], self.next(u).intersection(u_or_nodes)) for u in self.nodes.intersection(u_or_nodes)}
+        return DirectedGraph(neighborhood)
 
     def has_loop(self) -> bool:
         def dfs(u):
@@ -444,8 +445,7 @@ class DirectedGraph(Graph):
                 other_degrees[d] += 1
             if this_degrees != other_degrees:
                 return {}
-            this_nodes_degrees = defaultdict(list)
-            other_nodes_degrees = defaultdict(list)
+            this_nodes_degrees, other_nodes_degrees = defaultdict(list), defaultdict(list)
             for n in self.nodes:
                 this_nodes_degrees[tuple(self.degrees(n))].append(n)
             for n in other.nodes:
@@ -527,7 +527,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
         return self
 
     def remove(self, u: Node, *rest: Node) -> "WeightedNodesDirectedGraph":
-        for n in (u,) + rest:
+        for n in (u, *rest):
             self.__node_weights.pop(n)
         DirectedGraph.remove(self, u, *rest)
         return self
@@ -555,7 +555,8 @@ class WeightedNodesDirectedGraph(DirectedGraph):
         return WeightedNodesDirectedGraph({u: (self.node_weights(u), (self.next(u), [])) for u in self.nodes})
 
     def undirected(self) -> WeightedNodesUndirectedGraph:
-        return WeightedNodesUndirectedGraph({n: (self.node_weights(n), self.prev(n).union(self.next(n))) for n in self.nodes})
+        neighborhood = {n: (self.node_weights(n), self.prev(n).union(self.next(n))) for n in self.nodes}
+        return WeightedNodesUndirectedGraph(neighborhood)
 
     def component(self, u: Node) -> "WeightedNodesDirectedGraph":
         if u not in self:
@@ -586,7 +587,8 @@ class WeightedNodesDirectedGraph(DirectedGraph):
                     else:
                         res.add((n, self.node_weights(n)), [v]), queue.append(n)
             return res
-        return WeightedNodesDirectedGraph({u: (self.node_weights(u), ([], self.next(u).intersection(u_or_nodes))) for u in self.nodes.intersection(u_or_nodes)})
+        neighborhood = {u: (self.node_weights(u), ([], self.next(u).intersection(u_or_nodes))) for u in self.nodes.intersection(u_or_nodes)}
+        return WeightedNodesDirectedGraph(neighborhood)
 
     def minimal_path_nodes(self, u: Node, v: Node) -> list[Node]:
         neighborhood = {n: (self.node_weights(n), ({}, {m: 0 for m in self.next(n)})) for n in self.nodes}
@@ -603,8 +605,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
                 other_weights[w] += 1
             if this_weights != other_weights:
                 return {}
-            this_nodes_degrees = defaultdict(list)
-            other_nodes_degrees = defaultdict(list)
+            this_nodes_degrees, other_nodes_degrees = defaultdict(list), defaultdict(list)
             for n in self.nodes:
                 this_nodes_degrees[tuple(self.degrees(n))].append(n)
             for n in other.nodes:
@@ -693,7 +694,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
         return self
 
     def remove(self, n: Node, *rest: Node) -> "WeightedLinksDirectedGraph":
-        for u in (n,) + rest:
+        for u in (n, *rest):
             for v in self.next(u):
                 self.__link_weights.pop((u, v))
             for v in self.prev(u):
@@ -780,7 +781,8 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                     else:
                         res.add(n, {v: self.link_weights(v, n)}), queue.append(n)
             return res
-        return WeightedLinksDirectedGraph({u: ({}, {k: v for k, v in self.link_weights(u).items() if k in u_or_nodes}) for u in self.nodes.intersection(u_or_nodes)})
+        neighborhood = {u: ({}, {k: v for k, v in self.link_weights(u).items() if k in u_or_nodes}) for u in self.nodes.intersection(u_or_nodes)}
+        return WeightedLinksDirectedGraph(neighborhood)
 
     def minimal_path_links(self, u: Node, v: Node) -> list[Node]:
         return WeightedDirectedGraph({n: (0, ({}, self.link_weights(n))) for n in self.nodes}).minimal_path(u, v)
@@ -796,8 +798,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                 other_weights[w] += 1
             if this_weights != other_weights:
                 return {}
-            this_nodes_degrees = defaultdict(list)
-            other_nodes_degrees = defaultdict(list)
+            this_nodes_degrees, other_nodes_degrees = defaultdict(list), defaultdict(list)
             for n in self.nodes:
                 this_nodes_degrees[tuple(self.degrees(n))].append(n)
             for n in other.nodes:
@@ -851,8 +852,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
 
 class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGraph):
     def __init__(self, neighborhood: dict[Node, tuple[float, tuple[dict[Node, float], dict[Node, float]]]] = {}):
-        WeightedNodesDirectedGraph.__init__(self)
-        WeightedLinksDirectedGraph.__init__(self)
+        WeightedNodesDirectedGraph.__init__(self), WeightedLinksDirectedGraph.__init__(self)
         for n, (w, _) in neighborhood.items():
             self.add((n, w))
         for u, (_, (prev_u, next_u)) in neighborhood.items():
@@ -942,7 +942,8 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
                     else:
                         res.add((n, self.node_weights(n)), {v: self.link_weights(v, n)}), queue.append(n)
             return res
-        return WeightedDirectedGraph({u: (self.node_weights(u), ({}, {k: v for k, v in self.link_weights(u).items() if k in u_or_nodes})) for u in self.nodes.intersection(u_or_nodes)})
+        neighborhood = {u: (self.node_weights(u), ({}, {k: v for k, v in self.link_weights(u).items() if k in u_or_nodes})) for u in self.nodes.intersection(u_or_nodes)}
+        return WeightedDirectedGraph(neighborhood)
 
     def minimal_path(self, u: Node, v: Node) -> list[Node]:
         def dfs(x, current_path, current_weight, total_negative, res_path=None, res_weight=0):
@@ -1013,8 +1014,7 @@ class WeightedDirectedGraph(WeightedNodesDirectedGraph, WeightedLinksDirectedGra
                 other_node_weights[w] += 1
             if this_node_weights != other_node_weights or this_link_weights != other_link_weights:
                 return {}
-            this_nodes_degrees = defaultdict(list)
-            other_nodes_degrees = defaultdict(list)
+            this_nodes_degrees, other_nodes_degrees= defaultdict(list), defaultdict(list)
             for n in self.nodes:
                 this_nodes_degrees[tuple(self.degrees(n))].append(n)
             for n in other.nodes:
