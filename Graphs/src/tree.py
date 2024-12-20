@@ -223,8 +223,7 @@ class BinTree:
         return helper(self)
 
     def __repr__(self) -> str:
-        if self:
-            return f"BinTree({self.root}, {self.left}, {self.right})"
+        return f"BinTree({self.root}, {self.left}, {self.right})"
 
 
 class Tree:
