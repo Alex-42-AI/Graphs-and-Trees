@@ -1,4 +1,4 @@
-from Personal.Graphs.src.undirected_graph import *
+from Graphs.src.undirected_graph import *
 
 
 class DirectedGraph(Graph):
