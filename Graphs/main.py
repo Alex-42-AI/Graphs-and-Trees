@@ -1,6 +1,6 @@
-from Personal.Graphs.src.directed_graph import *
+from Graphs.src.directed_graph import *
 
-from Personal.Graphs.src.tree import *
+from Graphs.src.tree import *
 
 
 def clique_to_SAT(cnf: list[list[tuple[str, bool]]]) -> list[set[tuple[str, bool]]]:
