@@ -1,4 +1,12 @@
-from Personal.Graphs.src.undirected_graph import *
+from typing import Iterable
+
+from collections import defaultdict
+
+from itertools import permutations, product
+
+from Graphs.src.directed_graph import DirectedGraph, WeightedNodesDirectedGraph
+
+from Graphs.src.undirected_graph import Node, UndirectedGraph, WeightedNodesUndirectedGraph
 
 
 class BinTree:
@@ -274,8 +282,13 @@ class Tree:
                 res.add(v, n), queue.append(n)
         return res
 
-    def graph(self) -> "UndirectedGraph":
+    def undirected_graph(self) -> "UndirectedGraph":
         return UndirectedGraph(self.hierarchy())
+
+    def directed_graph(self, from_root: bool = True) -> DirectedGraph:
+        if from_root:
+            return DirectedGraph({k: ([], v) for k, v in self.hierarchy().items()})
+        return DirectedGraph({k: (v, []) for k, v in self.hierarchy().items()})
 
     def add(self, curr: Node, u: Node, *rest: Node) -> "Tree":
         if curr not in self:
@@ -482,8 +495,13 @@ class WeightedTree(Tree):
                 res.add(v, {n: self.weights(n)}), queue.append(n)
         return res
 
-    def graph(self) -> "WeightedNodesUndirectedGraph":
+    def undirected_graph(self) -> "WeightedNodesUndirectedGraph":
         return WeightedNodesUndirectedGraph({n: (self.weights(n), self.descendants(n)) for n in self.nodes})
+
+    def directed_graph(self, from_root: bool = True) -> WeightedNodesDirectedGraph:
+        if from_root:
+            return WeightedNodesDirectedGraph({k: (self.weights(k), ([], v)) for k, v in self.hierarchy().items()})
+        return WeightedNodesDirectedGraph({k: (self.weights(k), (v, [])) for k, v in self.hierarchy().items()})
 
     def add(self, curr: Node, rest: dict[Node, float] = {}) -> "WeightedTree":
         if curr not in self:
