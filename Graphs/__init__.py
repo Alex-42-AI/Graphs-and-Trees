@@ -1,5 +1,5 @@
-from Personal.Graphs.src.implementation.undirected_graph import *
+from Graphs.src.implementation.undirected_graph import *
 
-from Personal.Graphs.src.implementation.directed_graph import *
+from Graphs.src.implementation.directed_graph import *
 
-from Personal.Graphs.src.implementation.tree import *
+from Graphs.src.implementation.tree import *
