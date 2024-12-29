@@ -219,10 +219,12 @@ class BinTree:
         for c in message:
             if isinstance(c, Node):
                 c = c.value
-            if Node(c) in self:
-                res += self.code_in_morse(c) + "   "
-            else:
-                res += c + "   "
+            if c != " ":
+                if Node(c) in self:
+                    res += self.code_in_morse(c)
+                else:
+                    res += c
+            res += "   "
         return res[:-2]
 
     def inverted(self) -> "BinTree":
