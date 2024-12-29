@@ -265,7 +265,7 @@ class UndirectedGraph(Graph):
         """
         return len(self.nodes) == len(self.links) + bool(self.nodes) and self.connected()
 
-    def tree(self, n: Node, depth: bool = False) -> "Tree":
+    def tree(self, n: Node = None, depth: bool = False) -> "Tree":
         """
         Args:
             n: a present node.
@@ -276,6 +276,8 @@ class UndirectedGraph(Graph):
 
         from Graphs.src.implementation.tree import Tree
 
+        if n is None:
+            n = self.nodes.pop()
         if not isinstance(n, Node):
             n = Node(n)
         tree = Tree(n)
@@ -534,23 +536,26 @@ class UndirectedGraph(Graph):
                                     if final:
                                         return []
                                     this_final = True
-                    comp = sorted(comp, key=priority.get, reverse=True)
                     if this_final:
-                        final = sorted((graph.nodes - neighbors - {u}).union(comp), key=priority.get, reverse=True)
+                        final = sorted((graph.nodes - neighbors - {u}).union(comp), key=lambda x: (priority[x], x in neighbors), reverse=True)
                     else:
-                        comps.append(comp)
-            max_length = max(map(len, comps)) * len(priority[u])
-            comps = sorted(comps, key=lambda c: extend_0s(reduce(lambda x, y: priority[x] + priority[y], c), max_length), reverse=True)
+                        comps.append(sorted(comp, key=priority.get, reverse=True))
+            max_length = max(map(len, comps)) * len(priority[u]) if comps else 0
+            concatenate_priorities = lambda c: reduce(lambda x, y: x + y, c)
+            comparison_function = lambda c: extend_0s(concatenate_priorities(list(map(priority.get, c))), max_length)
+            comps = sorted(comps, key=comparison_function, reverse=True)
             for i in range(len(comps) - 1):
                 if priority[comps[i + 1][0]] > priority[comps[i][-1]]:
                     return []
-            if final and priority[final[0]] > priority[comps[-1][-1]]:
+            if final and comps and priority[final[0]] > priority[comps[-1][-1]]:
+                return []
+            final_neighbors = neighbors.intersection(final)
+            if final and set(final[:len(final_neighbors)]) != final_neighbors:
                 return []
             for comp in comps:
-                start_bfs_from = bfs(curr_graph := graph.subgraph(comp), comp[0])
-                starting = bfs(curr_graph, start_bfs_from)
-                if priority[starting] != max(map(priority.get, comp)):
-                    starting = max(comp, key=priority.get)
+                starting = bfs(curr_graph := graph.subgraph(comp), comp[0])
+                if priority[starting] != priority[comp[0]]:
+                    starting = bfs(curr_graph, starting)
                 if not (curr_sort := helper(starting, curr_graph, {k: priority[k] + (k in graph.neighbors(starting),) for k in comp})):
                     return []
                 order += curr_sort
@@ -645,8 +650,12 @@ class UndirectedGraph(Graph):
         """
         try:
             k = int(k)
+            if k < 0:
+                raise ValueError("Positive value expected!")
         except TypeError:
             raise TypeError("Integer expected!")
+        if not k:
+            return [set()]
         return [set(p) for p in combinations(self.nodes, abs(k)) if self.clique(*p)]
 
     def max_cliques_node(self, u: Node) -> list[set[Node]]:
@@ -656,37 +665,8 @@ class UndirectedGraph(Graph):
         Returns:
             All, maximum by cardinality, cliques in the graph, to which node u belongs.
         """
-        if not isinstance(u, Node):
-            u = Node(u)
-        if (tmp := self.component(u)).full():
-            return [tmp.nodes]
-        if not (neighbors := tmp.neighbors(u)):
-            return [{u}]
-        cliques = [{u, v} for v in neighbors]
-        while True:
-            new = set()
-            for i, cl1 in enumerate(cliques):
-                for cl2 in cliques[i + 1:]:
-                    compatible = True
-                    for x in cl1 - {u}:
-                        for y in cl2 - cl1:
-                            if x != y and y not in tmp.neighbors(x):
-                                compatible = False
-                                break
-                        if not compatible:
-                            break
-                    if compatible:
-                        new.add(frozenset(cl1.union(cl2)))
-            if not new:
-                max_card = max(map(len, cliques))
-                return [set(cl) for cl in cliques if len(cl) == max_card]
-            newer = new.copy()
-            for cl1 in new:
-                for cl2 in new:
-                    if len(cl1) < len(cl2):
-                        newer.remove(cl1)
-                        break
-            cliques = list(newer)
+        max_card = max(map(len, (cliques := self.all_maximal_cliques_node(u))))
+        return [set(cl) for cl in cliques if len(cl) == max_card]
 
     def max_cliques(self) -> list[set[Node]]:
         """
@@ -712,11 +692,11 @@ class UndirectedGraph(Graph):
         """
         if not isinstance(u, Node):
             u = Node(u)
-        if (tmp := self.component(u)).full():
+        if (tmp := self.subgraph((neighbors := self.neighbors(u)).union({u}))).full():
             return [tmp.nodes]
-        if not (neighbors := tmp.neighbors(u)):
-            return [{u}]
         cliques = [{u, v} for v in neighbors]
+        if sort := tmp.interval_sort(u):
+            pass
         result = {frozenset((u, v)) for v in neighbors}
         while True:
             changed = False
@@ -744,7 +724,7 @@ class UndirectedGraph(Graph):
                         break
             cliques, result = list(new), new.copy()
 
-    def maximal_independent_sets(self):
+    def maximal_independent_sets(self) -> list[set[Node]]:
         """
         Returns:
             All maximal by inclusion independent sets in the graph.
@@ -769,10 +749,12 @@ class UndirectedGraph(Graph):
             The clique graph of self.
         """
         result, independent_sets = UndirectedGraph(), self.complementary().maximal_independent_sets()
+        for u in independent_sets:
+            result.add(Node(u))
         for i, u in enumerate(independent_sets):
             for v in independent_sets[i + 1:]:
-                if u.value.intersection(v.value):
-                    result.connect(u, v)
+                if u.intersection(v):
+                    result.connect(Node(u), Node(v))
         return result
 
     def chromatic_nodes_partition(self) -> list[set[Node]]:
@@ -860,7 +842,7 @@ class UndirectedGraph(Graph):
         if not self.connected():
             return reduce(lambda x, y: x.union(y), [comp.dominating_set() for comp in self.connection_components()])
         if len(self.nodes) == len(self.links) + 1:
-            return self.tree(self.nodes.pop()).dominating_set()
+            return self.tree().dominating_set()
         if self.is_full_k_partite():
             if not self:
                 return set()
@@ -882,18 +864,18 @@ class UndirectedGraph(Graph):
         if not self.connected():
             return reduce(lambda x, y: x.union(y), [comp.independent_set() for comp in self.connection_components()])
         if len(self.nodes) == len(self.links) + 1:
-            return self.tree(self.nodes.pop()).independent_set()
+            return self.tree().independent_set()
         if self.is_full_k_partite():
             if not self:
                 return set()
             return max([comp.nodes for comp in self.complementary().connection_components()], key=len)
-        if sort := list(reversed(self.interval_sort())):
+        if sort := self.interval_sort():
             result = set()
-            for u in sort:
+            for u in reversed(sort):
                 if self.neighbors(u).isdisjoint(result):
                     result.add(u)
             return result
-        return self.complementary().max_cliques()[0]
+        return max(self.maximal_independent_sets(), key=len)
 
     def cycle_with_length(self, length: int) -> list[Node]:
         try:
