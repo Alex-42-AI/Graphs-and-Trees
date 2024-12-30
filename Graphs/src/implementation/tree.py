@@ -496,9 +496,11 @@ class Tree:
         Returns:
             The parent node of node u if it's given, otherwise the parent of each node.
         """
-        if u is not None and not isinstance(u, Node):
+        if u is None:
+            return self.__parent.copy()
+        if not isinstance(u, Node):
             u = Node(u)
-        return self.__parent.copy() if u is None else self.__parent.get(u)
+        return self.__parent.get(u)
 
     def hierarchy(self, u: Node = None) -> dict[Node, set[Node]] | set[Node]:
         """
@@ -507,9 +509,11 @@ class Tree:
         Returns:
             Descendants of node u if it's given, otherwise the descendants of each node.
         """
-        if u is not None and not isinstance(u, Node):
+        if u is None:
+            return self.__hierarchy.copy()
+        if not isinstance(u, Node):
             u = Node(u)
-        return (self.__hierarchy if u is None else self.__hierarchy[u]).copy()
+        return self.__hierarchy[u].copy()
 
     def descendants(self, u: Node) -> set[Node]:
         """
@@ -847,9 +851,11 @@ class WeightedTree(Tree):
         Returns:
             The weight of node n or the dictionary with all node weights.
         """
-        if u is not None and not isinstance(u, Node):
+        if u is None:
+            return self.__weights.copy()
+        if not isinstance(u, Node):
             u = Node(u)
-        return self.__weights.copy() if u is None else self.__weights.get(u)
+        return self.__weights.get(u)
 
     def set_weight(self, u: Node, w: float) -> "WeightedTree":
         """
