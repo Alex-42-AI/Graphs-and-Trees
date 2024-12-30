@@ -31,3 +31,9 @@ Trees, defined in this project, are:
 - Safely changing the value of an object of a given type;
 - Representation of given objects;
 - Complex algorithms over graphs and trees, such as interval sort, (weighted) vertex cover, (weighted) dominating set, (weighted) independent set, maximal clique and chromatic nodes/links partition for an undirected graph, topological sort for a directed graph and so on.
+
+## Not supported
+
+- Graphs with loops (a link, both ends of which are the same node);
+- Multigraphs (where a link with the same start and end can appear more than once).
+
