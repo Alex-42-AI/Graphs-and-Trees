@@ -491,25 +491,10 @@ class UndirectedGraph(Graph):
             If it fails, it returns an empty list. If start is given, it only tries to find a way to start from it.
         """
 
-        def consecutive_1s(sort):
-            if not sort:
-                return False
-            for i, u in enumerate(sort):
-                j = -1
-                for j, v in enumerate(sort[i:-1]):
-                    if u not in self.neighbors(sort[i + j + 1]) and u in {v, *self.neighbors(v)}:
-                        break
-                for v in sort[i + j + 2:]:
-                    if u in self.neighbors(v):
-                        return False
-            return True
-
         def extend_0s(ll, max_l):
             return ll + (0,) * (max_l - len(ll))
 
-        def bfs(g, res=None, limit=lambda _: True):
-            if res is None:
-                res = g.nodes.pop()
+        def bfs(g, res, limit):
             queue, total = [res], {res}
             while queue:
                 for v in g.neighbors(queue.pop(0)) - total:
@@ -553,17 +538,15 @@ class UndirectedGraph(Graph):
             if final and set(final[:len(final_neighbors)]) != final_neighbors:
                 return []
             for comp in comps:
-                starting = bfs(curr_graph := graph.subgraph(comp), comp[0])
-                if priority[starting] != priority[comp[0]]:
-                    starting = bfs(curr_graph, starting)
+                max_priority = priority[comp[0]]
+                starting = bfs(curr_graph := graph.subgraph(comp), comp[-1], lambda x: priority[x] == max_priority)
                 if not (curr_sort := helper(starting, curr_graph, {k: priority[k] + (k in graph.neighbors(starting),) for k in comp})):
                     return []
                 order += curr_sort
             if set(order) == graph.nodes:
                 return order
-            start_bfs_from = bfs(graph, u)
             max_priority = priority[final[0]]
-            starting = bfs((curr_graph := graph.subgraph(final)), start_bfs_from, lambda x: priority[x] == max_priority)
+            starting = bfs(curr_graph := graph.subgraph(final), final[-1], lambda x: priority[x] == max_priority)
             if not (curr_sort := helper(starting, curr_graph, {k: priority[k] + (k in graph.neighbors(starting),) for k in final})):
                 return []
             return order + curr_sort
@@ -596,16 +579,12 @@ class UndirectedGraph(Graph):
                 result += curr
             return result
         if start is None:
-            for n in self.nodes:
-                if consecutive_1s(result := helper(n, self, {u: (u in self.neighbors(n),) for u in self.nodes})):
-                    return result
-            return []
+            start = bfs(self, self.nodes.pop(), lambda _: True)
         if not isinstance(start, Node):
             start = Node(start)
         if start not in self:
             raise ValueError("Unrecognized node!")
-        r = helper(start, self, {u: (u in self.neighbors(start)) for u in self.nodes})
-        return r if consecutive_1s(r) else []
+        return helper(start, self, {u: (u in self.neighbors(start),) for u in self.nodes})
 
     def is_full_k_partite(self, k: int = None) -> bool:
         """
@@ -658,6 +637,22 @@ class UndirectedGraph(Graph):
             return [set()]
         return [set(p) for p in combinations(self.nodes, abs(k)) if self.clique(*p)]
 
+    def max_cliques(self) -> list[set[Node]]:
+        """
+        Returns:
+            All maximum by cardinality cliques in the graph.
+        """
+        result, low, high = [set()], 1, len(self.nodes)
+        k = (low + high) // 2
+        while low <= high:
+            if curr := self.cliques(mid := (low + high) // 2):
+                low = mid + 1
+                if mid > k:
+                    result, k = curr, mid
+            else:
+                high = mid - 1
+        return result
+
     def max_cliques_node(self, u: Node) -> list[set[Node]]:
         """
         Args:
@@ -665,23 +660,9 @@ class UndirectedGraph(Graph):
         Returns:
             All, maximum by cardinality, cliques in the graph, to which node u belongs.
         """
-        max_card = max(map(len, (cliques := self.all_maximal_cliques_node(u))))
-        return [set(cl) for cl in cliques if len(cl) == max_card]
-
-    def max_cliques(self) -> list[set[Node]]:
-        """
-        Returns:
-            All maximum by cardinality cliques in the graph.
-        """
-        result, low, high = [set()], 1, len(self.nodes)
-        while low <= high:
-            if not (curr := self.cliques(mid := (low + high) // 2)):
-                high = mid - 1
-            else:
-                low = mid + 1
-                if len(curr[0]) > len(result[0]):
-                    result = curr
-        return result
+        if not isinstance(u, Node):
+            u = Node(u)
+        return list(map(lambda cl: cl.union({u}), self.subgraph(self.neighbors(u)).max_cliques()))
 
     def all_maximal_cliques_node(self, u: Node) -> list[set[Node]]:
         """
@@ -692,37 +673,8 @@ class UndirectedGraph(Graph):
         """
         if not isinstance(u, Node):
             u = Node(u)
-        if (tmp := self.subgraph((neighbors := self.neighbors(u)).union({u}))).full():
-            return [tmp.nodes]
-        cliques = [{u, v} for v in neighbors]
-        if sort := tmp.interval_sort(u):
-            pass
-        result = {frozenset((u, v)) for v in neighbors}
-        while True:
-            changed = False
-            for i, cl1 in enumerate(cliques):
-                for cl2 in cliques[i + 1:]:
-                    compatible = True
-                    for x in cl1 - {u}:
-                        for y in cl2 - cl1:
-                            if x != y and y not in tmp.neighbors(x):
-                                compatible = False
-                                break
-                        if not compatible:
-                            break
-                    if compatible:
-                        changed = True
-                        result.add(frozenset(cl1.union(cl2)))
-                        result.discard(frozenset(cl1)), result.discard(frozenset(cl2))
-            if not changed:
-                return list(map(set, result))
-            new = result.copy()
-            for cl1 in result:
-                for cl2 in result:
-                    if cl1 != cl2 and cl1.issubset(cl2):
-                        new.remove(cl1)
-                        break
-            cliques, result = list(new), new.copy()
+        g = self.subgraph(self.neighbors(u)).complementary()
+        return list(map(lambda cl: cl.union({u}), g.maximal_independent_sets()))
 
     def maximal_independent_sets(self) -> list[set[Node]]:
         """
@@ -748,13 +700,13 @@ class UndirectedGraph(Graph):
         Returns:
             The clique graph of self.
         """
-        result, independent_sets = UndirectedGraph(), self.complementary().maximal_independent_sets()
-        for u in independent_sets:
-            result.add(Node(u))
-        for i, u in enumerate(independent_sets):
-            for v in independent_sets[i + 1:]:
+        result, cliques = UndirectedGraph(), self.complementary().maximal_independent_sets()
+        for u in cliques:
+            result.add(Node(frozenset(u)))
+        for i, u in enumerate(cliques):
+            for v in cliques[i + 1:]:
                 if u.intersection(v):
-                    result.connect(Node(u), Node(v))
+                    result.connect(Node(frozenset(u)), Node(frozenset(v)))
         return result
 
     def chromatic_nodes_partition(self) -> list[set[Node]]:
