@@ -1008,6 +1008,8 @@ class UndirectedGraph(Graph):
             v = Node(v)
         tmp = UndirectedGraph.copy(self)
         if u is None:
+            u, v = v, u
+        if u is None:
             if v is not None and v not in self:
                 raise KeyError("Unrecognized node.")
             for _u in self.nodes:
@@ -1016,8 +1018,6 @@ class UndirectedGraph(Graph):
                 if self.leaf(_u):
                     return []
             return []
-        if u is None and v is not None:
-            u, v = v, u
         if u not in self or v is not None and v not in self:
             raise KeyError("Unrecognized node(s).")
         return dfs(u, [u])
