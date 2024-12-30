@@ -40,7 +40,7 @@ class DirectedGraph(Graph):
         """
         if u is None:
             return {n: (len(self.prev(n)), len(self.next(n))) for n in self.nodes}
-        if u is not None and not isinstance(u, Node):
+        if not isinstance(u, Node):
             u = Node(u)
         return len(self.prev(u)), len(self.next(u))
 
@@ -51,9 +51,11 @@ class DirectedGraph(Graph):
         Returns:
             A set of all nodes, that node u points to, if it's given, otherwise the same for all nodes.
         """
-        if u is not None and not isinstance(u, Node):
+        if u is None:
+            return self.__next.copy()
+        if not isinstance(u, Node):
             u = Node(u)
-        return (self.__next if u is None else self.__next[u]).copy()
+        return self.__next[u].copy()
 
     def prev(self, u: Node = None) -> dict[Node, set[Node]] | set[Node]:
         """
@@ -62,9 +64,11 @@ class DirectedGraph(Graph):
         Returns:
             A set of all nodes, that point to node u, if it's given, otherwise the same for all nodes.
         """
-        if u is not None and not isinstance(u, Node):
+        if u is None:
+            return self.__prev.copy()
+        if not isinstance(u, Node):
             u = Node(u)
-        return (self.__prev if u is None else self.__prev[u]).copy()
+        return self.__prev[u].copy()
 
     @property
     def sources(self) -> set[Node]:
@@ -583,10 +587,6 @@ class DirectedGraph(Graph):
             tmp.add(x, prev_x, next_x)
             return []
 
-        if u is not None and not isinstance(u, Node):
-            u = Node(u)
-        if v is not None and not isinstance(v, Node):
-            v = Node(v)
         tmp = DirectedGraph.copy(self)
         if u is None:
             if v is not None and v not in self:
@@ -599,6 +599,10 @@ class DirectedGraph(Graph):
                 if result := dfs(_u, [_u]):
                     return result
             return []
+        if not isinstance(u, Node):
+            u = Node(u)
+        if v is not None and not isinstance(v, Node):
+            v = Node(v)
         if u not in self or v is not None and v not in self:
             raise KeyError("Unrecognized node(s).")
         return dfs(u, [u])
