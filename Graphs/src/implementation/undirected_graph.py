@@ -11,6 +11,66 @@ from itertools import permutations, combinations, product
 from Graphs.src.implementation.general import *
 
 
+def SAT_to_clique(cnf: list[list[tuple[str, bool]]]) -> list[set[tuple[str, bool]]]:
+    """
+    Represent the SAT problem as the maximum clique in a graph problem.
+    Args:
+        cnf: A list of lists (disjunctive clauses), each with tuples (a variable name and a boolean flag to
+    indicate whether the variable is true or false).
+    Returns:
+        A list of all possible sets of variables and their boolean flags, where a
+        predicate being present in the set means it's true (with its boolean flag).
+    """
+
+    def compatible(var1, var2):
+        return var1[0] != var2[0] or var1[1] == var2[1]
+
+    def independent_set(x):
+        for i_s in independent_sets:
+            if x in i_s:
+                return i_s
+
+    i = 0
+    while i < len(cnf):
+        j, clause, contradiction = 0, cnf[i], False
+        while j < len(clause):
+            for var0 in clause[j + 1:]:
+                if not compatible(var := clause[j], var0):
+                    contradiction = True
+                    break
+                if var == var0:
+                    clause.pop(j)
+                    j -= 1
+                    break
+                j += 1
+            if contradiction:
+                break
+        if contradiction:
+            i -= 1
+            cnf.pop(i)
+        i += 1
+    if not cnf:
+        return [set()]
+    graph, node_vars, i, independent_sets = UndirectedGraph(), {}, 0, []
+    for clause in cnf:
+        j = i
+        for var in clause:
+            node_vars[Node(i)] = var
+            graph.add(i)
+            i += 1
+        i += 1
+        independent_sets.append({*map(Node, range(j, i))})
+    for u in graph.nodes:
+        for v in graph.nodes:
+            if u != v and compatible(node_vars[u], node_vars[v]) and v.value not in independent_set(u.value):
+                graph.connect(u, v)
+    result, n = [], len(cnf)
+    for u in min(independent_sets, key=len):
+        if len((curr := graph.max_cliques_node(u))[0]) == n:
+            result += [set(map(node_vars.__getitem__, clique)) for clique in curr]
+    return result
+
+
 class Link:
     """
     Helper class, implementing an undirected link.
@@ -1853,63 +1913,3 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
 
     def __str__(self) -> str:
         return "<{" + ", ".join(f"{n} -> {self.node_weights(n)}" for n in self.nodes) + "}, {" + ", ".join(f"{l} -> {self.link_weights(l)}" for l in self.links) + "}>"
-
-
-def SAT_to_clique(cnf: list[list[tuple[str, bool]]]) -> list[set[tuple[str, bool]]]:
-    """
-    Represent the SAT problem as the maximum clique in a graph problem.
-    Args:
-        cnf: A list of lists (disjunctive clauses), each with tuples (a variable name and a boolean flag to
-    indicate whether the variable is true or false).
-    Returns:
-        A list of all possible sets of variables and their boolean flags, where a
-        predicate being present in the set means it's true (with its boolean flag).
-    """
-
-    def compatible(var1, var2):
-        return var1[0] != var2[0] or var1[1] == var2[1]
-
-    def independent_set(x):
-        for i_s in independent_sets:
-            if x in i_s:
-                return i_s
-
-    i = 0
-    while i < len(cnf):
-        j, clause, contradiction = 0, cnf[i], False
-        while j < len(clause):
-            for var0 in clause[j + 1:]:
-                if not compatible(var := clause[j], var0):
-                    contradiction = True
-                    break
-                if var == var0:
-                    clause.pop(j)
-                    j -= 1
-                    break
-                j += 1
-            if contradiction:
-                break
-        if contradiction:
-            i -= 1
-            cnf.pop(i)
-        i += 1
-    if not cnf:
-        return [set()]
-    graph, node_vars, i, independent_sets = UndirectedGraph(), {}, 0, []
-    for clause in cnf:
-        j = i
-        for var in clause:
-            node_vars[Node(i)] = var
-            graph.add(i)
-            i += 1
-        i += 1
-        independent_sets.append({*map(Node, range(j, i))})
-    for u in graph.nodes:
-        for v in graph.nodes:
-            if u != v and compatible(node_vars[u], node_vars[v]) and v.value not in independent_set(u.value):
-                graph.connect(u, v)
-    result, n = [], len(cnf)
-    for u in min(independent_sets, key=len):
-        if len((curr := graph.max_cliques_node(u))[0]) == n:
-            result += [set(map(node_vars.__getitem__, clique)) for clique in curr]
-    return result
