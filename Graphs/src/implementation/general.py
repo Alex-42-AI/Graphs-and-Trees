@@ -239,6 +239,30 @@ class Graph(ABC):
         pass
 
     @abstractmethod
+    def weighted_nodes_graph(self) -> "Graph":
+        """
+        Returns:
+            The version of the graph with node weights.
+        """
+        pass
+
+    @abstractmethod
+    def weighted_links_graph(self) -> "Graph":
+        """
+        Returns:
+            The version of the graph with link weights.
+        """
+        pass
+
+    @abstractmethod
+    def weighted_graph(self) -> "Graph":
+        """
+        Returns:
+            The version of the graph with node and link weights.
+        """
+        pass
+
+    @abstractmethod
     def path_with_length(self, u: Node, v: Node, length: int) -> list[Node]:
         """
         Args:
