@@ -448,10 +448,10 @@ class DirectedGraph(Graph):
         Returns:
             A list of all strongly-connected components of hte graph.
         """
-        if self.dag():
-            return list(map(lambda x: {x}, self.nodes))
         if not self.connected():
             return sum(map(lambda x: x.strongly_connected_components(), self.connection_components()), [])
+        if self.dag():
+            return list(map(lambda x: {x}, self.nodes))
         if not self.sources and not self.sinks:
             return [self.nodes]
         rest, res = self.nodes, []
