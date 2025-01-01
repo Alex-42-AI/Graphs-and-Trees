@@ -35,5 +35,5 @@ Trees, defined in this project, are:
 ## Not supported
 
 - Graphs with loops (a link, both ends of which are the same node);
-- Multigraphs (where a link with the same start and end can appear more than once).
+- Multigraphs (where multiple links can exist from one node to another).
 
