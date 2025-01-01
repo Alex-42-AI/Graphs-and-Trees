@@ -4,6 +4,8 @@ Module for implementing trees and working with them.
 
 from typing import Iterable
 
+from functools import reduce
+
 from collections import defaultdict
 
 from itertools import permutations, product
@@ -437,8 +439,11 @@ class Tree:
         self.__root = root
         self.__hierarchy, self.__parent = {root: set()}, {}
         self.__nodes, self.__leaves = {root}, {root}
+        remaining = reduce(lambda x, y: x.union(y), inheritance.values(), set())
+        if not (root_descendants := set(inheritance) - remaining) and inheritance:
+            raise ValueError("This dictionary doesn't represent a tree!")
         for u, desc in inheritance.items():
-            if u not in self:
+            if u in root_descendants:
                 self.add(root, u)
             if desc:
                 self.add(u, *desc)
@@ -522,8 +527,6 @@ class Tree:
         Returns:
             The descendants of node u.
         """
-        if not isinstance(u, Node):
-            u = Node(u)
         return self.hierarchy(u)
 
     def copy(self) -> "Tree":
@@ -531,7 +534,7 @@ class Tree:
         Returns:
             An identical copy of the tree.
         """
-        return Tree(self.root, {u: self.descendants(u) for u in self.nodes if u != self.root})
+        return Tree(self.root, {u: self.descendants(u) for u in self.nodes - {self.root}})
 
     def subtree(self, u: Node) -> "Tree":
         """
@@ -569,6 +572,9 @@ class Tree:
         if from_root:
             return DirectedGraph({k: ([], v) for k, v in self.hierarchy().items()})
         return DirectedGraph({k: (v, []) for k, v in self.hierarchy().items()})
+
+    def weighted_tree(self) -> "WeightedTree":
+        return WeightedTree((self.root, 0), {n: (0, self.descendants(n)) for n in self.nodes})
 
     def add(self, curr: Node, u: Node, *rest: Node) -> "Tree":
         """
@@ -765,8 +771,8 @@ class Tree:
                 other_nodes_descendants[len(self.descendants(n))].add(n)
             if any(len(this_nodes_descendants[d]) != len(other_nodes_descendants[d]) for d in this_nodes_descendants):
                 return {}
-            this_nodes_descendants = list(sorted(this_nodes_descendants.values(), key=len))
-            other_nodes_descendants = list(sorted(other_nodes_descendants.values(), key=len))
+            this_nodes_descendants = list(sorted(map(list, this_nodes_descendants.values()), key=len))
+            other_nodes_descendants = list(sorted(map(list, other_nodes_descendants.values()), key=len))
             for possibility in product(*map(permutations, this_nodes_descendants)):
                 flatten_self = sum(map(list, possibility), [])
                 flatten_other = sum(other_nodes_descendants, [])
@@ -836,13 +842,13 @@ class WeightedTree(Tree):
     """
 
     def __init__(self, root_and_weight: tuple[Node, float], inheritance: dict[Node, tuple[float, Iterable[Node]]] = {}) -> None:
-        super().__init__(root_and_weight[0])
+        super().__init__(root_and_weight[0], {k: v[1] for k, v in inheritance.items()})
         self.__weights = dict([root_and_weight])
-        for u, (w, desc) in inheritance.items():
-            if u not in self:
-                self.add(root_and_weight[0], {u: w})
-            if desc:
-                self.add(u, {v: inheritance[v][0] if v in inheritance else 0 for v in desc})
+        for u in self.nodes:
+            try:
+                self.set_weight(u, inheritance[u][0])
+            except KeyError:
+                self.set_weight(u, 0)
 
     def weights(self, u: Node = None) -> dict[Node, float] | float:
         """
@@ -929,8 +935,10 @@ class WeightedTree(Tree):
     def add_tree(self, tree: Tree) -> "WeightedTree":
         super().add_tree(tree)
         queue = [tree.root]
+        if not isinstance(tree, WeightedTree):
+            tree = self.weighted_tree()
         while queue:
-            self.set_weight((u := queue.pop(0)), tree.weights(u) if isinstance(tree, WeightedTree) else 0)
+            self.set_weight((u := queue.pop(0)), tree.weights(u))
             queue += self.descendants(u)
         return self
 
@@ -1022,8 +1030,8 @@ class WeightedTree(Tree):
                 this_nodes_descendants[len(self.descendants(n))].add(n)
             for n in other.nodes:
                 other_nodes_descendants[len(self.descendants(n))].add(n)
-            this_nodes_descendants = list(sorted(this_nodes_descendants.values(), key=len))
-            other_nodes_descendants = list(sorted(other_nodes_descendants.values(), key=len))
+            this_nodes_descendants = list(sorted(map(list, this_nodes_descendants.values()), key=len))
+            other_nodes_descendants = list(sorted(map(list, other_nodes_descendants.values()), key=len))
             for possibility in product(*map(permutations, this_nodes_descendants)):
                 flatten_self = sum(map(list, possibility), [])
                 flatten_other = sum(other_nodes_descendants, [])
