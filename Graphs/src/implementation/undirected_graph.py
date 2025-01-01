@@ -1111,10 +1111,10 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
     def __init__(self, neighborhood: dict[Node, tuple[float, Iterable[Node]]] = {}) -> None:
         super().__init__()
         self.__node_weights = {}
-        for n, p in neighborhood.items():
-            self.add((n, p[0]))
-        for u, p in neighborhood.items():
-            for v in p[1]:
+        for n, (w, _) in neighborhood.items():
+            self.add((n, w))
+        for u, (_, neighbors) in neighborhood.items():
+            for v in neighbors:
                 self.add((v, 0), u), self.connect(u, v)
 
     def node_weights(self, n: Node = None) -> dict[Node, float] | float:
@@ -1662,10 +1662,10 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
 
     def __init__(self, neighborhood: dict[Node, tuple[float, dict[Node, float]]] = {}) -> None:
         WeightedNodesUndirectedGraph.__init__(self), WeightedLinksUndirectedGraph.__init__(self)
-        for n, p in neighborhood.items():
-            self.add((n, p[0]))
-        for u, p in neighborhood.items():
-            for v, w in p[1].items():
+        for n, (w, _) in neighborhood.items():
+            self.add((n, w))
+        for u, (_, neighbors) in neighborhood.items():
+            for v, w in neighbors.items():
                 self.add((v, 0), {u: w}), self.connect(u, {v: w})
 
     @property
