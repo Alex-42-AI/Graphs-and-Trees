@@ -211,6 +211,15 @@ class DirectedGraph(Graph):
         """
         return DirectedGraph({u: (self.next(u), []) for u in self.nodes})
 
+    def weighted_nodes_graph(self) -> "WeightedNodesDirectedGraph":
+        return WeightedNodesDirectedGraph({n: (0, ([], self.next(n))) for n in self.nodes})
+
+    def weighted_links_graph(self) -> "WeightedLinksDirectedGraph":
+        return WeightedLinksDirectedGraph({u: ({}, {v: 0 for v in self.next(u)}) for u in self.nodes})
+
+    def weighted_graph(self) -> "WeightedDirectedGraph":
+        return self.weighted_nodes_graph().weighted_graph()
+
     def undirected(self) -> "UndirectedGraph":
         """
         Returns:
@@ -244,27 +253,19 @@ class DirectedGraph(Graph):
             u = Node(u)
         if u not in self:
             raise KeyError("Unrecognized node!")
-        queue, res = [u], DirectedGraph({u: ([], [])})
+        queue, total = [u], {u}
         while queue:
-            for n in self.next(v := queue.pop(0)):
-                if n in res:
-                    res.connect(n, [v])
-                else:
-                    res.add(n, [v]), queue.append(n)
-            for n in self.prev(v):
-                if n in res:
-                    res.connect(v, [n])
-                else:
-                    res.add(n, [], [v]), queue.append(n)
-        return res
+            queue += list((next_nodes := self.prev(v := queue.pop(0)).union(self.next(v)) - total))
+            total.update(next_nodes)
+        return self.subgraph(total)
 
     def full(self) -> bool:
         return len(self.links) == (n := len(self.nodes)) * (n - 1)
 
     def subgraph(self, u_or_nodes: Node | Iterable[Node]) -> "DirectedGraph":
         try:
-            neighborhood = {u: ([], self.next(u).intersection(u_or_nodes)) for u in self.nodes.intersection(u_or_nodes)}
-            return DirectedGraph(neighborhood)
+            u_or_nodes = self.nodes.intersection(u_or_nodes)
+            return DirectedGraph({u: ([], self.next(u).intersection(u_or_nodes)) for u in u_or_nodes})
         except TypeError:
             if not isinstance(u_or_nodes, Node):
                 u_or_nodes = Node(u_or_nodes)
@@ -623,8 +624,8 @@ class DirectedGraph(Graph):
                 this_nodes_degrees[self.degrees(n)].add(n)
             for n in other.nodes:
                 other_nodes_degrees[other.degrees(n)].add(n)
-            this_nodes_degrees = list(sorted(this_nodes_degrees.values(), key=len))
-            other_nodes_degrees = list(sorted(other_nodes_degrees.values(), key=len))
+            this_nodes_degrees = list(sorted(map(list, this_nodes_degrees.values()), key=len))
+            other_nodes_degrees = list(sorted(map(list, other_nodes_degrees.values()), key=len))
             for possibility in product(*map(permutations, this_nodes_degrees)):
                 flatten_self = sum(map(list, possibility), [])
                 flatten_other = sum(other_nodes_degrees, [])
@@ -775,32 +776,17 @@ class WeightedNodesDirectedGraph(DirectedGraph):
     def transposed(self) -> "WeightedNodesDirectedGraph":
         return WeightedNodesDirectedGraph({u: (self.node_weights(u), (self.next(u), [])) for u in self.nodes})
 
+    def weighted_graph(self) -> "WeightedDirectedGraph":
+        return WeightedDirectedGraph({u: (self.node_weights(u), ({}, {v: 0 for v in self.next(u)})) for u in self.nodes})
+
     def undirected(self) -> "WeightedNodesUndirectedGraph":
         neighborhood = {n: (self.node_weights(n), self.prev(n).union(self.next(n))) for n in self.nodes}
         return WeightedNodesUndirectedGraph(neighborhood)
 
-    def component(self, u: Node) -> "WeightedNodesDirectedGraph":
-        if not isinstance(u, Node):
-            u = Node(u)
-        if u not in self:
-            raise KeyError("Unrecognized node!")
-        queue, res = [u], WeightedNodesDirectedGraph({u: (self.node_weights(u), ([], []))})
-        while queue:
-            for n in self.next(v := queue.pop(0)):
-                if n in res:
-                    res.connect(n, [v])
-                else:
-                    res.add((n, self.node_weights(n)), [v]), queue.append(n)
-            for n in self.prev(v):
-                if n in res:
-                    res.connect(v, [n])
-                else:
-                    res.add((n, self.node_weights(n)), [], [v]), queue.append(n)
-        return res
-
     def subgraph(self, u_or_nodes: Node | Iterable[Node]) -> "WeightedNodesDirectedGraph":
         try:
-            neighborhood = {u: (self.node_weights(u), ([], self.next(u).intersection(u_or_nodes))) for u in self.nodes.intersection(u_or_nodes)}
+            u_or_nodes = self.nodes.intersection(u_or_nodes)
+            neighborhood = {u: (self.node_weights(u), ([], self.next(u).intersection(u_or_nodes))) for u in u_or_nodes}
             return WeightedNodesDirectedGraph(neighborhood)
         except TypeError:
             if not isinstance(u_or_nodes, Node):
@@ -824,8 +810,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
         Returns:
             A path between u and v with the least possible sum of node weights.
         """
-        neighborhood = {n: (self.node_weights(n), ({}, {m: 0 for m in self.next(n)})) for n in self.nodes}
-        return WeightedDirectedGraph(neighborhood).minimal_path(u, v)
+        return self.weighted_graph().minimal_path(u, v)
 
     def isomorphic_bijection(self, other: DirectedGraph) -> dict[Node, Node]:
         if isinstance(other, WeightedNodesDirectedGraph):
@@ -845,8 +830,8 @@ class WeightedNodesDirectedGraph(DirectedGraph):
                 other_nodes_degrees[other.degrees(n)].add(n)
             if any(len(this_nodes_degrees[d]) != len(other_nodes_degrees[d]) for d in this_nodes_degrees):
                 return {}
-            this_nodes_degrees = list(sorted(this_nodes_degrees.values(), key=len))
-            other_nodes_degrees = list(sorted(other_nodes_degrees.values(), key=len))
+            this_nodes_degrees = list(sorted(map(list, this_nodes_degrees.values()), key=len))
+            other_nodes_degrees = list(sorted(map(list, other_nodes_degrees.values()), key=len))
             for possibility in product(*map(permutations, this_nodes_degrees)):
                 flatten_self = sum(map(list, possibility), [])
                 flatten_other = sum(other_nodes_degrees, [])
@@ -870,10 +855,8 @@ class WeightedNodesDirectedGraph(DirectedGraph):
     def __add__(self, other: DirectedGraph) -> "WeightedNodesDirectedGraph":
         if not isinstance(other, DirectedGraph):
             raise TypeError(f"Addition not defined between class DirectedGraph and type {type(other).__name__}!")
-        if isinstance(other, WeightedDirectedGraph):
-            return other + self
         if isinstance(other, WeightedLinksDirectedGraph):
-            return WeightedDirectedGraph() + self + other
+            return self.weighted_graph() + other
         if isinstance(other, WeightedNodesDirectedGraph):
             res = self.copy()
             for n in other.nodes:
@@ -884,7 +867,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
             for u, v in other.links:
                 res.connect(v, [u])
             return res
-        return self + WeightedNodesDirectedGraph({n: (0, ([], other.next(n))) for n in other.nodes})
+        return self + other.weighted_nodes_graph()
 
     def __eq__(self, other: "WeightedNodesDirectedGraph") -> bool:
         if type(other) == WeightedNodesDirectedGraph:
@@ -1056,28 +1039,10 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                 res.connect(u, {v: self.link_weights(u, v)})
         return res
 
-    def component(self, u: Node) -> "WeightedLinksDirectedGraph":
-        if not isinstance(u, Node):
-            u = Node(u)
-        if u not in self:
-            raise KeyError("Unrecognized node!")
-        queue, res = [u], WeightedLinksDirectedGraph({u: ({}, {})})
-        while queue:
-            for n in self.next(v := queue.pop(0)):
-                if n in res:
-                    res.connect(n, {v: self.link_weights((v, n))})
-                else:
-                    res.add(n, {v: self.link_weights((v, n))}), queue.append(n)
-            for n in self.prev(v):
-                if n in res:
-                    res.connect(v, {n: self.link_weights((n, v))})
-                else:
-                    res.add(n, points_to_weights={v: self.link_weights((n, v))}), queue.append(n)
-        return res
-
     def subgraph(self, u_or_nodes: Node | Iterable[Node]) -> "WeightedLinksDirectedGraph":
         try:
-            neighborhood = {u: ({}, {k: v for k, v in self.link_weights(u).items() if k in u_or_nodes}) for u in self.nodes.intersection(u_or_nodes)}
+            u_or_nodes = self.nodes.intersection(u_or_nodes)
+            neighborhood = {u: ({}, {k: v for k, v in self.link_weights(u).items() if k in u_or_nodes}) for u in u_or_nodes}
             return WeightedLinksDirectedGraph(neighborhood)
         except TypeError:
             if not isinstance(u_or_nodes, Node):
@@ -1101,7 +1066,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
         Returns:
             A path from u to v with the least possible sum of link weights.
         """
-        return WeightedDirectedGraph({n: (0, ({}, self.link_weights(n))) for n in self.nodes}).minimal_path(u, v)
+        return self.weighted_graph().minimal_path(u, v)
 
     def isomorphic_bijection(self, other: DirectedGraph) -> dict[Node, Node]:
         if isinstance(other, WeightedLinksDirectedGraph):
@@ -1121,8 +1086,8 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                 other_nodes_degrees[other.degrees(n)].add(n)
             if any(len(this_nodes_degrees[d]) != len(other_nodes_degrees[d]) for d in this_nodes_degrees):
                 return {}
-            this_nodes_degrees = list(sorted(this_nodes_degrees.values(), key=len))
-            other_nodes_degrees = list(sorted(other_nodes_degrees.values(), key=len))
+            this_nodes_degrees = list(sorted(map(list, this_nodes_degrees.values()), key=len))
+            other_nodes_degrees = list(sorted(map(list, other_nodes_degrees.values()), key=len))
             for possibility in product(*map(permutations, this_nodes_degrees)):
                 flatten_self = sum(map(list, possibility), [])
                 flatten_other = sum(other_nodes_degrees, [])
@@ -1155,7 +1120,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                 else:
                     res.connect(v, {u: other.link_weights((u, v))})
             return res
-        return self + WeightedLinksDirectedGraph({u: ({}, {v: 0 for v in other.next(u)}) for u in other.nodes})
+        return self + other.weighted_links_graph()
 
     def __eq__(self, other: "WeightedLinksDirectedGraph") -> bool:
         if type(other) == WeightedLinksDirectedGraph:
@@ -1252,28 +1217,10 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                 res.connect(u, {v: self.link_weights(u, v)})
         return res
 
-    def component(self, u: Node) -> "WeightedDirectedGraph":
-        if not isinstance(u, Node):
-            u = Node(u)
-        if u not in self:
-            raise KeyError("Unrecognized node!")
-        queue, res = [u], WeightedDirectedGraph({u: (self.node_weights(u), ({}, {}))})
-        while queue:
-            for n in self.next(v := queue.pop(0)):
-                if n in res:
-                    res.connect(n, {v: self.link_weights(v, n)})
-                else:
-                    res.add((n, self.node_weights(n)), {v: self.link_weights((v, n))}), queue.append(n)
-            for n in self.prev(v):
-                if n in res:
-                    res.connect(v, {n: self.link_weights(n, v)})
-                else:
-                    res.add((n, self.node_weights(n)), points_to_weights={v: self.link_weights((n, v))}), queue.append(n)
-        return res
-
     def subgraph(self, u_or_nodes: Node | Iterable[Node]) -> "WeightedDirectedGraph":
         try:
-            neighborhood = {u: (self.node_weights(u), ({}, {k: v for k, v in self.link_weights(u).items() if k in u_or_nodes})) for u in self.nodes.intersection(u_or_nodes)}
+            u_or_nodes = self.nodes.intersection(u_or_nodes)
+            neighborhood = {u: (self.node_weights(u), ({}, {k: v for k, v in self.link_weights(u).items() if k in u_or_nodes})) for u in u_or_nodes}
             return WeightedDirectedGraph(neighborhood)
         except TypeError:
             if not isinstance(u_or_nodes, Node):
@@ -1377,8 +1324,8 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                 other_nodes_degrees[other.degrees(n)].add(n)
             if any(len(this_nodes_degrees[d]) != len(other_nodes_degrees[d]) for d in this_nodes_degrees):
                 return {}
-            this_nodes_degrees = list(sorted(this_nodes_degrees.values(), key=len))
-            other_nodes_degrees = list(sorted(other_nodes_degrees.values(), key=len))
+            this_nodes_degrees = list(sorted(map(list, this_nodes_degrees.values()), key=len))
+            other_nodes_degrees = list(sorted(map(list, other_nodes_degrees.values()), key=len))
             for possibility in product(*map(permutations, this_nodes_degrees)):
                 flatten_self = sum(map(list, possibility), [])
                 flatten_other = sum(other_nodes_degrees, [])
@@ -1417,12 +1364,7 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                 else:
                     res.connect(v, {u: other.link_weights(u, v)})
             return res
-        if isinstance(other, WeightedNodesDirectedGraph):
-            neighborhood = {u: (other.node_weights(u), ({}, {v: 0 for v in other.next(u)})) for u in other.nodes}
-            return self + WeightedDirectedGraph(neighborhood)
-        if isinstance(other, WeightedLinksDirectedGraph):
-            return self + WeightedDirectedGraph({u: (0, ({}, other.link_weights(u))) for u in other.nodes})
-        return self + WeightedDirectedGraph({u: (0, ({}, {v: 0 for v in other.next(u)})) for u in other.nodes})
+        return self + other.weighted_graph()
 
     def __eq__(self, other: "WeightedDirectedGraph") -> bool:
         if type(other) == WeightedDirectedGraph:
