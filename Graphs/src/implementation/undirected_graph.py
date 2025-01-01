@@ -314,8 +314,8 @@ class UndirectedGraph(Graph):
             return True
         queue, total = [u := self.nodes.pop()], {u}
         while queue:
-            for v in self.neighbors(queue.pop(0)) - total:
-                total.add(v), queue.append(v)
+            queue += list((next_nodes := self.neighbors(queue.pop(0)) - total))
+            total.update(next_nodes)
         return total == self.nodes
 
     def is_tree(self) -> bool:
