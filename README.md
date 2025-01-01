@@ -30,7 +30,7 @@ Trees, defined in this project, are:
 - Property getters;
 - Safely changing the value of a graph or a tree (for example, when a node is removed, all links it takes part in are also removed);
 - Representation of given objects;
-- Complex algorithms over graphs and trees, such as interval sort, (weighted) vertex cover, (weighted) dominating set, (weighted) independent set, maximal clique and chromatic nodes/links partition for an undirected graph, topological sort for a directed graph and so on.
+- Complex algorithms over graphs and trees, such as interval sort, (weighted) vertex cover, (weighted) dominating set, (weighted) independent set, maximal clique and chromatic nodes/links partition for an undirected graph, topological sort and strongly-connected components partition for a directed graph and so on.
 
 ## Not supported
 
