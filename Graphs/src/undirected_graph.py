@@ -334,7 +334,7 @@ class UndirectedGraph(Graph):
              A tree representation of the graph with root n.
         """
 
-        from Personal.Graphs.src.tree import Tree
+        from Graphs.src.tree import Tree
 
         if n is None:
             n = self.nodes.pop()
@@ -1216,7 +1216,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
              A weighted tree representation of the graph with root n.
         """
 
-        from Personal.Graphs.src.tree import WeightedTree
+        from Graphs.src.tree import WeightedTree
 
         if n is None:
             n = self.nodes.pop()
