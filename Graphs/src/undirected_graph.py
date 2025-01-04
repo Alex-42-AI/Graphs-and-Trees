@@ -1568,7 +1568,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
                     low = mid
 
         if not self.connected():
-            return reduce(lambda x, y: x.union(y.minimal_spanning_tree()), self.connection_components())
+            return reduce(lambda x, y: x.union(y.minimal_spanning_tree()), self.connection_components(), set())
         if len(self.nodes) == len(self.links) + bool(self):
             return self.links
         res_links, total = set(), {u := self.nodes.pop()}
