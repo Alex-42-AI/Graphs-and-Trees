@@ -1,5 +1,5 @@
-from Graphs.src.implementation.undirected_graph import *
+from Graphs.src.undirected_graph import *
 
-from Graphs.src.implementation.directed_graph import *
+from Graphs.src.directed_graph import *
 
-from Graphs.src.implementation.tree import *
+from Graphs.src.tree import *
