@@ -8,21 +8,28 @@ from collections import defaultdict
 
 from itertools import permutations, combinations, product
 
-from Graphs.src.general import *
+from Graphs.src.general import Node, Graph, Iterable
 
 
-def SAT_to_clique(cnf: list[list[tuple[str, bool]]]) -> list[set[tuple[str, bool]]]:
+def sat_to_clique(cnf: list[list[tuple[str, bool]]]) -> list[set[tuple[str, bool]]]:
     """
     Represent the SAT problem as the maximum clique in a graph problem.
     Args:
-        cnf: A list of lists (disjunctive clauses), each with tuples (a variable name and a boolean flag to
-    indicate whether the variable is true or false).
+        cnf: A list of lists (disjunctive clauses), each with tuples (a variable name and a boolean
+        flag to indicate whether the variable is true or false).
     Returns:
         A list of all possible sets of variables and their boolean flags, where a
         predicate being present in the set means it's true (with its boolean flag).
     """
 
     def compatible(var1, var2):
+        """
+        Args:
+            var1: tuple of a variable name and a boolean flag indicating whether it's true.
+            var2: tuple of a variable name and a boolean flag indicating whether it's true.
+        Returns:
+            Whether their conjunction isn't a contradiction.
+        """
         return var1[0] != var2[0] or var1[1] == var2[1]
 
     def independent_set(x):
@@ -32,22 +39,22 @@ def SAT_to_clique(cnf: list[list[tuple[str, bool]]]) -> list[set[tuple[str, bool
 
     i = 0
     while i < len(cnf):
-        j, clause, contradiction = 0, cnf[i], False
+        j, clause, tautology = 0, cnf[i], False
         while j < len(clause):
             for var0 in clause[j + 1:]:
                 if not compatible(var := clause[j], var0):
-                    contradiction = True
+                    tautology = True
                     break
                 if var == var0:
                     clause.pop(j)
                     j -= 1
                     break
                 j += 1
-            if contradiction:
+            if tautology:
                 break
-        if contradiction:
-            i -= 1
+        if tautology:
             cnf.pop(i)
+            i -= 1
         i += 1
     if not cnf:
         return [set()]
@@ -62,12 +69,12 @@ def SAT_to_clique(cnf: list[list[tuple[str, bool]]]) -> list[set[tuple[str, bool
         independent_sets.append({*map(Node, range(j, i))})
     for u in graph.nodes:
         for v in graph.nodes:
-            if u != v and compatible(node_vars[u], node_vars[v]) and v.value not in independent_set(u.value):
+            if u != v and compatible(node_vars[u], node_vars[v]) and v not in independent_set(u):
                 graph.connect(u, v)
     result, n = [], len(cnf)
     for u in min(independent_sets, key=len):
         if len((curr := graph.max_cliques_node(u))[0]) == n:
-            result += [set(map(node_vars.__getitem__, clique)) for clique in curr]
+            result += [set(map(node_vars.get, clique)) for clique in curr]
     return result
 
 
