@@ -10,10 +10,9 @@ from collections import defaultdict
 
 from itertools import permutations, product
 
-from Personal.Graphs.src.directed_graph import DirectedGraph, WeightedNodesDirectedGraph
+from .directed_graph import DirectedGraph, WeightedNodesDirectedGraph
 
-from Personal.Graphs.src.undirected_graph import (Node, UndirectedGraph,
-                                                  WeightedNodesUndirectedGraph)
+from .undirected_graph import Node, UndirectedGraph, WeightedNodesUndirectedGraph
 
 
 def build_heap(ll: list[float]):
