@@ -1,4 +1,4 @@
-from Personal.Graphs import *
+from .. import *
 
 
 morse_code = BinTree("",
