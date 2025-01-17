@@ -27,7 +27,7 @@ Trees, defined in this project, are:
 
 ## Functionalities
 
-- Defining an object of any of the given data types;
+- Defining an object of any given data type;
 - Property getters;
 - Safely changing the value of a graph or a tree (for example, when a node is removed, all links it takes part in are also removed);
 - Representation of given objects;
