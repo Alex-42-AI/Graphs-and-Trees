@@ -35,7 +35,7 @@ Trees, defined in this project, are:
 
 ## In progress
 
-- Multigraphs (where multiple links can exist from one node to another).
+- Multi-graphs (where multiple links can exist from one node to another).
 
 ## Not supported
 
