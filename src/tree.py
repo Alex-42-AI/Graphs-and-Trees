@@ -6,31 +6,10 @@ from collections import defaultdict
 
 from itertools import permutations, product
 
-from .directed_graph import DirectedGraph, WeightedNodesDirectedGraph
+from ..src.directed_graph import DirectedGraph, WeightedNodesDirectedGraph
 
-from .undirected_graph import Node, UndirectedGraph, WeightedNodesUndirectedGraph, Iterable, reduce
-
-
-def build_heap(ll: list[float]):
-    """
-    Args:
-        ll: A list of real values.
-    Sort list ll such, that it could represent a binary heap.
-    """
-
-    def heapify(low: int, high: int, ind: int, f=max):
-        left, right = 2 * ind - low, 2 * ind - low + 1
-        res = ind
-        if left <= high and (el := ll[ind - 1]) != f(ll[left - 1], el):
-            res = left
-        if right <= high and (el := ll[res - 1]) != f(ll[right - 1], el):
-            res = right
-        if res != ind:
-            ll[ind - 1], ll[res - 1] = ll[res - 1], ll[ind - 1]
-            heapify(res - low - 1, high, res, f)
-
-    for i in range((h := len(ll)) // 2, 0, -1):
-        heapify(0, h, i)
+from ..src.undirected_graph import Node, UndirectedGraph, Iterable, reduce, \
+    WeightedNodesUndirectedGraph
 
 
 class BinTree:
@@ -145,7 +124,10 @@ class BinTree:
 
         if not isinstance(u, Node):
             u = Node(u)
-        return dfs(self)
+        res = dfs(self)
+        if res is None:
+            raise KeyError("Unrecognized node!")
+        return res
 
     def tree(self) -> "Tree":
         """
@@ -168,9 +150,7 @@ class BinTree:
         """
 
         def dfs(l, tree):
-            if l < 0:
-                raise ValueError("Non-negative value expected!")
-            if not tree:
+            if l < 0 or not tree:
                 return []
             if not l:
                 return [tree.root]
@@ -191,6 +171,7 @@ class BinTree:
             if (curr := len(self.nodes_on_level(i))) <= res and res >= 2 ** (i - 1):
                 return res
             res = max(res, curr)
+        return 1
 
     def height(self) -> int:
         """
@@ -206,6 +187,11 @@ class BinTree:
         return dfs(self)
 
     def count_nodes(self) -> int:
+        """
+        Returns:
+            The number of nodes.
+        """
+
         def dfs(tree):
             if not tree:
                 return 0
@@ -238,7 +224,10 @@ class BinTree:
 
         if not isinstance(u, Node):
             u = Node(u)
-        return dfs(self)
+        res = dfs(self)
+        if res is None:
+            raise KeyError("Unrecognized node!")
+        return res
 
     def encode(self, message: str) -> str:
         """
@@ -391,52 +380,6 @@ class BinTree:
         return "None"
 
 
-def binary_heap(l: list[float]) -> BinTree:
-    """
-    Args:
-        l: A list of real values.
-    Returns:
-        A binary heap of list l.
-    """
-    build_heap(l)
-
-    def helper(curr_root, rest, i=1):
-        left = helper(rest[0], rest[(2 ** i):], i + 1) if rest else None
-        right = helper(rest[1], rest[2 * 2 ** i:], i + 1) if rest[1:] else None
-        res = BinTree(curr_root, left, right)
-        return res
-
-    return BinTree(helper(l[0], l[1:]))
-
-
-def print_zig_zag(b_t: BinTree):
-    """
-    Args:
-        b_t: BinTree
-    Print the nodes of b_t zigzag.
-    """
-
-    def bfs(from_left: bool, *trees: BinTree):
-        new = []
-        if from_left:
-            for t in trees:
-                if t.left and (t.left.left is not None or t.left.right is not None):
-                    new.insert(0, t.left), print(t.left.root, end=" ")
-                if t.right and (t.right.left is not None or t.right.right is not None):
-                    new.insert(0, t.right), print(t.right.root, end=" ")
-        else:
-            for t in trees:
-                if t.right and (t.right.left is not None or t.right.right is not None):
-                    new.insert(0, t.right), print(t.right.root, end=" ")
-                if t.left and (t.left.left is not None or t.left.right is not None):
-                    new.insert(0, t.left), print(t.left.root, end=" ")
-        if not new:
-            return
-        print(), bfs(not from_left, *new)
-
-    print(b_t.root), bfs(True, b_t)
-
-
 class Tree:
     """
     Class for implementing a tree with multiple descendants.
@@ -486,7 +429,7 @@ class Tree:
         """
         return self.__leaves.copy()
 
-    def leaf(self, n) -> bool:
+    def leaf(self, n: Node) -> bool:
         """
         Args:
             n: A present node.
@@ -495,6 +438,8 @@ class Tree:
         """
         if not isinstance(n, Node):
             n = Node(n)
+        if n not in self:
+            raise KeyError("Unrecognized node!")
         return n in self.leaves
 
     def height(self) -> int:
@@ -504,7 +449,7 @@ class Tree:
         """
 
         def helper(x):
-            return 1 + max([0, *map(helper, self.descendants(x))])
+            return 1 + max([-1, *map(helper, self.descendants(x))])
 
         return helper(self.root)
 
@@ -519,6 +464,8 @@ class Tree:
             return self.__parent.copy()
         if not isinstance(u, Node):
             u = Node(u)
+        if u not in self:
+            raise KeyError("Unrecognized node!")
         return self.__parent.get(u)
 
     def hierarchy(self, u: Node = None) -> dict[Node, set[Node]] | set[Node]:
@@ -611,18 +558,18 @@ class Tree:
         """
         if not isinstance(curr, Node):
             curr = Node(curr)
-        if curr not in self:
-            raise KeyError("Unrecognized node")
-        if self.leaf(curr): self.__leaves.remove(curr)
-        for v in (u, *rest):
-            if not isinstance(v, Node):
-                v = Node(v)
-            if v not in self:
-                self.__nodes.add(v)
-                self.__hierarchy[curr].add(v)
-                self.__parent[v] = curr
-                self.__leaves.add(v)
-                self.__hierarchy[v] = set()
+        if curr in self:
+            if self.leaf(curr):
+                self.__leaves.remove(curr)
+            for v in (u, *rest):
+                if not isinstance(v, Node):
+                    v = Node(v)
+                if v not in self:
+                    self.__nodes.add(v)
+                    self.__hierarchy[curr].add(v)
+                    self.__parent[v] = curr
+                    self.__leaves.add(v)
+                    self.__hierarchy[v] = set()
         return self
 
     def add_tree(self, tree: "Tree") -> "Tree":
@@ -655,41 +602,23 @@ class Tree:
         """
         if not isinstance(u, Node):
             u = Node(u)
-        if u not in self:
-            raise KeyError("Unrecognized node!")
-        if u == self.root:
-            raise ValueError("Can't remove root!")
-        if subtree:
-            for d in self.descendants(u):
-                self.remove(d, True)
-        self.__nodes.remove(u), self.__parent.pop(u)
-        v = self.parent(u)
-        for n in self.descendants(u):
-            self.__parent[n] = v
-        self.__hierarchy[v] += self.hierarchy(u)
-        if self.leaf(u):
-            self.__leaves.remove(u)
-            if not self.hierarchy(v):
-                self.__leaves.add(v)
-        self.__hierarchy.pop(u)
-        return self
-
-    def move_node(self, u: Node, new_parent: Node, subtree: bool = False) -> "Tree":
-        """
-        Args:
-            u: A present node.
-            new_parent: A present node.
-            subtree: A boolean flag, answering to whether the entire subtree, rooted in node u, should be moved.
-        """
-        if not isinstance(u, Node):
-            u = Node(u)
         if u in self:
-            tmp = self.subtree(u) if subtree else None
-            self.remove(u, subtree)
-            self.add(new_parent, {u: self.weights(u)} if isinstance(self, WeightedTree) else u)
+            if u == self.root:
+                raise ValueError("Can't remove root!")
             if subtree:
-                self.add_tree(tmp)
-        return self
+                for d in self.descendants(u):
+                    self.remove(d, True)
+            self.__nodes.remove(u), self.__parent.pop(u)
+            v = self.parent(u)
+            for n in self.descendants(u):
+                self.__parent[n] = v
+            self.__hierarchy[v] += self.hierarchy(u)
+            if self.leaf(u):
+                self.__leaves.remove(u)
+                if not self.hierarchy(v):
+                    self.__leaves.add(v)
+            self.__hierarchy.pop(u)
+            return self
 
     def node_depth(self, u: Node) -> int:
         """
@@ -701,7 +630,7 @@ class Tree:
         if not isinstance(u, Node):
             u = Node(u)
         if u not in self:
-            raise KeyError("Unrecognized node")
+            raise KeyError("Unrecognized node!")
         d = 0
         while u != self.root:
             u = self.parent(u)
@@ -759,6 +688,8 @@ class Tree:
                 dp[r][1].update(dp[d][1] if len(dp[d][1]) < len(dp[d][0])
                                             and d != min_no_root else dp[d][0])
 
+        if self.nodes == {self.root}:
+            return {self.root}
         dp = {n: [{n}, set()] for n in self.nodes}
         dfs(self.root)
         return root_val[0] \
@@ -825,13 +756,6 @@ class Tree:
             return {}
         return {}
 
-    def __bool__(self) -> bool:
-        """
-        Returns:
-            Whether the tree has nodes.
-        """
-        return bool(self.nodes)
-
     def __contains__(self, u: Node) -> bool:
         """
         Args:
@@ -851,7 +775,7 @@ class Tree:
             Whether both trees are equal.
         """
         if type(other) == Tree:
-            return self.hierarchy == other.hierarchy
+            return self.hierarchy() == other.hierarchy()
         return False
 
     def __str__(self) -> str:
@@ -884,13 +808,18 @@ class WeightedTree(Tree):
             inheritance: An inheritance dictionary. Each node is mapped to a tuple, where the first
             element is its weight and the second element is the set of its descendants.
         """
-        super().__init__(root_and_weight[0], {k: v[1] for k, v in inheritance.items()})
-        self.__weights = dict([root_and_weight])
-        for u in self.nodes:
-            try:
-                self.set_weight(u, inheritance[u][0])
-            except KeyError:
-                self.set_weight(u, 0)
+        super().__init__(root := root_and_weight[0])
+        if not isinstance(root, Node):
+            root = Node(root)
+        self.__weights = {root: root_and_weight[1]}
+        remaining = reduce(lambda x, y: x.union(y[1]), inheritance.values(), set())
+        if not (root_descendants := set(inheritance) - remaining) and inheritance:
+            raise ValueError("This dictionary doesn't represent a tree!")
+        for u in root_descendants:
+            self.add(root, {u: inheritance[u][0]})
+        for u, (_, desc) in inheritance.items():
+            if desc:
+                self.add(u, {d: inheritance[d][0] if d in inheritance else 0 for d in desc})
 
     def weights(self, u: Node = None) -> dict[Node, float] | float:
         """
@@ -900,7 +829,7 @@ class WeightedTree(Tree):
             The weight of node n or the dictionary with all node weights.
         """
         if u is None:
-            return self.__weights.copy()
+            return {n: self.weights(n) for n in self.nodes}
         if not isinstance(u, Node):
             u = Node(u)
         return self.__weights.get(u)
@@ -914,11 +843,10 @@ class WeightedTree(Tree):
         """
         if not isinstance(u, Node):
             u = Node(u)
-        if u in self.weights():
-            try:
-                self.__weights[u] = float(w)
-            except TypeError:
-                raise TypeError("Real value expected!")
+        try:
+            self.__weights[u] = float(w)
+        except ValueError:
+            raise TypeError("Real value expected!")
         return self
 
     def increase_weight(self, u: Node, w: float) -> "WeightedTree":
@@ -970,7 +898,7 @@ class WeightedTree(Tree):
         if not isinstance(curr, Node):
             curr = Node(curr)
         if curr not in self:
-            raise KeyError("Unrecognized node")
+            raise KeyError("Unrecognized node!")
         for u, w in rest.items():
             if u not in self:
                 self.set_weight(u, w)
@@ -1012,18 +940,20 @@ class WeightedTree(Tree):
         """
 
         def dfs(r):
-            if r in self.leaves:
+            if self.leaf(r):
+                if r == self.root:
+                    dp[r][1] = {r}
                 return
             only_leaves, min_no_root = True, None
             for d in self.descendants(r):
-                if d in self.leaves:
+                if self.leaf(d):
                     dp[r][1].add(min_no_root := d)
                 else:
                     only_leaves = False
             if only_leaves:
                 return
             for d in self.descendants(r):
-                if d not in self.leaves:
+                if not self.leaf(d):
                     dfs(d)
                     dp[r][0].update(
                         dp[d][0] if (d_weights_sum := sum(map(self.weights, dp[d][0]))) < sum(
@@ -1037,8 +967,9 @@ class WeightedTree(Tree):
 
         dp = {n: [{n}, set()] for n in self.nodes}
         dfs(self.root)
-        return root_val[0] if (sum(map(self.weights, (root_val := dp[self.root])[0])) <= sum(
-            map(self.weights, root_val[1]))) else root_val[1]
+        root_val = dp[self.root]
+        return root_val[0] if sum(map(self.weights, root_val[0])) <= sum(
+            map(self.weights, root_val[1])) else root_val[1]
 
     def weighted_independent_set(self) -> set[Node]:
         """
@@ -1112,7 +1043,7 @@ class WeightedTree(Tree):
 
     def __eq__(self, other: "WeightedTree") -> bool:
         if type(other) == WeightedTree:
-            return (self.hierarchy, self.weights()) == (other.hierarchy, other.weights())
+            return (self.hierarchy(), self.weights()) == (other.hierarchy(), other.weights())
         return False
 
     def __str__(self) -> str:
