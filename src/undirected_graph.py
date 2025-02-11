@@ -1315,11 +1315,10 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         def helper(curr, total=set(), res_sum=0.0, i=0):
             if total == self.nodes:
                 return curr, res_sum
-            result, result_sum = nodes.copy(), weights
-            for j, u in enumerate(list(nodes)[i:]):
-                if u not in total and self.node_weights(u) > 0 and (
-                        neighbors := self.neighbors(u) - total):
-                    cover, weight = helper({u, *curr}, {u, *total, *neighbors},
+            result, result_sum = set(), 0
+            for j, u in enumerate(list(self.nodes)[i:]):
+                if u not in total and self.node_weights(u) > 0:
+                    cover, weight = helper({u, *curr}, {u, *total, *self.neighbors(u)},
                                            res_sum + self.node_weights(u), i + j + 1)
                     if weight > result_sum:
                         result, result_sum = cover, weight
@@ -1332,11 +1331,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
                           [comp.independent_set() for comp in self.connection_components()])
         if self.is_tree(True):
             return self.weighted_tree().weighted_independent_set()
-        nodes, weights = self.nodes, self.total_nodes_weight
-        for n in self.nodes:
-            if not self.degrees(n):
-                nodes.remove(n)
-                weights -= self.node_weights(n)
+        weights = self.total_nodes_weight
         return helper(set())[0]
 
     def isomorphic_bijection(self, other: UndirectedGraph) -> dict[Node, Node]:
