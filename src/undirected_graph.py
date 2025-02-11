@@ -9,7 +9,7 @@ from collections import defaultdict
 from itertools import permutations, combinations, product
 
 
-from ..src.base import Node, Link, Graph, Iterable
+from .base import Node, Link, Graph, Iterable
 
 
 def links_graph(graph: "UndirectedGraph") -> "UndirectedGraph":
@@ -309,7 +309,7 @@ class UndirectedGraph(Graph):
              A tree representation of the graph with root n.
         """
 
-        from ..src.tree import Tree
+        from .tree import Tree
 
         if root is None:
             root = self.nodes.pop()
@@ -1229,7 +1229,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
              A weighted tree representation of the graph with root n.
         """
 
-        from ..src.tree import WeightedTree
+        from .tree import WeightedTree
 
         if n is None:
             n = self.nodes.pop()
