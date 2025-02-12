@@ -2,7 +2,7 @@
 Module for implementing directed graphs.
 """
 
-from .undirected_graph import *
+from ..src.undirected_graph import *
 
 
 def combine_graphs(graph0: "DirectedGraph", graph1: "DirectedGraph") -> "DirectedGraph":
@@ -265,7 +265,7 @@ class DirectedGraph(Graph):
     def complementary(self) -> "DirectedGraph":
         res = DirectedGraph({n: ([], self.nodes) for n in self.nodes})
         for l in self.links:
-            res.disconnect(l[0], [l[1]])
+            res.disconnect(l[1], [l[0]])
         return res
 
     def transposed(self) -> "DirectedGraph":
@@ -814,7 +814,8 @@ class WeightedNodesDirectedGraph(DirectedGraph):
     def add(self, n_w: tuple[Node, float], pointed_by: Iterable[Node] = (),
             points_to: Iterable[Node] = ()) -> "WeightedNodesDirectedGraph":
         DirectedGraph.add(self, n_w[0], pointed_by, points_to)
-        if n_w[0] not in self.node_weights():
+        n = n_w[0] if isinstance(n_w[0], Node) else Node(n_w[0])
+        if n not in self.node_weights():
             self.set_weight(*n_w)
         return self
 
@@ -822,7 +823,8 @@ class WeightedNodesDirectedGraph(DirectedGraph):
         for n in (u, *rest):
             if not isinstance(n, Node):
                 n = Node(n)
-            self.__node_weights.pop(n)
+            if n in self.node_weights():
+                self.__node_weights.pop(n)
         DirectedGraph.remove(self, u, *rest)
         return self
 
@@ -838,7 +840,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
         if u in self:
             try:
                 self.__node_weights[u] = float(w)
-            except TypeError:
+            except ValueError:
                 raise TypeError("Real value expected!")
         return self
 
@@ -851,10 +853,10 @@ class WeightedNodesDirectedGraph(DirectedGraph):
         """
         if not isinstance(u, Node):
             u = Node(u)
-        if u in self.node_weights:
+        if u in self.node_weights():
             try:
                 self.set_weight(u, self.node_weights(u) + float(w))
-            except TypeError:
+            except ValueError:
                 raise TypeError("Real value expected!")
         return self
 
@@ -866,7 +868,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
         res = WeightedNodesDirectedGraph(
             {n: (self.node_weights(n), ([], self.nodes)) for n in self.nodes})
         for l in self.links:
-            res.disconnect(l[0], [l[1]])
+            res.disconnect(l[1], [l[0]])
         return res
 
     def transposed(self) -> "WeightedNodesDirectedGraph":
@@ -962,7 +964,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
 
     def __eq__(self, other: "WeightedNodesDirectedGraph") -> bool:
         if type(other) == WeightedNodesDirectedGraph:
-            return (self.node_weights, self.links) == (other.node_weights, other.links)
+            return (self.node_weights(), self.links) == (other.node_weights(), other.links)
         return False
 
     def __str__(self) -> str:
@@ -1009,14 +1011,14 @@ class WeightedLinksDirectedGraph(DirectedGraph):
             of the link from that node to each of them.
         """
         if u_or_l is None:
-            return self.__link_weights
+            return self.__link_weights.copy()
         elif isinstance(u_or_l, tuple):
             return self.__link_weights.get(u_or_l)
         else:
             if not isinstance(u_or_l, Node):
                 u_or_l = Node(u_or_l)
             if v is None:
-                return {n: self.__link_weights[(u_or_l, n)] for n in self.next(u_or_l)}
+                return {n: self.link_weights((u_or_l, n)) for n in self.next(u_or_l)}
             if not isinstance(v, Node):
                 v = Node(v)
             return self.__link_weights.get((u_or_l, v))
@@ -1041,11 +1043,14 @@ class WeightedLinksDirectedGraph(DirectedGraph):
         for n in (u, *rest):
             if not isinstance(n, Node):
                 n = Node(n)
-            for v in self.next(n):
-                self.__link_weights.pop((n, v))
-            for v in self.prev(n):
-                self.__link_weights.pop((v, n))
-        return super().remove(n, *rest)
+            if n in self:
+                for v in self.next(n):
+                    if (n, v) in self.link_weights():
+                        self.__link_weights.pop((n, v))
+                for v in self.prev(n):
+                    if (v, n) in self.link_weights():
+                        self.__link_weights.pop((v, n))
+        return super().remove(u, *rest)
 
     def connect(self, u: Node, pointed_by_weights: dict[Node, float] = {},
                 points_to_weights: dict[Node, float] = {}) -> "WeightedLinksDirectedGraph":
@@ -1079,11 +1084,13 @@ class WeightedLinksDirectedGraph(DirectedGraph):
             for v in pointed_by:
                 if not isinstance(v, Node):
                     v = Node(v)
-                self.__link_weights.pop((v, u))
+                if v in self.prev(u):
+                    self.__link_weights.pop((v, u))
             for v in points_to:
                 if not isinstance(v, Node):
                     v = Node(v)
-                self.__link_weights.pop((u, v))
+                if v in self.next(u):
+                    self.__link_weights.pop((u, v))
             super().disconnect(u, pointed_by, points_to)
         return self
 
@@ -1106,7 +1113,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                 except TypeError:
                     raise TypeError("Real value expected!")
             return self
-        except TypeError:
+        except ValueError:
             raise TypeError("Directed link is of type tuple[Node, Node]!")
 
     def increase_weight(self, l: tuple[Node, Node], w: float) -> "WeightedLinksDirectedGraph":
@@ -1122,13 +1129,13 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                 raise ValueError("Directed link expected!")
             l = (l[0] if isinstance(l[0], Node) else Node(l[0]),
                  l[1] if isinstance(l[1], Node) else Node(l[1]))
-            if l in self.link_weights:
+            if l in self.link_weights():
                 try:
                     self.set_weight(l, self.link_weights(l) + float(w))
                 except TypeError:
                     raise TypeError("Real value expected!")
             return self
-        except TypeError as t:
+        except ValueError as t:
             if "Real value expected!" in t.args:
                 raise t
             raise TypeError("Directed link is of type tuple!")
@@ -1272,13 +1279,15 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
     def add(self, n_w: tuple[Node, float], pointed_by_weights: dict[Node, float] = {},
             points_to_weights: dict[Node, float] = {}) -> "WeightedDirectedGraph":
         super().add(n_w[0], pointed_by_weights, points_to_weights)
-        if n_w[0] not in self.node_weights():
+        n = n_w[0] if isinstance(n_w[0], Node) else Node(n_w[0])
+        if n not in self.node_weights():
             self.set_weight(*n_w)
         return self
 
     def remove(self, u: Node, *rest: Node) -> "WeightedDirectedGraph":
-        for n in (u,) + rest:
-            super().disconnect(n, self.prev(n), self.next(n))
+        for n in (u, *rest):
+            if n in self:
+                super().disconnect(n, self.prev(n), self.next(n))
         return WeightedNodesDirectedGraph.remove(self, u, *rest)
 
     def set_weight(self, el: Node | tuple, w: float) -> "WeightedDirectedGraph":
@@ -1304,7 +1313,7 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
             w: A real value.
         Increase the weight of object el with w.
         """
-        if el in self.link_weights:
+        if el in self.link_weights():
             try:
                 self.set_weight(el, self.link_weights(el) + float(w))
             except TypeError:
@@ -1312,10 +1321,10 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
             return self
         if not isinstance(el, Node):
             el = Node(el)
-        if el in self.node_weights:
+        if el in self.node_weights():
             try:
                 return self.set_weight(el, self.node_weights(el) + float(w))
-            except TypeError:
+            except ValueError:
                 raise TypeError("Real value expected!")
         return self
 
