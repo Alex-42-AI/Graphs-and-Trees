@@ -2,7 +2,7 @@
 Module for implementing directed graphs.
 """
 
-from ..src.undirected_graph import *
+from .undirected_graph import *
 
 
 def combine_graphs(graph0: "DirectedGraph", graph1: "DirectedGraph") -> "DirectedGraph":
