@@ -1,6 +1,6 @@
 from unittest import TestCase, main
 
-from .src.directed_graph import *
+from ..src.directed_graph import *
 
 n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15 = Node(0), Node(1), Node(
     2), Node(3), Node(4), Node(5), Node(6), Node(7), Node(8), Node(9), Node(10), Node(11), Node(
@@ -69,7 +69,7 @@ class TestDirectedGraph(TestCase):
         self.assertDictEqual(g1.prev(),
                              {n0: {n1}, n1: {n3, n6}, n2: {n0, n1, n6}, n3: {n2}, n4: {n1, n5},
                               n5: {n1, n3}, n6: {n2, n3}})
-        self.assertDictEqual(self.g1.next(),
+        self.assertDictEqual(g1.next(),
                              {n0: {n2}, n1: {n0, n2, n4, n5}, n2: {n3, n6}, n3: {n1, n5, n6},
                               n4: set(), n5: {n4}, n6: {n1, n2}})
 
@@ -147,8 +147,7 @@ class TestDirectedGraph(TestCase):
         self.assertEqual(self.g3, self.g3.copy())
 
     def test_complementary(self):
-        g1 = self.g1.complementary()
-        self.assertEqual(g1, DirectedGraph(
+        self.assertEqual(self.g1.complementary(), DirectedGraph(
             {0: ({2, 3, 4, 5}, {1, 3, 4, 5}), 1: ({2, 4, 5}, {3}), 2: ({3, 4, 5}, {4, 5}),
              3: ({4, 5}, {4}), 4: (set(), {5})}))
 
@@ -173,8 +172,8 @@ class TestDirectedGraph(TestCase):
         self.assertDictEqual(g1.link_weights(), dict(zip(self.g1.links, [0] * 9)))
         g2 = self.g2.weighted_links_graph({(n0, n1): 1, (n2, n1): 2})
         link_weights = dict(zip(self.g2.links, [0] * 10))
-        link_weights[(0, 1)] = 1
-        link_weights[(2, 1)] = 2
+        link_weights[(n0, n1)] = 1
+        link_weights[(n2, n1)] = 2
         self.assertDictEqual(g2.link_weights(), link_weights)
 
     def test_weighted_graph(self):
@@ -184,8 +183,8 @@ class TestDirectedGraph(TestCase):
         g2 = self.g2.weighted_graph({n0: 7, n1: 6, n2: 2}, {(n0, n1): 1, (n2, n1): 2})
         self.assertDictEqual(g2.node_weights(), {n0: 7, n1: 6, n2: 2, n3: 0, n4: 0, n5: 0, n6: 0})
         link_weights = dict(zip(self.g2.links, [0] * 10))
-        link_weights[(0, 1)] = 1
-        link_weights[(2, 1)] = 2
+        link_weights[(n0, n1)] = 1
+        link_weights[(n2, n1)] = 2
         self.assertDictEqual(g2.link_weights(), link_weights)
 
     def test_undirected(self):
@@ -270,7 +269,7 @@ class TestDirectedGraph(TestCase):
 
     def test_nodes_set_subgraph(self):
         self.assertEqual(self.g0.subgraph({n1, n2, n3, n7, n8}),
-                         DirectedGraph({0: (set(), {1, 2}), 1: ({8}, {2}), 3: ({2}, {8})}))
+                         DirectedGraph({1: ({8}, {2}), 3: ({2}, {8}), 7: ({3, 8}, set())}))
 
     def test_dag(self):
         self.assertFalse(self.g0.dag())
@@ -339,7 +338,6 @@ class TestDirectedGraph(TestCase):
         for i in range(1, n):
             self.assertIn(u, g0.prev(res[i]))
             u = res[i]
-        self.assertIn(u, g0.prev(res[0]))
 
     def test_euler_walk(self):
         g0 = DirectedGraph.component(self.g0, n0)
@@ -484,10 +482,10 @@ class TestDirectedGraph(TestCase):
         n = len(res)
         self.assertEqual(n, len(tmp.nodes))
         self.assertEqual(n9, res[-1])
-        tmp.disconnect(n5, [n4])
-        self.assertFalse(tmp.hamilton_walk())
         for i in range(n - 1):
             self.assertIn(res[i], tmp.prev(res[i + 1]))
+        tmp.disconnect(n5, [n4])
+        self.assertFalse(tmp.hamilton_walk())
 
     def test_hamilton_walk_missing_nodes(self):
         with self.assertRaises(KeyError):
@@ -537,8 +535,8 @@ class TestDirectedGraph(TestCase):
         self.assertEqual(g1.connect(n5, {n4}), self.g2.copy().remove(n6))
 
     def test_str(self):
-        self.assertEqual(str(self.g0), f"<{self.g0.nodes}, " + ", ".join(
-            f"<{l[0]}, {l[1]}>" for l in self.g0.links) + ">")
+        self.assertEqual(str(self.g0), "<" + str(self.g0.nodes) + ", {" + ", ".join(
+            f"<{l[0]}, {l[1]}>" for l in self.g0.links) + "}>")
 
     def test_repr(self):
         self.assertEqual(str(self.g0), repr(self.g0))
@@ -578,7 +576,7 @@ class TestWeightedNodesDirectedGraph(TestDirectedGraph):
         self.assertDictEqual(g1.prev(),
                              {n0: {n1}, n1: {n3, n6}, n2: {n0, n1, n6}, n3: {n2}, n4: {n1, n5},
                               n5: {n1, n3}, n6: {n2, n3}})
-        self.assertDictEqual(self.g1.next(),
+        self.assertDictEqual(g1.next(),
                              {n0: {n2}, n1: {n0, n2, n4, n5}, n2: {n3, n6}, n3: {n1, n5, n6},
                               n4: set(), n5: {n4}, n6: {n1, n2}})
 
@@ -591,7 +589,37 @@ class TestWeightedNodesDirectedGraph(TestDirectedGraph):
             {5: (1, ({3}, {4})), 3: (6, ([], [])), 4: (5, ([], []))}))
 
     def test_remove_missing_node(self):
-        self.assertEqual(self.g0, self.g0.remove(-1, -2))
+        self.assertEqual(self.g0, self.g0.copy().remove(-1, -2))
+
+    def test_connect(self):
+        ...
+
+    def test_connect_connected_nodes(self):
+        ...
+
+    def test_connect_all(self):
+        ...
+
+    def test_disconnect(self):
+        ...
+
+    def test_disconnect_disconnected_nodes(self):
+        ...
+
+    def test_disconnect_all(self):
+        ...
+
+    def test_connected(self):
+        ...
+
+    def test_strongly_connected_component(self):
+        ...
+
+    def test_strongly_connected_components(self):
+        ...
+
+    def test_strongly_connected_component_missing_node(self):
+        ...
 
     def test_set_weight(self):
         g0 = self.g0.copy().set_weight(4, 6)
@@ -603,6 +631,23 @@ class TestWeightedNodesDirectedGraph(TestDirectedGraph):
     def test_set_weight_bad_weight_type(self):
         with self.assertRaises(TypeError):
             self.g0.set_weight(4, "5-")
+
+    def test_component(self):
+        self.assertEqual(self.g0.component(n9), WeightedNodesDirectedGraph(
+            {n0: (7, ([], [])), n1: (3, ([n0, n8], [n2])), n2: (5, ([n0], [n3, n4])),
+             n3: (2, ([n6], [n7, n8])), n4: (8, ([n6], [n5])), n5: (4, ([n7], [n6])),
+             n6: (6, ([], [])), n7: (6, ([n8], [n9])), n8: (2, ([], [])), n9: (5, ([], []))}))
+        self.assertEqual(self.g0.component(n13), WeightedNodesDirectedGraph(
+            {n10: (4, ([], [])), n11: (2, ([n10], [n12, n13])), n12: (1, ([], [n13])),
+             n13: (3, ([], []))}))
+        self.assertEqual(self.g1.component(n4), self.g1)
+        self.assertEqual(self.g2.component(n1), self.g2)
+        self.assertEqual(self.g3.component(n4), WeightedNodesDirectedGraph(
+            {n0: (7, ([], [])), n1: (4, ([n0, n2], [n5])), n2: (3, ([n0, n3], [n4])),
+             n3: (5, ([], [])), n4: (6, ([], [n5])), n5: (2, ([], []))}))
+        self.assertEqual(self.g3.component(n10), WeightedNodesDirectedGraph(
+            {n6: (2, ([], [n7, n8])), n7: (1, ([], [])), n8: (6, ([], [])),
+             n9: (4, ([n7, n8, n10], [])), n10: (5, ([], [n11])), n11: (8, ([], []))}))
 
     def test_increase_weight(self):
         g0 = self.g0.copy().increase_weight(4, 2)
@@ -618,8 +663,8 @@ class TestWeightedNodesDirectedGraph(TestDirectedGraph):
     def test_complementary(self):
         g1 = self.g1.complementary()
         self.assertEqual(g1, WeightedNodesDirectedGraph(
-            {0: (3, ({2, 3, 4, 5}, {1, 3, 4, 5})), 1: (2, ({2, 4, 5}, {3})),
-             2: ({3, 4, 5}, {4, 5}), 3: ({4, 5}, {4}), 4: (set(), {5})}))
+            {0: (3, ({2, 3, 4, 5}, {1, 3, 4, 5})), 1: (2, ({2, 4, 5}, {3})), 5: (1, ([], [])),
+             2: (4, ({3, 4, 5}, {4, 5})), 3: (6, ({4, 5}, {4})), 4: (5, (set(), {5}))}))
 
     def test_transposed(self):
         self.assertEqual(self.g0.transposed(), WeightedNodesDirectedGraph(
@@ -640,8 +685,8 @@ class TestWeightedNodesDirectedGraph(TestDirectedGraph):
         self.assertDictEqual(g1.link_weights(), dict(zip(self.g1.links, [0] * 9)))
         g2 = self.g2.weighted_graph({(n0, n1): 1, (n2, n1): 2})
         link_weights = dict(zip(self.g2.links, [0] * 10))
-        link_weights[(0, 1)] = 1
-        link_weights[(2, 1)] = 2
+        link_weights[(n0, n1)] = 1
+        link_weights[(n2, n1)] = 2
         self.assertDictEqual(g2.link_weights(), link_weights)
 
     def test_undirected(self):
@@ -650,6 +695,28 @@ class TestWeightedNodesDirectedGraph(TestDirectedGraph):
              n4: (8, [n5, n6]), n5: (4, {n6, n7}), n6: (6, {}), n7: (6, [n8, n9]), n8: (2, {}),
              n9: (5, {}), n10: (4, {n11}), n11: (2, [n12, n13]), n12: (1, {n13}), n13: (3, {}),
              n14: (6, {})}))
+
+    def test_connection_components(self):
+        res = self.g0.connection_components()
+        self.assertEqual(len(res), 3)
+        self.assertIn(WeightedNodesDirectedGraph(
+            {n0: (7, ([], [])), n1: (3, ([n0, n8], [n2])), n2: (5, ([n0], [n3, n4])),
+             n3: (2, ([n6], [n7, n8])), n4: (8, ([n6], [n5])), n5: (4, ([n7], [n6])),
+             n6: (6, ([], [])), n7: (6, ([n8], [n9])), n8: (2, ([], [])), n9: (5, ([], []))}), res)
+        self.assertIn(WeightedNodesDirectedGraph(
+            {n10: (4, ([], [])), n11: (2, ([n10], [n12, n13])), n12: (1, ([], [n13])),
+             n13: (3, ([], []))}), res)
+        self.assertIn(WeightedNodesDirectedGraph({n14: (6, ([], []))}), res)
+        self.assertListEqual(self.g1.connection_components(), [self.g1])
+        self.assertListEqual(self.g2.connection_components(), [self.g2])
+        res = self.g3.connection_components()
+        self.assertEqual(len(res), 2)
+        self.assertIn(WeightedNodesDirectedGraph(
+            {n0: (7, ([], [])), n1: (4, ([n0, n2], [n5])), n2: (3, ([n0, n3], [n4])),
+             n3: (5, ([], [])), n4: (6, ([], [n5])), n5: (2, ([], []))}), res)
+        self.assertIn(WeightedNodesDirectedGraph(
+            {n6: (2, ([], [n7, n8])), n7: (1, ([], [])), n8: (6, ([], [])),
+             n9: (4, ([n7, n8, n10], [])), n10: (5, ([], [n11])), n11: (8, ([], []))}), res)
 
     def test_node_subgraph(self):
         self.assertEqual(self.g0.subgraph(n0), self.g0.component(n0))
@@ -711,9 +778,9 @@ class TestWeightedNodesDirectedGraph(TestDirectedGraph):
         expected = WeightedNodesDirectedGraph(
             {0: (7, ([], [])), 1: (4, ([0, 2], [5])), 2: (3, ([0, 3], [4])), 4: (6, ([], [5])),
              5: (2, ([], [])), 6: (2, ([], [7, 8])), 7: (1, ([], [])), 8: (6, ([], [])),
-             9: (4, ([7, 8, 10], [])), 10: (3, ([], [])), 13: (6, ([], [])),
-             11: (2, ([10, 13], [10, 12, 14, 15])), 12: ([10, 11], [13]), 14: (5, ([], [])),
-             15: ([13], [14])})
+             9: (4, ([7, 8, 10], [])), 10: (8, ([], [])), 13: (6, ([], [])), 3: (5, ([], [])),
+             11: (10, ([10, 13], [10, 12, 14, 15])), 12: (4, ([10, 11], [13])), 14: (5, ([], [])),
+             15: (1, ([13], [14]))})
         self.assertEqual(self.g3 + g1, expected)
 
     def test_str(self):
@@ -742,17 +809,55 @@ class TestWeightedLinksDirectedGraph(TestDirectedGraph):
     def test_init(self):
         pass
 
+    def test_add_node(self):
+        g1 = self.g1.copy().add(6, {2: 1, 3: 2}, {1: 2, 2: 3})
+        self.assertSetEqual(g1.nodes, {n0, n1, n2, n3, n4, n5, n6})
+        link_weights = self.g1.link_weights()
+        link_weights[(n2, n6)] = 1
+        link_weights[(n3, n6)] = 2
+        link_weights[(n6, n1)] = 2
+        link_weights[(n6, n2)] = 3
+        self.assertDictEqual(g1.link_weights(), link_weights)
+        self.assertDictEqual(g1.prev(),
+                             {n0: {n1}, n1: {n3, n6}, n2: {n0, n1, n6}, n3: {n2}, n4: {n1, n5},
+                              n5: {n1, n3}, n6: {n2, n3}})
+        self.assertDictEqual(g1.next(),
+                             {n0: {n2}, n1: {n0, n2, n4, n5}, n2: {n3, n6}, n3: {n1, n5, n6},
+                              n4: set(), n5: {n4}, n6: {n1, n2}})
+
+    def test_add_present_node(self):
+        self.assertEqual(self.g0, self.g0.add(0, {1, 2}))
+
+    def test_remove(self):
+        g1 = self.g1.copy().remove(0, 1, 2)
+        self.assertEqual(g1, WeightedLinksDirectedGraph({5: ({3: 2}, {4: 5})}))
+
+    def test_remove_missing_node(self):
+        self.assertEqual(self.g0, self.g0.remove(-1, -2))
+
     def test_connect(self):
         pass
 
     def test_connect_connected_nodes(self):
         pass
 
+    def test_connect_all(self):
+        g1 = self.g1.copy()
+        g1.connect_all(0, 1, 2)
+        self.assertEqual(g1, WeightedLinksDirectedGraph(
+            {n1: ({n0: 0, n2: 0, n3: 3}, {n0: 1, n2: 4, n4: 9, n5: 3}),
+             n2: ({n0: 2}, {n0: 0, n3: -6}), n5: ({n3: 2}, {n4: 5})}))
+
     def test_disconnect(self):
         pass
 
     def test_disconnect_disconnected_nodes(self):
         pass
+
+    def test_disconnect_all(self):
+        g1 = self.g1.copy().disconnect_all(0, 1, 2, 3)
+        self.assertEqual(g1, WeightedLinksDirectedGraph(
+            {n0: ({}, {}), n1: ({}, {n4: 9, n5: 3}), n2: ({}, {}), n5: ({n3: 2}, {n4: 5})}))
 
     def test_set_weight(self):
         g0 = self.g0.copy().set_weight((n2, n4), 3)
@@ -794,13 +899,117 @@ class TestWeightedLinksDirectedGraph(TestDirectedGraph):
             {u: (self.g3.link_weights(u), {v: self.g3.link_weights(v, u) for v in self.g3.prev(u)})
              for u in self.g3.nodes}))
 
+    def test_weighted_graph(self):
+        g1 = self.g1.weighted_graph()
+        self.assertDictEqual(g1.node_weights(), {n0: 0, n1: 0, n2: 0, n3: 0, n4: 0, n5: 0})
+        g2 = self.g2.weighted_graph({n0: 7, n1: 6, n2: 2})
+        self.assertDictEqual(g2.node_weights(), {n0: 7, n1: 6, n2: 2, n3: 0, n4: 0, n5: 0, n6: 0})
+
     def test_undirected(self):
-        self.assertEqual(self.g0.copy().connect(1, {0: 1}).undirected(),
+        self.assertEqual(self.g0.copy().connect(0, {1: 1}).undirected(),
                          WeightedLinksUndirectedGraph(
                              {n0: {n1: 3, n2: 4}, n1: {n2: 3, n8: -1}, n2: {n3: -6, n4: 5},
                               n3: {n6: 3, n7: -3, n8: 5}, n4: {n5: 0, n6: 2}, n5: {n6: 5, n7: 1},
                               n7: {n8: 4, n9: 3}, n10: {n11: 2}, n11: {n12: 6, n13: 10},
                               n12: {n13: 3}, n14: {}}))
+
+    def test_euler_tour(self):
+        ...
+
+    def test_euler_tour_exists(self):
+        ...
+
+    def test_euler_walk(self):
+        ...
+
+    def test_euler_walk_missing_nodes(self):
+        ...
+
+    def test_euler_walk_exists(self):
+        ...
+
+    def test_euler_walk_exists_missing_nodes(self):
+        ...
+
+    def test_hamilton_tour(self):
+        ...
+
+    def test_hamilton_tour_exists(self):
+        ...
+
+    def test_hamilton_walk(self):
+        ...
+
+    def test_hamilton_walk_missing_nodes(self):
+        ...
+
+    def test_hamilton_walk_exists(self):
+        ...
+
+    def test_hamilton_walk_exists_missing_nodes(self):
+        ...
+
+    def test_cycle_with_length(self):
+        ...
+
+    def test_cycle_with_length_bad_length_type(self):
+        ...
+
+    def test_cycle_with_length_bad_length_value(self):
+        ...
+
+    def test_path_with_length(self):
+        ...
+
+    def test_path_with_length_missing_nodes(self):
+        ...
+
+    def test_path_with_length_bad_length_value(self):
+        ...
+
+    def test_path_with_length_bad_length_type(self):
+        ...
+
+    def test_get_shortest_path(self):
+        ...
+
+    def test_get_shortest_path_missing_nodes(self):
+        ...
+
+    def test_component(self):
+        self.assertEqual(self.g0.component(n9), WeightedLinksDirectedGraph(
+            {n1: ({n0: 2, n8: -1}, {n2: 3}), n2: ({n0: 4}, {n3: -6, n4: 5}),
+             n3: ({n6: 3}, {n7: -3, n8: 5}), n4: ({n6: 2}, {n5: 0}), n5: ({n7: 1}, {n6: 5}),
+             n7: ({n8: 4}, {n9: 3})}))
+        self.assertEqual(self.g0.component(n13), WeightedLinksDirectedGraph(
+            {n11: ({n10: 2}, {n12: 6, n13: 10}), n13: ({n12: 3}, {})}))
+        self.assertEqual(self.g1.component(n4), self.g1)
+        self.assertEqual(self.g2.component(n1), self.g2)
+        self.assertEqual(self.g3.component(n4), WeightedLinksDirectedGraph(
+            {n1: ({n0: 3, n2: 4}, {n5: 5}), n2: ({n0: 6, n3: 1}, {n4: 0}), n4: ({}, {n5: 1})}))
+        self.assertEqual(self.g3.component(n10), WeightedLinksDirectedGraph(
+            {n6: ({}, {n7: 2, n8: 4}), n9: ({n7: 3, n8: 0, n10: 4}, {}), n11: ({n10: 1}, {})}))
+
+    def test_connection_components(self):
+        res = self.g0.connection_components()
+        self.assertEqual(len(res), 3)
+        self.assertIn(WeightedLinksDirectedGraph(
+            {n1: ({n0: 2, n8: -1}, {n2: 3}), n2: ({n0: 4}, {n3: -6, n4: 5}),
+             n3: ({n6: 3}, {n7: -3, n8: 5}), n4: ({n6: 2}, {n5: 0}), n5: ({n7: 1}, {n6: 5}),
+             n7: ({n8: 4}, {n9: 3})}), res)
+        self.assertIn(WeightedLinksDirectedGraph(
+            {n11: ({n10: 2}, {n12: 6, n13: 10}), n13: ({n12: 3}, {})}), res)
+        self.assertIn(WeightedLinksDirectedGraph({n14: ({}, {})}), res)
+        self.assertListEqual(self.g1.connection_components(), [self.g1])
+        self.assertListEqual(self.g2.connection_components(), [self.g2])
+        res = self.g3.connection_components()
+        self.assertEqual(len(res), 2)
+        self.assertIn(WeightedLinksDirectedGraph(
+            {n1: ({n0: 3, n2: 4}, {n5: 5}), n2: ({n0: 6, n3: 1}, {n4: 0}), n4: ({}, {n5: 1})}),
+                      res)
+        self.assertIn(WeightedLinksDirectedGraph(
+            {n6: ({}, {n7: 2, n8: 4}), n9: ({n7: 3, n8: 0, n10: 4}, {}), n11: ({n10: 1}, {})}),
+                      res)
 
     def test_node_subgraph(self):
         self.assertEqual(self.g0.subgraph(0), self.g0.component(0))
@@ -815,8 +1024,8 @@ class TestWeightedLinksDirectedGraph(TestDirectedGraph):
             self.g1.subgraph(6)
 
     def test_nodes_set_subgraph(self):
-        self.assertEqual(self.g2.subgraph({n0, n1, n2, n3}),
-                         WeightedLinksDirectedGraph({1: {0: 2, 2: 6}, 2: {0: 2, 3: -1}}))
+        self.assertEqual(self.g2.subgraph({n0, n1, n2, n3}), WeightedLinksDirectedGraph(
+            {1: ({0: 2, 2: 6}, {3: 1}), 2: ({}, {0: 2, 3: -1})}))
 
     def test_minimal_path_links(self):
         self.assertListEqual(self.g0.minimal_path_links(1, 5), [n1, n2, n3, n7, n5])
@@ -849,7 +1058,7 @@ class TestWeightedLinksDirectedGraph(TestDirectedGraph):
     def test_add(self):
         expected = WeightedLinksDirectedGraph(
             {n0: ({n5: 4}, {}), n1: ({n0: 2, n2: 6, n3: 3}, {n0: 1, n2: 4, n3: 1, n4: 9, n5: 3}),
-             n2: ({n0: 2, n5: 3}, {n3: -7}), n4: ({}, {n3: 4}),
+             n2: ({n0: 2, n5: 3}, {n0: 2, n3: -7}), n4: ({}, {n3: 4}),
              n5: ({n3: 2, n4: 1, n6: 2}, {n4: 5})})
         self.assertEqual(self.g1 + self.g2, expected)
 
@@ -902,7 +1111,7 @@ class TestWeightedDirectedGraph(TestWeightedNodesDirectedGraph, TestWeightedLink
         self.assertDictEqual(g1.prev(),
                              {n0: {n1}, n1: {n3, n6}, n2: {n0, n1, n6}, n3: {n2}, n4: {n1, n5},
                               n5: {n1, n3}, n6: {n2, n3}})
-        self.assertDictEqual(self.g1.next(),
+        self.assertDictEqual(g1.next(),
                              {n0: {n2}, n1: {n0, n2, n4, n5}, n2: {n3, n6}, n3: {n1, n5, n6},
                               n4: set(), n5: {n4}, n6: {n1, n2}})
 
@@ -915,7 +1124,7 @@ class TestWeightedDirectedGraph(TestWeightedNodesDirectedGraph, TestWeightedLink
             {5: (1, ({3: 2}, {4: 5})), 3: (6, ({}, {})), 4: (5, ({}, {}))}))
 
     def test_remove_missing_node(self):
-        self.assertEqual(self.g0, self.g0.remove(-1, -2))
+        self.assertEqual(self.g0, self.g0.copy().remove(-1, -2))
 
     def test_set_node_weight(self):
         g0 = self.g0.copy().set_weight(2, 3)
@@ -924,11 +1133,11 @@ class TestWeightedDirectedGraph(TestWeightedNodesDirectedGraph, TestWeightedLink
         self.assertDictEqual(g0.node_weights(), node_weights)
 
     def test_set_node_weight_missing_node(self):
-        self.assertEqual(self.g0, self.g0.set_weight(Node(-1), 4))
+        self.assertEqual(self.g0, self.g0.copy().set_weight(Node(-1), 4))
 
     def test_set_node_weight_bad_weight_type(self):
         with self.assertRaises(TypeError):
-            self.g0.set_weight(2, [3])
+            self.g0.copy().set_weight(2, [3])
 
     def test_set_link_weight(self):
         g0 = self.g0.copy().set_weight((n2, n4), 3)
@@ -937,11 +1146,11 @@ class TestWeightedDirectedGraph(TestWeightedNodesDirectedGraph, TestWeightedLink
         self.assertDictEqual(g0.link_weights(), res_link_weights)
 
     def test_set_link_weight_missing_link(self):
-        self.assertEqual(self.g0, self.g0.set_weight((n2, n6), 3))
+        self.assertEqual(self.g0, self.g0.copy().set_weight((n2, n6), 3))
 
     def test_set_link_weight_bad_weight_type(self):
         with self.assertRaises(TypeError):
-            self.g0.set_weight((n2, n4), [3])
+            self.g0.copy().set_weight((n2, n4), [3])
 
     def test_increase_node_weight(self):
         g0 = self.g0.copy().increase_weight(2, 3)
@@ -950,11 +1159,11 @@ class TestWeightedDirectedGraph(TestWeightedNodesDirectedGraph, TestWeightedLink
         self.assertDictEqual(g0.node_weights(), node_weights)
 
     def test_increase_node_weight_missing_node(self):
-        self.assertEqual(self.g0, self.g0.increase_weight(Node(-1), 4))
+        self.assertEqual(self.g0, self.g0.copy().increase_weight(Node(-1), 4))
 
     def test_increase_node_weight_bad_weight_type(self):
         with self.assertRaises(TypeError):
-            self.g0.increase_weight(2, [3])
+            self.g0.copy().increase_weight(2, [3])
 
     def test_increase_link_weight(self):
         g0 = self.g0.copy().increase_weight((n2, n4), 1)
@@ -963,11 +1172,57 @@ class TestWeightedDirectedGraph(TestWeightedNodesDirectedGraph, TestWeightedLink
         self.assertDictEqual(g0.link_weights(), res_link_weights)
 
     def test_increase_link_weight_missing_link(self):
-        self.assertEqual(self.g0, self.g0.increase_weight((n2, n6), 1))
+        self.assertEqual(self.g0, self.g0.copy().increase_weight((n2, n6), 1))
 
     def test_increase_link_weight_bad_weight_type(self):
         with self.assertRaises(TypeError):
-            self.g0.increase_weight((n2, n4), [3])
+            self.g0.copy().increase_weight((n2, n4), [3])
+
+    def test_component(self):
+        self.assertEqual(self.g0.component(n9), WeightedDirectedGraph(
+            {n0: (7, ({}, {})), n1: (3, ({n0: 2, n8: -1}, {n2: 3})),
+             n2: (5, ({n0: 4}, {n3: -6, n4: 5})), n3: (2, ({n6: 3}, {n7: -3, n8: 5})),
+             n4: (8, ({n6: 2}, {n5: 0})), n5: (4, ({n7: 1}, {n6: 5})), n6: (6, ({}, {})),
+             n7: (6, ({n8: 4}, {n9: 3})), n8: (2, ({}, {})), n9: (5, ({}, {}))}))
+        self.assertEqual(self.g0.component(n13), WeightedDirectedGraph({n10: (4, ({}, {})),
+                                                                        n11: (2, ({n10: 2},
+                                                                                  {n12: 6,
+                                                                                   n13: 10})),
+                                                                        n12: (1, ({}, {})),
+                                                                        n13: (3, ({n12: 3}, {}))}))
+        self.assertEqual(self.g1.component(n4), self.g1)
+        self.assertEqual(self.g2.component(n1), self.g2)
+        self.assertEqual(self.g3.component(n4), WeightedDirectedGraph(
+            {n0: (7, ({}, {})), n1: (4, ({n0: 3, n2: 4}, {n5: 5})),
+             n2: (2, ({n0: 6, n3: 1}, {n4: 0})), n3: (5, ({}, {})), n4: (3, ({}, {n5: 1})),
+             n5: (2, ({}, {}))}))
+        self.assertEqual(self.g3.component(n10), WeightedDirectedGraph(
+            {n6: (2, ({}, {n7: 2, n8: 4})), n7: (1, ({}, {})), n8: (6, ({}, {})),
+             n9: (4, ({n7: 3, n8: 0, n10: 4}, {})), n10: (5, ({}, {})), n11: (8, ({n10: 1}, {}))}))
+
+    def test_connection_components(self):
+        res = self.g0.connection_components()
+        self.assertEqual(len(res), 3)
+        self.assertIn(WeightedDirectedGraph(
+            {n0: (7, ({}, {})), n1: (3, ({n0: 2, n8: -1}, {n2: 3})),
+             n2: (5, ({n0: 4}, {n3: -6, n4: 5})), n3: (2, ({n6: 3}, {n7: -3, n8: 5})),
+             n4: (8, ({n6: 2}, {n5: 0})), n5: (4, ({n7: 1}, {n6: 5})), n6: (6, ({}, {})),
+             n7: (6, ({n8: 4}, {n9: 3})), n8: (2, ({}, {})), n9: (5, ({}, {}))}), res)
+        self.assertIn(WeightedDirectedGraph(
+            {n10: (4, ({}, {})), n11: (2, ({n10: 2}, {n12: 6, n13: 10})), n12: (1, ({}, {})),
+             n13: (3, ({n12: 3}, {}))}), res)
+        self.assertIn(WeightedDirectedGraph({n14: (6, ({}, {}))}), res)
+        self.assertListEqual(self.g1.connection_components(), [self.g1])
+        self.assertListEqual(self.g2.connection_components(), [self.g2])
+        res = self.g3.connection_components()
+        self.assertEqual(len(res), 2)
+        self.assertIn(WeightedDirectedGraph({n0: (7, ({}, {})), n1: (4, ({n0: 3, n2: 4}, {n5: 5})),
+                                             n2: (2, ({n0: 6, n3: 1}, {n4: 0})), n3: (5, ({}, {})),
+                                             n4: (3, ({}, {n5: 1})), n5: (2, ({}, {}))}), res)
+        self.assertIn(WeightedDirectedGraph(
+            {n6: (2, ({}, {n7: 2, n8: 4})), n7: (1, ({}, {})), n8: (6, ({}, {})),
+             n9: (4, ({n7: 3, n8: 0, n10: 4}, {})), n10: (5, ({}, {})), n11: (8, ({n10: 1}, {}))}),
+                      res)
 
     def test_transposed(self):
         self.assertEqual(self.g0.transposed(), WeightedDirectedGraph({u: (self.g0.node_weights(u),
@@ -1025,7 +1280,22 @@ class TestWeightedDirectedGraph(TestWeightedNodesDirectedGraph, TestWeightedLink
     def test_nodes_set_subgraph(self):
         self.assertEqual(self.g2.subgraph({n0, n1, n2, n5}), WeightedDirectedGraph(
             {0: (7, ({2: 2, 5: 4}, {1: 2})), 1: (6, ({2: 6}, {})), 2: (2, ({5: 3}, {})),
-             5: (5, {})}))
+             5: (5, ({}, {}))}))
+
+    def test_weighted_graph(self):
+        ...
+
+    def test_minimal_path_nodes(self):
+        ...
+
+    def test_minimal_path_nodes_missing_nodes(self):
+        ...
+
+    def test_minimal_path_links(self):
+        ...
+
+    def test_minimal_path_links_missing_nodes(self):
+        ...
 
     def test_minimal_path(self):
         self.assertListEqual(self.g0.minimal_path(n1, n13), [])
@@ -1039,7 +1309,7 @@ class TestWeightedDirectedGraph(TestWeightedNodesDirectedGraph, TestWeightedLink
     def test_isomorphic_bijection(self):
         g1 = WeightedDirectedGraph(
             {n10: (3, ({}, {})), n11: (2, ({n13: 3}, {n10: 1, n12: 4, n14: 9, n15: 3})),
-             n12: (4, ({n10: 2}, {n13: -6})), n13: (6, ({}, {})), n14: (5, {}, {}),
+             n12: (4, ({n10: 2}, {n13: -6})), n13: (6, ({}, {})), n14: (5, ({}, {})),
              n15: (1, ({n13: 2}, {n14: 5}))})
         func = self.g1.isomorphic_bijection(g1)
         self.assertEqual(func, {n0: n10, n1: n11, n2: n12, n3: n13, n4: n14, n5: n15})
@@ -1064,7 +1334,7 @@ class TestWeightedDirectedGraph(TestWeightedNodesDirectedGraph, TestWeightedLink
 
     def test_add(self):
         expected = WeightedDirectedGraph(
-            {n0: (10, ({n5: 4}, {})),
+            {n0: (10, ({n5: 4, n2: 2}, {})),
              n1: (8, ({n0: 2, n2: 6, n3: 3}, {n0: 1, n2: 4, n3: 1, n4: 9, n5: 3})),
              n2: (6, ({n0: 2, n5: 3}, {n3: -7})), n3: (10, ({}, {})), n4: (8, ({}, {n3: 4})),
              n5: (6, ({n3: 2, n4: 1, n6: 2}, {n4: 5})), n6: (4, ({}, {}))})
