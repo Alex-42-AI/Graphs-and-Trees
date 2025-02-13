@@ -8,7 +8,6 @@ from collections import defaultdict
 
 from itertools import permutations, combinations, product
 
-
 from .base import Node, Link, Graph, Iterable
 
 
@@ -190,7 +189,7 @@ class UndirectedGraph(Graph):
                 u = Node(u)
             if u in self:
                 if tmp := self.neighbors(u):
-                    self.disconnect(u, *tmp)
+                    UndirectedGraph.disconnect(self, u, *tmp)
                 self.__nodes.remove(u), self.__neighbors.pop(u)
         return self
 
@@ -1152,7 +1151,9 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         """
         if n is not None and not isinstance(n, Node):
             n = Node(n)
-        return self.__node_weights.copy() if n is None else self.__node_weights.get(n)
+        if n is None:
+            return {u: self.node_weights(u) for u in self.nodes}
+        return self.__node_weights[n]
 
     @property
     def total_nodes_weight(self) -> float:
@@ -1163,18 +1164,17 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         return sum(self.node_weights().values())
 
     def add(self, n_w: tuple[Node, float], *current_nodes: Node) -> "WeightedNodesUndirectedGraph":
-        UndirectedGraph.add(self, n_w[0], *current_nodes)
         n = n_w[0] if isinstance(n_w[0], Node) else Node(n_w[0])
-        if n not in self.node_weights():
+        if n not in self:
+            UndirectedGraph.add(self, n, *current_nodes)
             self.set_weight(*n_w)
         return self
 
     def remove(self, n: Node, *rest: Node) -> "WeightedNodesUndirectedGraph":
-        for u in (n, *rest):
+        for u in self.nodes.intersection({n, *rest}):
             if not isinstance(u, Node):
                 u = Node(u)
-            if u in self.node_weights():
-                self.__node_weights.pop(u)
+            self.__node_weights.pop(u)
         return super().remove(n, *rest)
 
     def set_weight(self, u: Node, w: float) -> "WeightedNodesUndirectedGraph":
@@ -1331,7 +1331,6 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
                           [comp.independent_set() for comp in self.connection_components()])
         if self.is_tree(True):
             return self.weighted_tree().weighted_independent_set()
-        weights = self.total_nodes_weight
         return helper(set())[0]
 
     def isomorphic_bijection(self, other: UndirectedGraph) -> dict[Node, Node]:
@@ -1420,13 +1419,13 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
             of the link it shares with each of them.
         """
         if u_or_l is None:
-            return self.__link_weights
+            return {l: self.link_weights(l) for l in self.links}
         elif isinstance(u_or_l, Link):
-            return self.__link_weights.get(u_or_l)
+            return self.__link_weights[u_or_l]
         else:
             if v is None:
-                return {n: self.__link_weights[Link(n, u_or_l)] for n in self.neighbors(u_or_l)}
-            return self.__link_weights.get(Link(u_or_l, v))
+                return {n: self.link_weights(Link(n, u_or_l)) for n in self.neighbors(u_or_l)}
+            return self.link_weights(Link(u_or_l, v))
 
     @property
     def total_links_weight(self) -> float:
@@ -1443,8 +1442,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         if u not in self:
             UndirectedGraph.add(self, u, *nodes_weights.keys())
             for v, w in nodes_weights.items():
-                if Link(u, v) not in self.link_weights():
-                    self.set_weight(Link(u, v), w)
+                self.set_weight(Link(u, v), w)
         return self
 
     def remove(self, n: Node, *rest: Node) -> "WeightedLinksUndirectedGraph":
@@ -1458,11 +1456,13 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
                 nodes_weights: dict[Node, float] = {}) -> "WeightedLinksUndirectedGraph":
         if not isinstance(u, Node):
             u = Node(u)
+        nodes_weights = {(k if isinstance(k, Node) else Node(k)): v for k, v in
+                         nodes_weights.items()}
+        nodes_weights = {v: w for v, w in nodes_weights.items() if v not in self.neighbors(u)}
         if nodes_weights:
             super().connect(u, *nodes_weights.keys())
-        if u in self:
-            for v, w in nodes_weights.items():
-                if Link(u, v) not in self.link_weights():
+            if u in self:
+                for v, w in nodes_weights.items():
                     self.set_weight(Link(u, v), w)
         return self
 
@@ -1645,7 +1645,8 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
                 possible = True
                 for n, u in map_dict.items():
                     for m, v in map_dict.items():
-                        if self.link_weights(Link(n, m)) != other.link_weights(Link(u, v)):
+                        if self.link_weights().get(Link(n, m)) != other.link_weights().get(
+                                Link(u, v)):
                             possible = False
                             break
                     if not possible:
@@ -1694,9 +1695,9 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
 
     def add(self, n_w: tuple[Node, float],
             nodes_weights: dict[Node, float] = {}) -> "WeightedUndirectedGraph":
-        super().add(n_w[0], nodes_weights)
         n = n_w[0] if isinstance(n_w[0], Node) else Node(n_w[0])
-        if n not in self.node_weights():
+        if n not in self:
+            super().add(n_w[0], nodes_weights)
             self.set_weight(*n_w)
         return self
 
@@ -1872,7 +1873,7 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
                         possible = False
                         break
                     for m, v in map_dict.items():
-                        if self.link_weights(Link(n, m)) != other.link_weights(
+                        if self.link_weights().get(Link(n, m)) != other.link_weights().get(
                                 Link(u, v)) or self.node_weights(m) != other.node_weights(v):
                             possible = False
                             break
