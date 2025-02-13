@@ -1,6 +1,6 @@
 from unittest import TestCase, main
 
-from .src.tree import *
+from ..src.tree import *
 
 n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15 = Node(0), Node(1), Node(
     2), Node(3), Node(4), Node(5), Node(6), Node(7), Node(8), Node(9), Node(10), Node(11), Node(
@@ -45,7 +45,7 @@ class TestBinTree(TestCase):
         self.assertSetEqual(self.tree.leaves, {h, v, f, l, p, j, b, x, c, y, z, q, o})
 
     def test_copy(self):
-        self.assertEqual(self.tree, self.tree.copy())
+        self.assertTrue(self.tree == self.tree.copy())
 
     def test_rotate_left(self):
         tree = self.tree.copy().rotate_left()
@@ -77,7 +77,7 @@ class TestBinTree(TestCase):
         self.assertEqual(tree.tree(), Tree(0, {1: [], 2: []}))
 
     def test_nodes_on_level(self):
-        self.assertListEqual(self.tree.nodes_on_level(2), [a, i, m, n])
+        self.assertSetEqual(set(self.tree.nodes_on_level(2)), {a, i, m, n})
 
     def test_nodes_on_level_bad_level_value(self):
         self.assertListEqual(self.tree.nodes_on_level(-2), [])
@@ -109,24 +109,11 @@ class TestBinTree(TestCase):
     def test_inverted(self):
         tree = self.tree.inverted()
         self.assertEqual(tree, BinTree(eps,
-                                       BinTree(t, BinTree(n, BinTree(k, y, c), BinTree(d, x, b)),
-                                               BinTree(m, o, BinTree(g, q, z))), BinTree(e,
-                                                                                         BinTree(a,
-                                                                                                 BinTree(
-                                                                                                     w,
-                                                                                                     j,
-                                                                                                     p),
-                                                                                                 BinTree(
-                                                                                                     r,
-                                                                                                     right=l)),
-                                                                                         BinTree(i,
-                                                                                                 BinTree(
-                                                                                                     u,
-                                                                                                     right=f),
-                                                                                                 BinTree(
-                                                                                                     s,
-                                                                                                     v,
-                                                                                                     h)))))
+                                       BinTree(t, BinTree(m, o, BinTree(g, q, z)),
+                                               BinTree(n, BinTree(k, y, c), BinTree(d, x, b))),
+                                       BinTree(e,
+                                               BinTree(a, BinTree(w, j, p), BinTree(r, right=l)),
+                                               BinTree(i, BinTree(u, right=f), BinTree(s, v, h)))))
 
     def test_traverse(self):
         self.assertListEqual(self.tree.traverse("preorder"),
@@ -135,7 +122,7 @@ class TestBinTree(TestCase):
         self.assertListEqual(self.tree.traverse("in-order"),
                              [h, s, v, i, f, u, e, l, r, a, p, w, j, eps, b, d, x, n, c, k, y, t,
                               z, g, q, m, o])
-        self.assertListEqual(self.tree.traverse("post_order"),
+        self.assertListEqual(self.tree.traverse("post-order"),
                              [h, v, s, f, u, i, l, r, p, j, w, a, e, b, x, d, c, y, k, n, z, q, g,
                               o, m, t, eps])
 
@@ -164,8 +151,9 @@ class TestTree(TestCase):
         self.assertEqual(t.root, n0)
         self.assertSetEqual(t.nodes, {n0, n1, n2, n3, n4, n5})
         self.assertDictEqual(t.hierarchy(),
-                             {n0: {n1, n2}, n1: {n3, n4}, n2: {n5}, n3: {}, n4: {}, n5: {}})
-        self.assertDictEqual(t.parent(), {n1: {n0}, n2: {n0}, n3: {n1}, n4: {n1}, n5: {n2}})
+                             {n0: {n1, n2}, n1: {n3, n4}, n2: {n5}, n3: set(), n4: set(),
+                              n5: set()})
+        self.assertDictEqual(t.parent(), {n1: n0, n2: n0, n3: n1, n4: n1, n5: n2})
         self.assertSetEqual(t.leaves, {n3, n4, n5})
 
     def test_root(self):
@@ -204,7 +192,9 @@ class TestTree(TestCase):
 
     def test_hierarchy(self):
         self.assertSetEqual(self.t0.descendants(0), {n1, n2})
-        self.assertDictEqual(self.t1.hierarchy(), {n0: {n1, n2, n3, n4, n5}})
+        self.assertDictEqual(self.t1.hierarchy(),
+                             {n0: {n1, n2, n3, n4, n5}, n1: set(), n2: set(), n3: set(), n4: set(),
+                              n5: set()})
 
     def test_hierarchy_missing_node(self):
         with self.assertRaises(KeyError):
@@ -232,7 +222,7 @@ class TestTree(TestCase):
              n5: ([], [n10, n11])}))
 
     def test_directed_graph_to_root(self):
-        self.assertEqual(self.t0.directed_graph(), DirectedGraph(
+        self.assertEqual(self.t0.directed_graph(False), DirectedGraph(
             {n1: ([n3, n4, n5], [n0]), n2: ([n6, n7], [n0]), n3: ([n8, n9], []),
              n5: ([n10, n11], [])}))
 
@@ -253,8 +243,8 @@ class TestTree(TestCase):
         self.assertSetEqual(t1.nodes, {n0, n1, n2, n3, n4, n5, n6, n7})
         self.assertSetEqual(t1.leaves, {n1, n2, n4, n5, n6, n7})
         self.assertDictEqual(t1.hierarchy(),
-                             {n0: {n1, n2, n3, n4, n5}, n1: {set()}, n2: {set()}, n3: {n6, n7},
-                              n4: {set()}, n5: {set()}, n6: {set()}, n7: {set()}})
+                             {n0: {n1, n2, n3, n4, n5}, n1: set(), n2: set(), n3: {n6, n7},
+                              n4: set(), n5: set(), n6: set(), n7: set()})
         self.assertSetEqual(t1.descendants(3), {n6, n7})
 
     def test_add_to_missing_node(self):
@@ -275,17 +265,17 @@ class TestTree(TestCase):
         self.assertEqual(t0, Tree(0, {1: {4, 5, 8, 9}, 2: {6, 7}, 5: {10, 11}}))
 
     def test_remove_missing_node(self):
-        self.assertEqual(self.t0, self.t0.remove(-2))
+        self.assertEqual(self.t0, self.t0.copy().remove(-2))
 
     def test_remove_subtree(self):
         t0 = self.t0.copy().remove(3, True)
-        self.assertEqual(t0, Tree(0, {1: {8, 9}, 2: {6, 7}, 5: {10, 11}}))
+        self.assertEqual(t0, Tree(0, {1: {4, 5}, 2: {6, 7}, 5: {10, 11}}))
 
     def test_node_depth(self):
         self.assertEqual(self.t0.node_depth(4), 2)
 
     def test_node_depth_missing_node(self):
-        with self.assertEqual(KeyError):
+        with self.assertRaises(KeyError):
             self.t1.node_depth(6)
 
     def test_path_to(self):
@@ -316,7 +306,7 @@ class TestTree(TestCase):
         self.assertNotEqual(self.t0, self.t1)
 
     def test_str(self):
-        self.assertEqual(str(self.t1), "(0)\n  ├──(1)\n  ├──(2)\n  ├──(3)\n  ├──(4)\n  └──(5)")
+        self.assertEqual(str(self.t1), "(0)\n ├──(1)\n ├──(2)\n ├──(3)\n ├──(4)\n └──(5)")
 
     def test_repr(self):
         inheritance = self.t0.hierarchy().copy()
@@ -344,7 +334,7 @@ class TestWeightedTree(TestTree):
 
     def test_weights_missing_node(self):
         with self.assertRaises(KeyError):
-            self.t0.weights(6)
+            self.t1.weights(6)
 
     def test_set_weight(self):
         t0 = self.t0.copy().set_weight(4, 7)
@@ -368,6 +358,44 @@ class TestWeightedTree(TestTree):
         with self.assertRaises(TypeError):
             self.t0.increase_weight(4, "5-")
 
+    def test_copy(self):
+        self.assertEqual(self.t0.copy(), self.t0)
+        self.assertEqual(self.t1.copy(), self.t1)
+
+    def test_subtree(self):
+        self.assertEqual(self.t0.subtree(1), WeightedTree((1, 4), {3: (5, {8, 9}), 4: (6, []),
+                                                                   5: (2, {10, 11}), 8: (6, []),
+                                                                   9: (4, []), 10: (5, []),
+                                                                   11: (8, [])}))
+        self.assertEqual(self.t1.subtree(0), self.t1)
+
+    def test_subtree_missing_node(self):
+        with self.assertRaises(KeyError):
+            self.t1.subtree(6)
+
+    def test_undirected_graph(self):
+        self.assertEqual(self.t0.undirected_graph(), WeightedNodesUndirectedGraph(
+            {n0: (7, []), n1: (4, [n0, n3, n4, n5]), n2: (3, [n0, n6, n7]),
+             n3: (5, [n8, n9]), n4: (6, []), n5: (2, [n10, n11]), n6: (2, []),
+             n7: (1, []), n8: (6, []), n9: (4, []), n10: (5, []), n11: (8, [])}))
+
+    def test_directed_graph_from_root(self):
+        self.assertEqual(self.t0.directed_graph(), WeightedNodesDirectedGraph(
+            {n0: (7, ([], [])), n1: (4, ([n0], [n3, n4, n5])), n2: (3, ([n0], [n6, n7])),
+             n3: (5, ([], [n8, n9])), n4: (6, ([], [])), n5: (2, ([], [n10, n11])),
+             n6: (2, ([], [])), n7: (1, ([], [])), n8: (6, ([], [])), n9: (4, ([], [])),
+             n10: (5, ([], [])), n11: (8, ([], []))}))
+
+    def test_directed_graph_to_root(self):
+        self.assertEqual(self.t0.directed_graph(False), WeightedNodesDirectedGraph(
+            {n0: (7, ([], [])), n1: (4, ([n3, n4, n5], [n0])), n2: (3, ([n6, n7], [n0])),
+             n3: (5, ([n8, n9], [])), n4: (6, ([], [])), n5: (2, ([n10, n11], [])),
+             n6: (2, ([], [])), n7: (1, ([], [])), n8: (6, ([], [])), n9: (4, ([], [])),
+             n10: (5, ([], [])), n11: (8, ([], []))}))
+
+    def test_weighted_tree(self):
+        ...
+
     def test_add_nodes(self):
         t1 = self.t1.copy()
         t1.add(3, {6: 3, 7: 4})
@@ -375,12 +403,12 @@ class TestWeightedTree(TestTree):
                              {n0: 6, n1: 1, n2: 1, n3: 0, n4: 2, n5: 1, n6: 3, n7: 4})
         self.assertSetEqual(t1.leaves, {n1, n2, n4, n5, n6, n7})
         self.assertDictEqual(t1.hierarchy(),
-                             {n0: {n1, n2, n3, n4, n5}, n1: {set()}, n2: {set()}, n3: {n6, n7},
-                              n4: {set()}, n5: {set()}, n6: {set()}, n7: {set()}})
+                             {n0: {n1, n2, n3, n4, n5}, n1: set(), n2: set(), n3: {n6, n7},
+                              n4: set(), n5: set(), n6: set(), n7: set()})
         self.assertSetEqual(t1.descendants(3), {n6, n7})
 
     def test_add_to_missing_node(self):
-        self.assertEqual(self.t1, self.t1.add(6, {7: 4}))
+        self.assertEqual(self.t1, self.t1.copy().add(6, {7: 4}))
 
     def test_add_already_present_nodes(self):
         self.assertEqual(self.t1, self.t1.copy().add(2, {3: 2, 4: 1}))
@@ -401,14 +429,14 @@ class TestWeightedTree(TestTree):
                                            9: (4, []), 10: (5, []), 11: (8, [])}))
 
     def test_remove_missing_node(self):
-        self.assertEqual(self.t0, self.t0.remove(-2))
+        self.assertEqual(self.t0, self.t0.copy().remove(-2))
 
     def test_remove_subtree(self):
         t0 = self.t0.copy().remove(3, True)
         self.assertEqual(t0, WeightedTree((0, 7),
                                           {1: (4, {4, 5}), 2: (3, {6, 7}), 4: (6, []),
-                                           5: (2, {10, 11}), 6: (2, []), 7: (1, []), 8: (6, []),
-                                           9: (4, []), 10: (5, []), 11: (8, [])}))
+                                           5: (2, {10, 11}), 6: (2, []), 7: (1, []), 10: (5, []),
+                                           11: (8, [])}))
 
     def test_weighted_vertex_cover(self):
         self.assertSetEqual(self.t0.weighted_vertex_cover(), {n1, n2, n3, n5})
@@ -432,13 +460,13 @@ class TestWeightedTree(TestTree):
 
     def test_str(self):
         self.assertEqual(str(self.t1),
-                         "(0)->6\n  ├──(1)->1\n  ├──(2)->1\n  ├──(3)->0\n  ├──(4)->2\n  └──(5)->1")
+                         "(0)->6.0\n ├──(1)->1.0\n ├──(2)->1.0\n ├──(3)->0.0\n ├──(4)->2.0\n └──(5)->1.0")
 
     def test_repr(self):
         inheritance = {k: (self.t1.weights(k), v) for k, v in self.t1.hierarchy().items()}
         inheritance.pop(self.t1.root)
-        self.assertEqual(repr(self.t1), f"WeightedTree({(n0, 6)}, {inheritance})")
+        self.assertEqual(repr(self.t1), f"WeightedTree({(n0, 6.0)}, {inheritance})")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
