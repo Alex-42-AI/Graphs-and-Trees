@@ -147,7 +147,7 @@ class TestUndirectedGraph(TestCase):
         self.assertIn(Node(-1), g0.nodes)
 
     def test_add_already_present_node(self):
-        self.assertEqual(self.g0, self.g0.add(0, 3, 4))
+        self.assertEqual(self.g0, self.g0.copy().add(0, 3, 4))
 
     def test_remove(self):
         g0 = self.g0.copy().remove(n2, n6)
@@ -160,7 +160,7 @@ class TestUndirectedGraph(TestCase):
                               n12: {n11, n13}, n13: {n11, n12}, n14: set()})
 
     def test_remove_missing_nodes(self):
-        self.assertEqual(self.g0, self.g0.remove(-3))
+        self.assertEqual(self.g0, self.g0.copy().remove(-3))
 
     def test_connect(self):
         g0 = self.g0.copy().connect(3, 4, 9)
@@ -176,29 +176,26 @@ class TestUndirectedGraph(TestCase):
         self.assertEqual(g00.connect(3, 2, 4, 6, 8), g01.connect(3, 4, 8))
 
     def test_connect_all(self):
-        g0 = self.g0.copy()
-        g0.connect_all(3, 4, 6, 8)
+        g0 = self.g0.copy().connect_all(3, 4, 6, 8)
         self.assertTrue(g0.clique(3, 4, 6, 8))
 
     def test_disconnect(self):
-        g0 = self.g0.copy()
-        g0.disconnect(n6, n7, n8)
+        g0 = self.g0.copy().disconnect(n6, n7, n8)
         self.assertSetEqual(g0.nodes, self.g0.nodes)
         self.assertTrue(g0.links.isdisjoint({Link(6, 7), Link(6, 8)}))
         self.assertSetEqual(g0.links.union({Link(6, 7), Link(6, 8)}), self.g0.links)
         self.assertDictEqual(g0.neighbors(),
                              {n0: {n1, n2}, n1: {n0, n2}, n2: {n0, n1, n3, n4, n5}, n3: {n2, n6},
-                              n4: {n2, n5, n6}, n5: {n2, n4, n8}, n6: {n3, n4}, n7: {n8, n9}, n8: {n5, n7},
-                              n9: {n7}, n10: {n11}, n11: {n10, n12, n13}, n12: {n11, n13},
-                              n13: {n11, n12}, n14: set()})
+                              n4: {n2, n5, n6}, n5: {n2, n4, n8}, n6: {n3, n4}, n7: {n8, n9},
+                              n8: {n5, n7}, n9: {n7}, n10: {n11}, n11: {n10, n12, n13},
+                              n12: {n11, n13}, n13: {n11, n12}, n14: set()})
 
     def test_disconnect_disconnected_nodes(self):
         g00, g01 = self.g0.copy(), self.g0.copy()
         self.assertEqual(g00.disconnect(4, 2, 3, 6, 10), g01.disconnect(4, 2, 6))
 
     def test_disconnect_all(self):
-        g0 = self.g0.copy()
-        g0.disconnect_all(4, 6, 7, 9)
+        g0 = self.g0.copy().disconnect_all(4, 6, 7, 9)
         self.assertTrue(g0.complementary().clique(4, 6, 7, 9))
 
     def test_copy(self):
@@ -849,7 +846,7 @@ class TestUndirectedGraph(TestCase):
         self.assertEqual(repr(self.g0), str(self.g0))
 
 
-class TestWeightedNodesUndirectedGraph(TestUndirectedGraph):
+class TestWeightedNodesUndirectedGraph(TestCase):
     def setUp(self):
         self.g0 = WeightedNodesUndirectedGraph(
             {n0: (7, [n1, n2]), n1: (3, []), n2: (5, [n1, n3, n4, n5]),
@@ -878,6 +875,10 @@ class TestWeightedNodesUndirectedGraph(TestUndirectedGraph):
                          {n0: 7, n1: 3, n2: 5, n3: 2, n4: 8, n5: 4, n6: 6, n7: 2, n8: 0, n9: 5,
                           n10: 4, n11: 2, n12: 1, n13: 3, n14: 6})
 
+    def test_node_weights_missing_node(self):
+        with self.assertRaises(KeyError):
+            self.g1.node_weights(n9)
+
     def test_total_node_weights(self):
         self.assertEqual(self.g0.total_nodes_weight, 58)
 
@@ -890,7 +891,7 @@ class TestWeightedNodesUndirectedGraph(TestUndirectedGraph):
         self.assertSetEqual(g0.neighbors(-1), {n2, n3, n5})
 
     def test_add_already_present_node(self):
-        self.assertEqual(self.g0, self.g0.add((0, 3), 3))
+        self.assertEqual(self.g0, self.g0.copy().add((0, 3), 3))
 
     def test_remove(self):
         g0 = self.g0.copy().remove(2, 6, 11, 14)
@@ -899,14 +900,14 @@ class TestWeightedNodesUndirectedGraph(TestUndirectedGraph):
              9: (5, []), 10: (4, []), 12: (1, {13}), 13: (3, {})}))
 
     def test_remove_missing_nodes(self):
-        self.assertEqual(self.g0, self.g0.remove(-1, 15))
+        self.assertEqual(self.g0, self.g0.copy().remove(-1, 15))
 
     def test_set_weight(self):
         g0 = self.g0.copy().set_weight(4, 6)
         self.assertEqual(g0.node_weights(4), 6)
 
     def test_set_weight_missing_node(self):
-        self.assertEqual(self.g0, self.g0.set_weight(-4, 0))
+        self.assertEqual(self.g0, self.g0.copy().set_weight(-4, 0))
 
     def test_set_weight_bad_weight_type(self):
         with self.assertRaises(TypeError):
@@ -917,7 +918,7 @@ class TestWeightedNodesUndirectedGraph(TestUndirectedGraph):
         self.assertEqual(g0.node_weights(4), 10)
 
     def test_increase_weight_missing_node(self):
-        self.assertEqual(self.g0, self.g0.set_weight(-4, 3))
+        self.assertEqual(self.g0, self.g0.copy().set_weight(-4, 3))
 
     def test_increase_weight_bad_weight_type(self):
         with self.assertRaises(TypeError):
@@ -988,6 +989,10 @@ class TestWeightedNodesUndirectedGraph(TestUndirectedGraph):
                          WeightedNodesUndirectedGraph(
                              {1: (2, {4}), 4: (5, {5}), 5: (1, {2}), 2: (4, {1})}))
 
+    def test_subgraph_missing_nodes(self):
+        self.assertEqual(self.g0.subgraph({n3, n4, n5, n6, n8, n11, n12}),
+                         self.g0.subgraph({Node(-1), Node(-2), n3, n4, n5, n6, n8, n11, n12}))
+
     def test_component(self):
         r0 = WeightedNodesUndirectedGraph({0: (7, {1, 2}), 1: (3, []), 2: (5, {1, 3, 4, 5}),
                                            3: (2, {6}), 4: (8, {5, 6}), 5: (4, {8}),
@@ -1000,6 +1005,10 @@ class TestWeightedNodesUndirectedGraph(TestUndirectedGraph):
         self.assertEqual(self.g1.component(0), self.g1)
         self.assertEqual(self.g2.component(0), self.g2)
         self.assertEqual(self.g3.component(0), self.g3)
+
+    def test_component_missing_node(self):
+        with self.assertRaises(KeyError):
+            self.g1.component(10)
 
     def test_links_graph(self):
         l02 = Node(Link(0, 2))
@@ -1016,108 +1025,14 @@ class TestWeightedNodesUndirectedGraph(TestUndirectedGraph):
 
     def test_weighted_graph(self):
         g1 = self.g1.weighted_graph()
+        self.assertDictEqual(self.g1.node_weights(), g1.node_weights())
         self.assertDictEqual(g1.link_weights(), dict(zip(self.g1.links, [0] * 8)))
         g2 = self.g2.weighted_graph({Link(0, 1): 1, Link(0, 2): 2})
+        self.assertDictEqual(self.g2.node_weights(), g2.node_weights())
         link_weights = dict(zip(self.g2.links, [0] * 9))
         link_weights[Link(0, 1)] = 1
         link_weights[Link(0, 2)] = 2
         self.assertDictEqual(g2.link_weights(), link_weights)
-
-    def test_connected(self):
-        ...
-
-    def test_connection_components(self):
-        ...
-
-    def test_dominating_set_on_full_k_partite_graph(self):
-        ...
-
-    def test_full(self):
-        ...
-
-    def test_full_k_partite(self):
-        ...
-
-    def test_get_degrees_sum(self):
-        ...
-
-    def test_get_neighbors(self):
-        ...
-
-    def test_get_nodes(self):
-        ...
-
-    def test_get_links(self):
-        ...
-
-    def test_diameter(self):
-        ...
-
-    def test_interval_sort(self):
-        ...
-
-    def test_interval_sort_given_start(self):
-        ...
-
-    def test_leaf_missing_node(self):
-        ...
-
-    def test_leaves(self):
-        ...
-
-    def test_max_cliques(self):
-        ...
-
-    def test_is_tree(self):
-        ...
-
-    def test_get_shortest_path(self):
-        ...
-
-    def test_all_maximal_cliques_node(self):
-        ...
-
-    def test_all_maximal_cliques_node_missing_node(self):
-        ...
-
-    def test_cut_nodes(self):
-        ...
-
-    def test_bridge_links(self):
-        ...
-
-    def test_chromatic_nodes_partition(self):
-        ...
-
-    def test_chromatic_nodes_partition_on_full_k_partite_graph(self):
-        ...
-
-    def test_chromatic_nodes_partition_on_tree_graph(self):
-        ...
-
-    def test_chromatic_nodes_partition_on_interval_graph(self):
-        ...
-
-    def test_chromatic_links_partition(self):
-        ...
-
-    def test_cliques_graph(self):
-        ...
-
-    def test_vertex_cover(self):
-        ...
-
-    def test_vertex_cover_on_interval_graph(self):
-        ...
-
-    def test_vertex_cover_on_tree_graph(self):
-        ...
-
-    def test_vertex_cover_on_disconnected_graph(self):
-        ...
-
-    def test_vertex_cover_on_full_k_partite_graph(self):
-        ...
 
     def test_minimal_path_nodes(self):
         res = self.g0.minimal_path_nodes(2, 7)
@@ -1191,8 +1106,11 @@ class TestWeightedNodesUndirectedGraph(TestUndirectedGraph):
             f"{n} -> {self.g1.node_weights(n)}" for n in self.g1.nodes) + "}, " + str(
             self.g1.links) + ">")
 
+    def test_repr(self):
+        self.assertEqual(repr(self.g0), str(self.g0))
 
-class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
+
+class TestWeightedLinksUndirectedGraph(TestCase):
     def setUp(self):
         self.g0 = WeightedLinksUndirectedGraph(
             {n0: {n1: 3, n2: 1}, n2: {n1: -4, n3: 6, n4: 2, n5: 4}, n3: {n6: 3},
@@ -1211,135 +1129,6 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
         self.assertSetEqual(g.nodes, {n0, n1, n2, n3})
         self.assertDictEqual(g.link_weights(), {Link(0, 1): 4, Link(0, 2): 3, Link(1, 3): 1})
         self.assertDictEqual(g.neighbors(), {n0: {n1, n2}, n1: {n0, n3}, n2: {n0}, n3: {n1}})
-
-    def test_add_node(self):
-        g0 = self.g0.copy().add(-1, {0: 2, 1: 2, 2: 1})
-        for n in {0, 1, 2}:
-            self.assertIn(Node(-1), g0.neighbors(n))
-        self.assertSetEqual(g0.neighbors(-1), {n0, n1, n2})
-        link_weights = self.g0.link_weights()
-        link_weights[Link(0, -1)] = 2
-        link_weights[Link(1, -1)] = 2
-        link_weights[Link(2, -1)] = 1
-        self.assertDictEqual(g0.link_weights(), link_weights)
-        self.assertSetEqual(g0.nodes, self.g0.nodes.union({Node(-1)}))
-
-    def test_add_already_present_node(self):
-        self.assertEqual(self.g0, self.g0.copy().add(0, {n3: 2, n4: 1}))
-
-    def test_connect(self):
-        g0 = self.g0.copy().connect(9, {10: 3, 14: 2})
-        self.assertSetEqual(g0.nodes, self.g0.nodes)
-        res_link_weights = self.g0.link_weights()
-        res_link_weights[Link(9, 10)] = 3
-        res_link_weights[Link(9, 14)] = 2
-        self.assertDictEqual(g0.link_weights(), res_link_weights)
-        self.assertSetEqual(g0.neighbors(9), {n7, n10, n14})
-        self.assertSetEqual(g0.neighbors(10), {n9, n11})
-        self.assertSetEqual(g0.neighbors(14), {n9})
-
-    def test_connect_connected_nodes(self):
-        self.assertEqual(self.g0, self.g0.connect(0, {2: 3}))
-
-    def test_disconnect(self):
-        g0 = self.g0.copy().disconnect(7, 9)
-        self.assertSetEqual(g0.nodes, self.g0.nodes)
-        self.assertSetEqual(g0.links, self.g0.links - {Link(7, 9)})
-        link_weights = self.g0.link_weights()
-        link_weights.pop(Link(7, 9))
-        self.assertDictEqual(g0.link_weights(), link_weights)
-        self.assertSetEqual(g0.neighbors(7), {n6, n8})
-        self.assertSetEqual(g0.neighbors(9), set())
-
-    def test_disconnect_disconnected_nodes(self):
-        self.assertEqual(self.g0, self.g0.disconnect(6, 9, 10))
-
-    def test_set_weight(self):
-        g0 = self.g0.copy().set_weight(Link(2, 4), 3)
-        res_link_weights = self.g0.link_weights()
-        res_link_weights[Link(2, 4)] = 3
-        self.assertDictEqual(g0.link_weights(), res_link_weights)
-
-    def test_set_weight_missing_link(self):
-        self.assertEqual(self.g0, self.g0.set_weight(Link(2, 6), 3))
-
-    def test_set_weight_bad_weight_type(self):
-        with self.assertRaises(TypeError):
-            self.g0.set_weight(Link(2, 3), [3])
-
-    def test_increase_weight(self):
-        g0 = self.g0.copy().increase_weight(Link(2, 4), 1)
-        res_link_weights = self.g0.link_weights()
-        res_link_weights[Link(2, 4)] = 3
-        self.assertDictEqual(g0.link_weights(), res_link_weights)
-
-    def test_increase_weight_missing_link(self):
-        self.assertEqual(self.g0, self.g0.increase_weight(Link(2, 6), 1))
-
-    def test_increase_weight_bad_weight_type(self):
-        with self.assertRaises(TypeError):
-            self.g0.increase_weight(Link(2, 3), [3])
-
-    def test_copy(self):
-        self.assertEqual(self.g0, self.g0.copy())
-        self.assertEqual(self.g1, self.g1.copy())
-        self.assertEqual(self.g2, self.g2.copy())
-        self.assertEqual(self.g3, self.g3.copy())
-
-    def test_leaves(self):
-        ...
-
-    def test_leaf(self):
-        ...
-
-    def test_leaf_missing_node(self):
-        ...
-
-    def test_max_cliques(self):
-        ...
-
-    def test_maximal_independent_sets(self):
-        ...
-
-    def test_max_cliques_node(self):
-        ...
-
-    def test_max_cliques_node_missing_node(self):
-        ...
-
-    def test_weighted_graph(self):
-        g1 = self.g1.weighted_graph()
-        self.assertDictEqual(g1.node_weights(), {n0: 0, n1: 0, n2: 0, n3: 0, n4: 0, n5: 0})
-        g2 = self.g2.weighted_graph({n0: 7, n1: 6, n2: 2})
-        self.assertDictEqual(g2.node_weights(), {n0: 7, n1: 6, n2: 2, n3: 0, n4: 0, n5: 0, n6: 0})
-
-    def test_component(self):
-        r0 = WeightedLinksUndirectedGraph(
-            {0: {1: 3, 2: 1}, 2: {1: -4, 3: 6, 4: 2, 5: 4}, 3: {6: 3}, 4: {5: 3, 6: 7},
-             7: {6: 2, 8: 1, 9: 3}, 8: {5: 5, 6: 4}})
-        r1 = WeightedLinksUndirectedGraph({11: {10: 2, 12: 3, 13: 4}, 12: {13: 1}})
-        self.assertEqual(self.g0.component(0), r0)
-        self.assertEqual(self.g0.component(10), r1)
-        self.assertEqual(self.g0.component(14), WeightedLinksUndirectedGraph({14: {}}))
-        self.assertEqual(self.g1.component(0), self.g1)
-        self.assertEqual(self.g2.component(0), self.g2)
-        self.assertEqual(self.g3.component(0), self.g3)
-
-    def test_connection_components(self):
-        res = self.g0.connection_components()
-        self.assertEqual(len(res), 3)
-        self.assertIn(WeightedLinksUndirectedGraph(
-            {0: {1: 3, 2: 1}, 2: {1: -4, 3: 6, 4: 2, 5: 4}, 3: {6: 3}, 4: {5: 3, 6: 7},
-             7: {6: 2, 8: 1, 9: 3}, 8: {5: 5, 6: 4}}), res)
-        self.assertIn(WeightedLinksUndirectedGraph({11: {10: 2, 12: 3, 13: 4}, 12: {13: 1}}), res)
-        self.assertIn(WeightedLinksUndirectedGraph({14: {}}), res)
-        self.assertListEqual(self.g1.connection_components(), [self.g1])
-        self.assertListEqual(self.g2.connection_components(), [self.g2])
-        self.assertListEqual(self.g3.connection_components(), [self.g3])
-
-    def test_complementary(self):
-        g1 = self.g1.complementary()
-        self.assertEqual(g1, UndirectedGraph({0: {1, 3, 4}, 1: {5}, 2: {3, 4}, 3: {4}}))
 
     def test_link_weights(self):
         self.assertDictEqual(self.g0.link_weights(),
@@ -1366,153 +1155,157 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
         self.assertDictEqual(self.g0.link_weights(n14), {})
         self.assertEqual(self.g0.link_weights(Link(n2, n5)), 4)
 
+    def test_link_weights_missing_link(self):
+        with self.assertRaises(KeyError):
+            self.g0.link_weights(0, 4)
+
     def test_total_link_weights(self):
         self.assertEqual(self.g0.total_links_weight, 50)
         self.assertEqual(self.g1.total_links_weight, 23)
         self.assertEqual(self.g2.total_links_weight, 8)
         self.assertEqual(self.g3.total_links_weight, 30)
 
-    def test_dominating_set(self):
-        ...
+    def test_add_node(self):
+        g0 = self.g0.copy().add(-1, {0: 2, 1: 2, 2: 1})
+        for n in {0, 1, 2}:
+            self.assertIn(Node(-1), g0.neighbors(n))
+        self.assertSetEqual(g0.neighbors(-1), {n0, n1, n2})
+        link_weights = self.g0.link_weights()
+        link_weights[Link(0, -1)] = 2
+        link_weights[Link(1, -1)] = 2
+        link_weights[Link(2, -1)] = 1
+        self.assertDictEqual(g0.link_weights(), link_weights)
+        self.assertSetEqual(g0.nodes, self.g0.nodes.union({Node(-1)}))
 
-    def test_dominating_set_on_full_k_partite_graph(self):
-        ...
+    def test_add_already_present_node(self):
+        self.assertEqual(self.g0, self.g0.copy().add(0, {n3: 2, n4: 1}))
 
-    def test_dominating_set_on_tree_graph(self):
-        ...
+    def test_remove(self):
+        g0 = self.g0.copy().remove(n2, n6)
+        self.assertSetEqual(g0.nodes, {n0, n1, n3, n4, n5, n7, n8, n9, n10, n11, n12, n13, n14})
+        link_weights = self.g0.link_weights()
+        (link_weights.pop(Link(0, 2)), link_weights.pop(Link(1, 2)), link_weights.pop(Link(2, 3)),
+         link_weights.pop(Link(2, 4)), link_weights.pop(Link(2, 5)))
+        (link_weights.pop(Link(3, 6)), link_weights.pop(Link(4, 6)), link_weights.pop(Link(6, 7)),
+         link_weights.pop(Link(6, 8)))
+        self.assertDictEqual(g0.link_weights(), link_weights)
+        self.assertDictEqual(g0.neighbors(),
+                             {n0: {n1}, n1: {n0}, n3: set(), n4: {n5}, n5: {n4, n8}, n7: {n8, n9},
+                              n8: {n5, n7}, n9: {n7}, n10: {n11}, n11: {n10, n12, n13},
+                              n12: {n11, n13}, n13: {n11, n12}, n14: set()})
 
-    def test_dominating_set_on_disconnected_graph(self):
-        ...
+    def test_remove_missing_nodes(self):
+        self.assertEqual(self.g0, self.g0.copy().remove(-3))
 
-    def test_euler_tour(self):
-        ...
+    def test_connect(self):
+        g0 = self.g0.copy().connect(9, {10: 3, 14: 2})
+        self.assertSetEqual(g0.nodes, self.g0.nodes)
+        res_link_weights = self.g0.link_weights()
+        res_link_weights[Link(9, 10)] = 3
+        res_link_weights[Link(9, 14)] = 2
+        self.assertDictEqual(g0.link_weights(), res_link_weights)
+        self.assertSetEqual(g0.neighbors(9), {n7, n10, n14})
+        self.assertSetEqual(g0.neighbors(10), {n9, n11})
+        self.assertSetEqual(g0.neighbors(14), {n9})
 
-    def test_euler_walk(self):
-        ...
+    def test_connect_connected_nodes(self):
+        self.assertEqual(self.g0, self.g0.copy().connect(0, {2: 3}))
 
-    def test_euler_tour_exist(self):
-        ...
+    def test_connect_all(self):
+        g0 = self.g0.copy().connect_all(3, 4, 6, 8)
+        self.assertTrue(g0.clique(3, 4, 6, 8))
+        self.assertEqual(list(map(g0.link_weights,
+                                 [Link(3, 4), Link(3, 6), Link(4, 6), Link(3, 8), Link(4, 8),
+                                  Link(6, 8)])), [0, 3, 7, 0, 0, 4])
 
-    def test_euler_walk_missing_nodes(self):
-        ...
+    def test_disconnect(self):
+        g0 = self.g0.copy().disconnect(7, 9)
+        self.assertSetEqual(g0.nodes, self.g0.nodes)
+        self.assertSetEqual(g0.links, self.g0.links - {Link(7, 9)})
+        link_weights = self.g0.link_weights()
+        link_weights.pop(Link(7, 9))
+        self.assertDictEqual(g0.link_weights(), link_weights)
+        self.assertSetEqual(g0.neighbors(7), {n6, n8})
+        self.assertSetEqual(g0.neighbors(9), set())
 
-    def test_euler_walk_exists_missing_nodes(self):
-        ...
+    def test_disconnect_disconnected_nodes(self):
+        self.assertEqual(self.g0, self.g0.copy().disconnect(6, 9, 10))
 
-    def test_euler_walk_exists(self):
-        ...
+    def test_disconnect_all(self):
+        g0 = self.g0.copy().disconnect_all(4, 6, 7, 9)
+        self.assertTrue(g0.complementary().clique(4, 6, 7, 9))
 
-    def test_full(self):
-        ...
+    def test_set_weight(self):
+        g0 = self.g0.copy().set_weight(Link(2, 4), 3)
+        res_link_weights = self.g0.link_weights()
+        res_link_weights[Link(2, 4)] = 3
+        self.assertDictEqual(g0.link_weights(), res_link_weights)
 
-    def test_full_k_partite(self):
-        ...
+    def test_set_weight_missing_link(self):
+        self.assertEqual(self.g0, self.g0.copy().set_weight(Link(2, 6), 3))
 
-    def test_full_k_partite_bad_k_type(self):
-        ...
+    def test_set_weight_bad_weight_type(self):
+        with self.assertRaises(TypeError):
+            self.g0.copy().set_weight(Link(2, 3), [3])
 
-    def test_vertex_cover(self):
-        ...
+    def test_increase_weight(self):
+        g0 = self.g0.copy().increase_weight(Link(2, 4), 1)
+        res_link_weights = self.g0.link_weights()
+        res_link_weights[Link(2, 4)] = 3
+        self.assertDictEqual(g0.link_weights(), res_link_weights)
 
-    def test_vertex_cover_on_interval_graph(self):
-        ...
+    def test_increase_weight_missing_link(self):
+        self.assertEqual(self.g0, self.g0.copy().increase_weight(Link(2, 6), 1))
 
-    def test_vertex_cover_on_tree_graph(self):
-        ...
+    def test_increase_weight_bad_weight_type(self):
+        with self.assertRaises(TypeError):
+            self.g0.copy().increase_weight(Link(2, 3), [3])
 
-    def test_vertex_cover_on_disconnected_graph(self):
-        ...
+    def test_copy(self):
+        self.assertEqual(self.g0, self.g0.copy())
+        self.assertEqual(self.g1, self.g1.copy())
+        self.assertEqual(self.g2, self.g2.copy())
+        self.assertEqual(self.g3, self.g3.copy())
 
-    def test_vertex_cover_on_full_k_partite_graph(self):
-        ...
+    def test_weighted_graph(self):
+        g1 = self.g1.weighted_graph()
+        self.assertDictEqual(g1.node_weights(), {n0: 0, n1: 0, n2: 0, n3: 0, n4: 0, n5: 0})
+        self.assertDictEqual(self.g1.link_weights(), g1.link_weights())
+        g2 = self.g2.weighted_graph({n0: 7, n1: 6, n2: 2})
+        self.assertDictEqual(g2.node_weights(), {n0: 7, n1: 6, n2: 2, n3: 0, n4: 0, n5: 0, n6: 0})
+        self.assertDictEqual(self.g2.link_weights(), g2.link_weights())
 
-    def test_get_degrees(self):
-        ...
+    def test_component(self):
+        r0 = WeightedLinksUndirectedGraph(
+            {0: {1: 3, 2: 1}, 2: {1: -4, 3: 6, 4: 2, 5: 4}, 3: {6: 3}, 4: {5: 3, 6: 7},
+             7: {6: 2, 8: 1, 9: 3}, 8: {5: 5, 6: 4}})
+        r1 = WeightedLinksUndirectedGraph({11: {10: 2, 12: 3, 13: 4}, 12: {13: 1}})
+        self.assertEqual(self.g0.component(0), r0)
+        self.assertEqual(self.g0.component(10), r1)
+        self.assertEqual(self.g0.component(14), WeightedLinksUndirectedGraph({14: {}}))
+        self.assertEqual(self.g1.component(0), self.g1)
+        self.assertEqual(self.g2.component(0), self.g2)
+        self.assertEqual(self.g3.component(0), self.g3)
 
-    def test_get_degrees_sum(self):
-        ...
-
-    def test_get_nodes(self):
-        ...
-
-    def test_get_links(self):
-        ...
-
-    def test_get_neighbors(self):
-        ...
-
-    def test_get_shortest_path(self):
-        ...
-
-    def test_hamilton_tour(self):
-        ...
-
-    def test_hamilton_tour_exist(self):
-        ...
-
-    def test_hamilton_walk(self):
-        ...
-
-    def test_hamilton_walk_exist(self):
-        ...
-
-    def test_hamilton_walk_missing_nodes(self):
-        ...
-
-    def test_hamilton_walk_exist_missing_nodes(self):
-        ...
-
-    def test_interval_sort(self):
-        ...
-
-    def test_interval_sort_given_start(self):
-        ...
-
-    def test_interval_sort_on_disconnected_graph(self):
-        ...
-
-    def test_is_tree(self):
-        ...
-
-    def test_all_maximal_cliques_node(self):
-        ...
-
-    def test_all_maximal_cliques_node_missing_node(self):
-        ...
-
-    def test_cut_nodes(self):
-        ...
-
-    def test_bridge_links(self):
-        ...
-
-    def test_chromatic_nodes_partition(self):
-        ...
-
-    def test_chromatic_nodes_partition_on_interval_graph(self):
-        ...
-
-    def test_chromatic_nodes_partition_on_tree_graph(self):
-        ...
-
-    def test_chromatic_nodes_partition_on_full_k_partite_graph(self):
-        ...
-
-    def test_chromatic_links_partition(self):
-        ...
-
-    def test_cliques_graph(self):
-        ...
-
-    def test_connected(self):
-        ...
-
-    def test_diameter(self):
-        ...
+    def test_connection_components(self):
+        res = self.g0.connection_components()
+        self.assertEqual(len(res), 3)
+        self.assertIn(WeightedLinksUndirectedGraph(
+            {0: {1: 3, 2: 1}, 2: {1: -4, 3: 6, 4: 2, 5: 4}, 3: {6: 3}, 4: {5: 3, 6: 7},
+             7: {6: 2, 8: 1, 9: 3}, 8: {5: 5, 6: 4}}), res)
+        self.assertIn(WeightedLinksUndirectedGraph({11: {10: 2, 12: 3, 13: 4}, 12: {13: 1}}), res)
+        self.assertIn(WeightedLinksUndirectedGraph({14: {}}), res)
+        self.assertListEqual(self.g1.connection_components(), [self.g1])
+        self.assertListEqual(self.g2.connection_components(), [self.g2])
+        self.assertListEqual(self.g3.connection_components(), [self.g3])
 
     def test_subgraph(self):
         self.assertEqual(self.g2.subgraph({n0, n1, n2, n3}),
                          WeightedLinksUndirectedGraph({1: {0: 1, 2: -4, 3: -6}, 2: {0: 2, 3: 1}}))
+
+    def test_subgraph_missing_nodes(self):
+        self.assertEqual(self.g0.subgraph({n3, n4, n5, n6, n8, n11, n12}),
+                         self.g0.subgraph({Node(-1), Node(-2), n3, n4, n5, n6, n8, n11, n12}))
 
     def test_minimal_spanning_tree(self):
         def build_graph(links):
@@ -1622,15 +1415,18 @@ class TestWeightedLinksUndirectedGraph(TestUndirectedGraph):
              5: {0: 3, 2: 0, 4: 4, 6: 5}}))
         self.assertEqual(g11 + self.g2, WeightedUndirectedGraph(
             {n0: (3, {n2: 2}), n1: (2, {n0: 1, n2: -4, n3: -6, n4: 0}), n2: (4, {n5: 0}),
-             n3: (6, {n2: 1, n4: 2, n5: 0}), n4: (5, {}), n5: (1, {n0: 3, n4: 4, n6: 5}), n6: (0, {})}))
+             n3: (6, {n2: 1, n4: 2, n5: 0}), n4: (5, {}), n5: (1, {n0: 3, n4: 4, n6: 5}),
+             n6: (0, {})}))
 
     def test_str(self):
         self.assertEqual(str(self.g0), "<" + str(self.g0.nodes) + ", {" + ", ".join(
             f"{l} -> {self.g0.link_weights(l)}" for l in self.g0.links) + "}>")
 
+    def test_repr(self):
+        self.assertEqual(repr(self.g0), str(self.g0))
 
-class TestWeightedUndirectedGraph(TestWeightedNodesUndirectedGraph,
-                                  TestWeightedLinksUndirectedGraph):
+
+class TestWeightedUndirectedGraph(TestCase):
     def setUp(self):
         self.g0 = WeightedUndirectedGraph(
             {n0: (7, {n1: 3, n2: 1}), n1: (3, {}), n2: (5, {n1: -4, n3: 6, n4: 2, n5: 4}),
@@ -1657,6 +1453,53 @@ class TestWeightedUndirectedGraph(TestWeightedNodesUndirectedGraph,
         self.assertDictEqual(g.link_weights(), {Link(0, 1): 0, Link(1, 2): 3})
         self.assertDictEqual(g.neighbors(), {n0: {n1}, n1: {n0, n2}, n2: {n1}})
 
+    def test_node_weights(self):
+        self.assertEqual(self.g0.node_weights(),
+                         {n0: 7, n1: 3, n2: 5, n3: 2, n4: 8, n5: 4, n6: 6, n7: 2, n8: 0, n9: 5,
+                          n10: 4, n11: 2, n12: 1, n13: 3, n14: 6})
+
+    def test_node_weights_missing_node(self):
+        with self.assertRaises(KeyError):
+            self.g1.node_weights(n9)
+
+    def test_total_node_weights(self):
+        self.assertEqual(self.g0.total_nodes_weight, 58)
+
+    def test_link_weights(self):
+        self.assertDictEqual(self.g0.link_weights(),
+                             {Link(n0, n1): 3, Link(n0, n2): 1, Link(n1, n2): -4,
+                              Link(n3, n2): 6, Link(n4, n2): 2, Link(n5, n2): 4, Link(n3, n6): 3,
+                              Link(n4, n6): 7, Link(n4, n5): 3,
+                              Link(n5, n8): 5, Link(n6, n7): 2, Link(n6, n8): 4, Link(n7, n8): 1,
+                              Link(n7, n9): 3, Link(n10, n11): 2,
+                              Link(n11, n12): 3, Link(n11, n13): 4, Link(n13, n12): 1})
+        self.assertDictEqual(self.g0.link_weights(n0), {n1: 3, n2: 1})
+        self.assertDictEqual(self.g0.link_weights(n1), {n0: 3, n2: -4})
+        self.assertDictEqual(self.g0.link_weights(n2), {n0: 1, n1: -4, n3: 6, n4: 2, n5: 4})
+        self.assertDictEqual(self.g0.link_weights(n3), {n2: 6, n6: 3})
+        self.assertDictEqual(self.g0.link_weights(n4), {n2: 2, n5: 3, n6: 7})
+        self.assertDictEqual(self.g0.link_weights(n5), {n2: 4, n4: 3, n8: 5})
+        self.assertDictEqual(self.g0.link_weights(n6), {n3: 3, n4: 7, n7: 2, n8: 4})
+        self.assertDictEqual(self.g0.link_weights(n7), {n6: 2, n8: 1, n9: 3})
+        self.assertDictEqual(self.g0.link_weights(n8), {n5: 5, n6: 4, n7: 1})
+        self.assertDictEqual(self.g0.link_weights(n9), {n7: 3})
+        self.assertDictEqual(self.g0.link_weights(n10), {n11: 2})
+        self.assertDictEqual(self.g0.link_weights(n11), {n10: 2, n12: 3, n13: 4})
+        self.assertDictEqual(self.g0.link_weights(n12), {n11: 3, n13: 1})
+        self.assertDictEqual(self.g0.link_weights(n13), {n11: 4, n12: 1})
+        self.assertDictEqual(self.g0.link_weights(n14), {})
+        self.assertEqual(self.g0.link_weights(Link(n2, n5)), 4)
+
+    def test_link_weights_missing_link(self):
+        with self.assertRaises(KeyError):
+            self.g0.link_weights(0, 4)
+
+    def test_total_link_weights(self):
+        self.assertEqual(self.g0.total_links_weight, 50)
+        self.assertEqual(self.g1.total_links_weight, 23)
+        self.assertEqual(self.g2.total_links_weight, 8)
+        self.assertEqual(self.g3.total_links_weight, 30)
+
     def test_total_weight(self):
         self.assertEqual((self.g0.total_weight, self.g1.total_weight, self.g2.total_weight,
                           self.g3.total_weight), (108, 44, 39, 83))
@@ -1676,7 +1519,7 @@ class TestWeightedUndirectedGraph(TestWeightedNodesUndirectedGraph,
         self.assertDictEqual(g0.neighbors(), neighbors)
 
     def test_add_already_present_node(self):
-        self.assertEqual(self.g0, self.g0.add((3, 5), {1: 2}))
+        self.assertEqual(self.g0, self.g0.copy().add((3, 5), {1: 2}))
 
     def test_remove(self):
         g0 = self.g0.copy().remove(10, 14)
@@ -1700,11 +1543,11 @@ class TestWeightedUndirectedGraph(TestWeightedNodesUndirectedGraph,
         self.assertDictEqual(g0.node_weights(), node_weights)
 
     def test_set_node_weight_missing_node(self):
-        self.assertEqual(self.g0, self.g0.set_weight(Node(-1), 4))
+        self.assertEqual(self.g0, self.g0.copy().set_weight(Node(-1), 4))
 
     def test_set_node_weight_bad_weight_type(self):
         with self.assertRaises(TypeError):
-            self.g0.set_weight(2, [3])
+            self.g0.copy().set_weight(2, [3])
 
     def test_set_link_weight(self):
         g0 = self.g0.copy().set_weight(Link(2, 3), 3)
@@ -1713,7 +1556,7 @@ class TestWeightedUndirectedGraph(TestWeightedNodesUndirectedGraph,
         self.assertDictEqual(g0.link_weights(), link_weights)
 
     def test_set_link_weight_missing_link(self):
-        self.assertEqual(self.g0, self.g0.set_weight(Link(1, 3), 4))
+        self.assertEqual(self.g0, self.g0.copy().set_weight(Link(1, 3), 4))
 
     def test_set_link_weight_bad_weight_type(self):
         with self.assertRaises(TypeError):
@@ -1726,11 +1569,11 @@ class TestWeightedUndirectedGraph(TestWeightedNodesUndirectedGraph,
         self.assertDictEqual(g0.node_weights(), node_weights)
 
     def test_increase_node_weight_missing_node(self):
-        self.assertEqual(self.g0, self.g0.increase_weight(Node(-1), 4))
+        self.assertEqual(self.g0, self.g0.copy().increase_weight(Node(-1), 4))
 
     def test_increase_node_weight_bad_weight_type(self):
         with self.assertRaises(TypeError):
-            self.g0.increase_weight(2, [3])
+            self.g0.copy().increase_weight(2, [3])
 
     def test_increase_link_weight(self):
         g0 = self.g0.copy().increase_weight(Link(2, 3), 3)
@@ -1739,11 +1582,17 @@ class TestWeightedUndirectedGraph(TestWeightedNodesUndirectedGraph,
         self.assertDictEqual(g0.link_weights(), link_weights)
 
     def test_increase_link_weight_missing_link(self):
-        self.assertEqual(self.g0, self.g0.increase_weight(Link(1, 3), 4))
+        self.assertEqual(self.g0, self.g0.copy().increase_weight(Link(1, 3), 4))
 
     def test_increase_link_weight_bad_weight_type(self):
         with self.assertRaises(TypeError):
-            self.g0.increase_weight(Link(2, 3), [3])
+            self.g0.copy().increase_weight(Link(2, 3), [3])
+
+    def test_copy(self):
+        self.assertEqual(self.g0, self.g0.copy())
+        self.assertEqual(self.g1, self.g1.copy())
+        self.assertEqual(self.g2, self.g2.copy())
+        self.assertEqual(self.g3, self.g3.copy())
 
     def test_component(self):
         r0 = WeightedUndirectedGraph(
@@ -1759,12 +1608,28 @@ class TestWeightedUndirectedGraph(TestWeightedNodesUndirectedGraph,
         self.assertEqual(self.g2.component(0), self.g2)
         self.assertEqual(self.g3.component(0), self.g3)
 
+    def test_connection_components(self):
+        res = self.g0.connection_components()
+        self.assertEqual(len(res), 3)
+        self.assertIn(WeightedUndirectedGraph(
+            {n0: (7, {n1: 3, n2: 1}), n1: (3, {}), n2: (5, {n1: -4, n3: 6, n4: 2, n5: 4}),
+             n3: (2, {n6: 3}), n4: (8, {n5: 3, n6: 7}), n5: (4, {}), n6: (6, {}),
+             n7: (2, {n6: 2, n8: 1, n9: 3}), n8: (0, {n5: 5, n6: 4}), n9: (5, {})}), res)
+        self.assertIn(WeightedUndirectedGraph(
+            {n10: (4, {}), n11: (2, {n10: 2, n12: 3, n13: 4}), n12: (1, {n13: 1}), n13: (3, {})}),
+            res)
+        self.assertIn(WeightedUndirectedGraph({14: (6, {})}), res)
+        self.assertListEqual(self.g1.connection_components(), [self.g1])
+        self.assertListEqual(self.g2.connection_components(), [self.g2])
+        self.assertListEqual(self.g3.connection_components(), [self.g3])
+
     def test_subgraph(self):
         self.assertEqual(self.g2.subgraph({n0, n1, n2, n3}), WeightedUndirectedGraph(
             {0: (7, {1: 1, 2: 2}), 1: (6, {2: -4, 3: -6}), 2: (2, {3: 1}), 3: (4, {})}))
 
-    def test_weighted_graph(self):
-        ...
+    def test_subgraph_missing_nodes(self):
+        self.assertEqual(self.g0.subgraph({n3, n4, n5, n6, n8, n11, n12}),
+                         self.g0.subgraph({Node(-1), Node(-2), n3, n4, n5, n6, n8, n11, n12}))
 
     def test_links_graph(self):
         l02 = Node(Link(0, 2))
@@ -1779,18 +1644,6 @@ class TestWeightedUndirectedGraph(TestWeightedNodesUndirectedGraph,
             {l02: (2, {l05: 3, l25: 4, l12: 4}), l25: (1, {l05: 1, l12: 4, l35: 1, l45: 1}),
              l12: (5, {l14: 2}), l13: (2, {l12: 2, l14: 2, l35: 6}), l35: (3, {l05: 1, l45: 1}),
              l05: (4, {l45: 1}), l14: (4, {l45: 5}), l45: (2, {})}))
-
-    def test_minimal_path_nodes(self):
-        ...
-
-    def test_minimal_path_nodes_missing_nodes(self):
-        ...
-
-    def test_minimal_spanning_tree(self):
-        ...
-
-    def test_minimal_path_links(self):
-        ...
 
     def test_minimal_path(self):
         self.assertListEqual(self.g0.minimal_path(n13, n11), [n13, n11])
@@ -1841,6 +1694,9 @@ class TestWeightedUndirectedGraph(TestWeightedNodesUndirectedGraph,
         self.assertEqual(str(self.g0), "<{" + ", ".join(
             f"{n} -> {self.g0.node_weights(n)}" for n in self.g0.nodes) + "}, {" + ", ".join(
             f"{l} -> {self.g0.link_weights(l)}" for l in self.g0.links) + "}>")
+
+    def test_repr(self):
+        self.assertEqual(repr(self.g0), str(self.g0))
 
 
 if __name__ == "__main__":
