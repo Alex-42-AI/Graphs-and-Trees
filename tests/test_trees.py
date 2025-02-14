@@ -175,6 +175,40 @@ class TestTree(TestCase):
         with self.assertRaises(KeyError):
             self.t1.leaf(6)
 
+    def test_add_nodes(self):
+        t1 = self.t1.copy()
+        t1.add(3, 6, 7)
+        self.assertSetEqual(t1.nodes, {n0, n1, n2, n3, n4, n5, n6, n7})
+        self.assertSetEqual(t1.leaves, {n1, n2, n4, n5, n6, n7})
+        self.assertDictEqual(t1.hierarchy(),
+                             {n0: {n1, n2, n3, n4, n5}, n1: set(), n2: set(), n3: {n6, n7},
+                              n4: set(), n5: set(), n6: set(), n7: set()})
+        self.assertSetEqual(t1.descendants(3), {n6, n7})
+
+    def test_add_to_missing_node(self):
+        self.assertEqual(self.t1, self.t1.add(6, 7))
+
+    def test_add_already_present_nodes(self):
+        self.assertEqual(self.t1, self.t1.add(2, 3, 4))
+
+    def test_add_tree(self):
+        t = Tree(1, {6: {7}, 8: {9}})
+        t1 = self.t1.copy()
+        self.assertEqual(t1.add_tree(t), Tree(0,
+                                              {1: {6, 8}, 2: set(), 3: set(), 4: set(), 5: set(),
+                                               6: {7}, 8: {9}}))
+
+    def test_remove(self):
+        t0 = self.t0.copy().remove(3, False)
+        self.assertEqual(t0, Tree(0, {1: {4, 5, 8, 9}, 2: {6, 7}, 5: {10, 11}}))
+
+    def test_remove_missing_node(self):
+        self.assertEqual(self.t0, self.t0.copy().remove(-2))
+
+    def test_remove_subtree(self):
+        t0 = self.t0.copy().remove(3)
+        self.assertEqual(t0, Tree(0, {1: {4, 5}, 2: {6, 7}, 5: {10, 11}}))
+
     def test_height(self):
         self.assertEqual(self.t0.height(), 3)
         self.assertEqual(self.t1.height(), 1)
@@ -237,40 +271,6 @@ class TestTree(TestCase):
                                                                {1: (0, []), 2: (0, []), 3: (0, []),
                                                                 4: (0, []), 5: (0, [])}))
 
-    def test_add_nodes(self):
-        t1 = self.t1.copy()
-        t1.add(3, 6, 7)
-        self.assertSetEqual(t1.nodes, {n0, n1, n2, n3, n4, n5, n6, n7})
-        self.assertSetEqual(t1.leaves, {n1, n2, n4, n5, n6, n7})
-        self.assertDictEqual(t1.hierarchy(),
-                             {n0: {n1, n2, n3, n4, n5}, n1: set(), n2: set(), n3: {n6, n7},
-                              n4: set(), n5: set(), n6: set(), n7: set()})
-        self.assertSetEqual(t1.descendants(3), {n6, n7})
-
-    def test_add_to_missing_node(self):
-        self.assertEqual(self.t1, self.t1.add(6, 7))
-
-    def test_add_already_present_nodes(self):
-        self.assertEqual(self.t1, self.t1.add(2, 3, 4))
-
-    def test_add_tree(self):
-        t = Tree(1, {6: {7}, 8: {9}})
-        t1 = self.t1.copy()
-        self.assertEqual(t1.add_tree(t), Tree(0,
-                                              {1: {6, 8}, 2: set(), 3: set(), 4: set(), 5: set(),
-                                               6: {7}, 8: {9}}))
-
-    def test_remove(self):
-        t0 = self.t0.copy().remove(3)
-        self.assertEqual(t0, Tree(0, {1: {4, 5, 8, 9}, 2: {6, 7}, 5: {10, 11}}))
-
-    def test_remove_missing_node(self):
-        self.assertEqual(self.t0, self.t0.copy().remove(-2))
-
-    def test_remove_subtree(self):
-        t0 = self.t0.copy().remove(3, True)
-        self.assertEqual(t0, Tree(0, {1: {4, 5}, 2: {6, 7}, 5: {10, 11}}))
-
     def test_node_depth(self):
         self.assertEqual(self.t0.node_depth(4), 2)
 
@@ -314,7 +314,7 @@ class TestTree(TestCase):
         self.assertEqual(repr(self.t0), f"Tree({self.t0.root}, {inheritance})")
 
 
-class TestWeightedTree(TestTree):
+class TestWeightedTree(TestCase):
     def setUp(self):
         self.t0 = WeightedTree((0, 7),
                                {1: (4, {3, 4, 5}), 2: (3, {6, 7}), 3: (5, {8, 9}), 4: (6, []),
@@ -335,6 +335,48 @@ class TestWeightedTree(TestTree):
     def test_weights_missing_node(self):
         with self.assertRaises(KeyError):
             self.t1.weights(6)
+
+    def test_add_nodes(self):
+        t1 = self.t1.copy()
+        t1.add(3, {6: 3, 7: 4})
+        self.assertDictEqual(t1.weights(),
+                             {n0: 6, n1: 1, n2: 1, n3: 0, n4: 2, n5: 1, n6: 3, n7: 4})
+        self.assertSetEqual(t1.leaves, {n1, n2, n4, n5, n6, n7})
+        self.assertDictEqual(t1.hierarchy(),
+                             {n0: {n1, n2, n3, n4, n5}, n1: set(), n2: set(), n3: {n6, n7},
+                              n4: set(), n5: set(), n6: set(), n7: set()})
+        self.assertSetEqual(t1.descendants(3), {n6, n7})
+
+    def test_add_to_missing_node(self):
+        self.assertEqual(self.t1, self.t1.copy().add(6, {7: 4}))
+
+    def test_add_already_present_nodes(self):
+        self.assertEqual(self.t1, self.t1.copy().add(2, {3: 2, 4: 1}))
+
+    def test_add_tree(self):
+        t = Tree(1, {6: {7}, 8: {9}})
+        t1 = self.t1.copy()
+        self.assertEqual(t1.add_tree(t), WeightedTree((0, 6), {1: (1, {6, 8}), 2: (1, set()),
+                                                               3: (0, set()), 4: (2, set()),
+                                                               5: (1, set()), 6: (0, {7}),
+                                                               8: (0, {9})}))
+
+    def test_remove(self):
+        t0 = self.t0.copy().remove(3, False)
+        self.assertEqual(t0, WeightedTree((0, 7),
+                                          {1: (4, {4, 5, 8, 9}), 2: (3, {6, 7}), 4: (6, []),
+                                           5: (2, {10, 11}), 6: (2, []), 7: (1, []), 8: (6, []),
+                                           9: (4, []), 10: (5, []), 11: (8, [])}))
+
+    def test_remove_missing_node(self):
+        self.assertEqual(self.t0, self.t0.copy().remove(-2))
+
+    def test_remove_subtree(self):
+        t0 = self.t0.copy().remove(3)
+        self.assertEqual(t0, WeightedTree((0, 7),
+                                          {1: (4, {4, 5}), 2: (3, {6, 7}), 4: (6, []),
+                                           5: (2, {10, 11}), 6: (2, []), 7: (1, []), 10: (5, []),
+                                           11: (8, [])}))
 
     def test_set_weight(self):
         t0 = self.t0.copy().set_weight(4, 7)
@@ -392,51 +434,6 @@ class TestWeightedTree(TestTree):
              n3: (5, ([n8, n9], [])), n4: (6, ([], [])), n5: (2, ([n10, n11], [])),
              n6: (2, ([], [])), n7: (1, ([], [])), n8: (6, ([], [])), n9: (4, ([], [])),
              n10: (5, ([], [])), n11: (8, ([], []))}))
-
-    def test_weighted_tree(self):
-        ...
-
-    def test_add_nodes(self):
-        t1 = self.t1.copy()
-        t1.add(3, {6: 3, 7: 4})
-        self.assertDictEqual(t1.weights(),
-                             {n0: 6, n1: 1, n2: 1, n3: 0, n4: 2, n5: 1, n6: 3, n7: 4})
-        self.assertSetEqual(t1.leaves, {n1, n2, n4, n5, n6, n7})
-        self.assertDictEqual(t1.hierarchy(),
-                             {n0: {n1, n2, n3, n4, n5}, n1: set(), n2: set(), n3: {n6, n7},
-                              n4: set(), n5: set(), n6: set(), n7: set()})
-        self.assertSetEqual(t1.descendants(3), {n6, n7})
-
-    def test_add_to_missing_node(self):
-        self.assertEqual(self.t1, self.t1.copy().add(6, {7: 4}))
-
-    def test_add_already_present_nodes(self):
-        self.assertEqual(self.t1, self.t1.copy().add(2, {3: 2, 4: 1}))
-
-    def test_add_tree(self):
-        t = Tree(1, {6: {7}, 8: {9}})
-        t1 = self.t1.copy()
-        self.assertEqual(t1.add_tree(t), WeightedTree((0, 6), {1: (1, {6, 8}), 2: (1, set()),
-                                                               3: (0, set()), 4: (2, set()),
-                                                               5: (1, set()), 6: (0, {7}),
-                                                               8: (0, {9})}))
-
-    def test_remove(self):
-        t0 = self.t0.copy().remove(3)
-        self.assertEqual(t0, WeightedTree((0, 7),
-                                          {1: (4, {4, 5, 8, 9}), 2: (3, {6, 7}), 4: (6, []),
-                                           5: (2, {10, 11}), 6: (2, []), 7: (1, []), 8: (6, []),
-                                           9: (4, []), 10: (5, []), 11: (8, [])}))
-
-    def test_remove_missing_node(self):
-        self.assertEqual(self.t0, self.t0.copy().remove(-2))
-
-    def test_remove_subtree(self):
-        t0 = self.t0.copy().remove(3, True)
-        self.assertEqual(t0, WeightedTree((0, 7),
-                                          {1: (4, {4, 5}), 2: (3, {6, 7}), 4: (6, []),
-                                           5: (2, {10, 11}), 6: (2, []), 7: (1, []), 10: (5, []),
-                                           11: (8, [])}))
 
     def test_weighted_vertex_cover(self):
         self.assertSetEqual(self.t0.weighted_vertex_cover(), {n1, n2, n3, n5})
