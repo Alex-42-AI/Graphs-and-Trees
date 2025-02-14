@@ -801,7 +801,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
         """
         if n is not None and not isinstance(n, Node):
             n = Node(n)
-        return self.__node_weights.copy() if n is None else self.__node_weights.get(n)
+        return self.__node_weights.copy() if n is None else self.__node_weights[n]
 
     @property
     def total_nodes_weight(self) -> float:
@@ -1021,7 +1021,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                 return {n: self.link_weights((u_or_l, n)) for n in self.next(u_or_l)}
             if not isinstance(v, Node):
                 v = Node(v)
-            return self.__link_weights.get((u_or_l, v))
+            return self.__link_weights[(u_or_l, v)]
 
     @property
     def total_links_weight(self) -> float:
@@ -1223,7 +1223,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                 possible = True
                 for n, u in map_dict.items():
                     for m, v in map_dict.items():
-                        if self.link_weights((n, m)) != other.link_weights((u, v)):
+                        if self.link_weights().get((n, m)) != other.link_weights().get((u, v)):
                             possible = False
                             break
                     if not possible:
@@ -1477,9 +1477,8 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                         possible = False
                         break
                     for m, v in map_dict.items():
-                        if self.link_weights(n, m) != other.link_weights(u,
-                                                                         v) or self.node_weights(
-                            m) != other.node_weights(v):
+                        if self.link_weights().get((n, m)) != other.link_weights().get(
+                                (u, v)) or self.node_weights(m) != other.node_weights(v):
                             possible = False
                             break
                     if not possible:
