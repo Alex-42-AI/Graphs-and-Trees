@@ -910,6 +910,25 @@ class WeightedNodesDirectedGraph(DirectedGraph):
                         res.add((n, self.node_weights(n)), [v]), queue.append(n)
             return res
 
+    def scc_dag(self) -> "WeightedNodesDirectedGraph":
+        """
+        Returns:
+            The DAG, the nodes of which are the individual strongly-connected
+            components, and the links of which are according to whether any
+            node of one SCC points to any node of another SCC.
+        """
+        result = WeightedNodesDirectedGraph()
+        scc = self.strongly_connected_components()
+        for s in scc:
+            result.add((Node(frozenset(s)), sum(map(self.node_weights, s))))
+        for u in result.nodes:
+            for v in result.nodes:
+                if u != v:
+                    for x in u.value:
+                        if any(y in v.value for y in self.next(x)):
+                            result.connect(v, [u])
+        return result
+
     def minimal_path_nodes(self, u: Node, v: Node) -> list[Node]:
         """
         Args:
@@ -1185,6 +1204,28 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                         res.add(n, {v: self.link_weights(v, n)}), queue.append(n)
             return res
 
+    def scc_dag(self) -> "WeightedLinksDirectedGraph":
+        """
+        Returns:
+            The DAG, the nodes of which are the individual strongly-connected
+            components, and the links of which are according to whether any
+            node of one SCC points to any node of another SCC.
+        """
+        result = WeightedLinksDirectedGraph()
+        scc = self.strongly_connected_components()
+        for s in scc:
+            result.add(Node(frozenset(s)))
+        for u in result.nodes:
+            for v in result.nodes:
+                if u != v:
+                    for x in u.value:
+                        if any(y in v.value for y in self.next(x)):
+                            result.connect(v, {u: 0})
+                            for y in self.next(x):
+                                if y in v.value:
+                                    result.increase_weight((u, v), self.link_weights(x, y))
+        return result
+
     def minimal_path_links(self, u: Node, v: Node) -> list[Node]:
         """
         Args:
@@ -1367,6 +1408,28 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                         res.add((n, self.node_weights(n)),
                                 {v: self.link_weights(v, n)}), queue.append(n)
             return res
+
+    def scc_dag(self) -> "WeightedDirectedGraph":
+        """
+        Returns:
+            The DAG, the nodes of which are the individual strongly-connected
+            components, and the links of which are according to whether any
+            node of one SCC points to any node of another SCC.
+        """
+        result = WeightedDirectedGraph()
+        scc = self.strongly_connected_components()
+        for s in scc:
+            result.add((Node(frozenset(s)), sum(map(self.node_weights, s))))
+        for u in result.nodes:
+            for v in result.nodes:
+                if u != v:
+                    for x in u.value:
+                        if any(y in v.value for y in self.next(x)):
+                            result.connect(v, {u: 0})
+                            for y in self.next(x):
+                                if y in v.value:
+                                    result.increase_weight((u, v), self.link_weights(x, y))
+        return result
 
     def minimal_path(self, u: Node, v: Node) -> list[Node]:
         """
