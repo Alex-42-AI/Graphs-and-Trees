@@ -2,6 +2,8 @@
 Module for implementing trees and working with them.
 """
 
+from typing import Callable
+
 from collections import defaultdict
 
 from itertools import permutations, product
@@ -11,7 +13,7 @@ from .directed_graph import DirectedGraph, WeightedNodesDirectedGraph
 from .undirected_graph import Node, UndirectedGraph, Iterable, reduce, WeightedNodesUndirectedGraph
 
 
-def build_heap(ll: list[float], f=max):
+def build_heap(ll: list[float], f: Callable = max):
     """
     Args:
         ll: A list of real values.
@@ -431,7 +433,7 @@ def print_zig_zag(b_t: BinTree):
     print(b_t.root), bfs(True, b_t)
 
 
-def binary_heap(l: list[float], f=max) -> BinTree:
+def binary_heap(l: list[float], f: Callable = max) -> BinTree:
     """
     Args:
         l: A list of real values.
