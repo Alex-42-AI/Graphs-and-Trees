@@ -447,6 +447,81 @@ class Tree:
             raise KeyError("Unrecognized node!")
         return n in self.leaves
 
+    def add(self, curr: Node, u: Node, *rest: Node) -> "Tree":
+        """
+        Args:
+            curr: A present node.
+            u: A new node.
+            rest: Other new nodes.
+        Add new nodes as descendants of a given present node.
+        """
+        if not isinstance(curr, Node):
+            curr = Node(curr)
+        if curr in self:
+            new_nodes = False
+            for v in (u, *rest):
+                if not isinstance(v, Node):
+                    v = Node(v)
+                if v not in self:
+                    new_nodes = True
+                    self.__nodes.add(v)
+                    self.__hierarchy[curr].add(v)
+                    self.__parent[v] = curr
+                    self.__leaves.add(v)
+                    self.__hierarchy[v] = set()
+            if self.leaf(curr) and new_nodes:
+                self.__leaves.remove(curr)
+        return self
+
+    def add_tree(self, tree: "Tree") -> "Tree":
+        """
+        Args:
+            tree: A Tree object, the root of which is a present node.
+        Add an entire tree, the root of which is an already present node.
+        It expands the tree from there.
+        """
+        if isinstance(tree, BinTree):
+            tree = tree.tree()
+        if not isinstance(tree, Tree):
+            raise TypeError("Tree expected!")
+        if tree.root not in self:
+            raise KeyError("Unrecognized node!")
+        queue = [tree.root]
+        while queue:
+            if res := tree.descendants(u := queue.pop(0)) - self.nodes:
+                Tree.add(self, u, *res)
+                queue += list(res)
+        return self
+
+    def remove(self, u: Node, subtree: bool = True) -> "Tree":
+        """
+        Args:
+            u: A present node.
+            subtree: Boolean flag, answering to whether to remove the subtree, rooted in node u.
+        Remove a node and make its descendants direct
+        descendants of its parent node if subtree is False.
+        """
+        if not isinstance(u, Node):
+            u = Node(u)
+        if u in self:
+            if u == self.root:
+                raise ValueError("Can't remove root!")
+            if subtree:
+                for d in self.descendants(u):
+                    self.remove(d, True)
+            v = self.parent(u)
+            leaf = self.leaf(u)
+            self.__nodes.remove(u), self.__parent.pop(u)
+            for n in self.descendants(u):
+                self.__parent[n] = v
+            self.__hierarchy[v].update(self.hierarchy(u)), self.__hierarchy[v].remove(u)
+            if leaf:
+                self.__leaves.remove(u)
+                if not self.hierarchy(v):
+                    self.__leaves.add(v)
+            self.__hierarchy.pop(u)
+        return self
+
     def height(self) -> int:
         """
         Returns:
@@ -552,81 +627,6 @@ class Tree:
             weights[n] = 0
         return WeightedTree((self.root, weights[self.root]),
                             {n: (weights[n], self.descendants(n)) for n in self.nodes})
-
-    def add(self, curr: Node, u: Node, *rest: Node) -> "Tree":
-        """
-        Args:
-            curr: A present node.
-            u: A new node.
-            rest: Other new nodes.
-        Add new nodes as descendants of a given present node.
-        """
-        if not isinstance(curr, Node):
-            curr = Node(curr)
-        if curr in self:
-            new_nodes = False
-            for v in (u, *rest):
-                if not isinstance(v, Node):
-                    v = Node(v)
-                if v not in self:
-                    new_nodes = True
-                    self.__nodes.add(v)
-                    self.__hierarchy[curr].add(v)
-                    self.__parent[v] = curr
-                    self.__leaves.add(v)
-                    self.__hierarchy[v] = set()
-            if self.leaf(curr) and new_nodes:
-                self.__leaves.remove(curr)
-        return self
-
-    def add_tree(self, tree: "Tree") -> "Tree":
-        """
-        Args:
-            tree: A Tree object, the root of which is a present node.
-        Add an entire tree, the root of which is an already present node.
-        It expands the tree from there.
-        """
-        if isinstance(tree, BinTree):
-            tree = tree.tree()
-        if not isinstance(tree, Tree):
-            raise TypeError("Tree expected!")
-        if tree.root not in self:
-            raise KeyError("Unrecognized node!")
-        queue = [tree.root]
-        while queue:
-            if res := tree.descendants(u := queue.pop(0)) - self.nodes:
-                Tree.add(self, u, *res)
-                queue += list(res)
-        return self
-
-    def remove(self, u: Node, subtree: bool = False) -> "Tree":
-        """
-        Args:
-            u: A present node.
-            subtree: Boolean flag, answering to whether to remove the subtree, rooted in node u.
-        Remove a node and make its descendants direct
-        descendants of its parent node if subtree is False.
-        """
-        if not isinstance(u, Node):
-            u = Node(u)
-        if u in self:
-            if u == self.root:
-                raise ValueError("Can't remove root!")
-            if subtree:
-                for d in self.descendants(u):
-                    self.remove(d, True)
-            v = self.parent(u)
-            leaf = self.leaf(u)
-            self.__nodes.remove(u), self.__parent.pop(u)
-            for n in self.descendants(u):
-                self.__parent[n] = v
-            self.__hierarchy[v].update(self.hierarchy(u)), self.__hierarchy[v].remove(u)
-            if leaf:
-                self.__leaves.remove(u)
-                if not self.hierarchy(v):
-                    self.__leaves.add(v)
-            self.__hierarchy.pop(u)
-        return self
 
     def node_depth(self, u: Node) -> int:
         """
@@ -864,7 +864,7 @@ class WeightedTree(Tree):
             queue += self.descendants(u)
         return self
 
-    def remove(self, u: Node, subtree: bool = False) -> "WeightedTree":
+    def remove(self, u: Node, subtree: bool = True) -> "WeightedTree":
         if not isinstance(u, Node):
             u = Node(u)
         if u in self:
@@ -872,7 +872,7 @@ class WeightedTree(Tree):
                 for d in self.descendants(u):
                     self.remove(d, True)
             self.__weights.pop(u)
-            super().remove(u)
+            super().remove(u, subtree)
         return self
 
     def set_weight(self, u: Node, w: float) -> "WeightedTree":
