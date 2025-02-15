@@ -1,9 +1,9 @@
 # Graphs and Trees
-![g3](https://github.com/user-attachments/assets/d14f3fbf-f71f-425f-b8e9-8d511e096322)
-![g1](https://github.com/user-attachments/assets/2659a505-6308-4779-b278-a0bcb2e3238f)
 ![g0](https://github.com/user-attachments/assets/a7f6b9a5-33ec-4eb2-bcad-05bdfb0c9969)
-![g4](https://github.com/user-attachments/assets/75d2a798-0d4f-42fa-8fc8-e91ac760d7cb)
+![g1](https://github.com/user-attachments/assets/2659a505-6308-4779-b278-a0bcb2e3238f)
 ![g2](https://github.com/user-attachments/assets/a07deef5-ba3c-424c-b840-2515989d93fc)
+![g3](https://github.com/user-attachments/assets/d14f3fbf-f71f-425f-b8e9-8d511e096322)
+![g4](https://github.com/user-attachments/assets/75d2a798-0d4f-42fa-8fc8-e91ac760d7cb)
 
 ## Summary
 
