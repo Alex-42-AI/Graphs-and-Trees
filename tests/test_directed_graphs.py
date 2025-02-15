@@ -1,6 +1,6 @@
 from unittest import TestCase, main
 
-from ..src.directed_graph import *
+from ..directed_graph import *
 
 n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15 = Node(0), Node(1), Node(
     2), Node(3), Node(4), Node(5), Node(6), Node(7), Node(8), Node(9), Node(10), Node(11), Node(
@@ -725,6 +725,14 @@ class TestWeightedNodesDirectedGraph(TestCase):
                          WeightedNodesDirectedGraph({0: (3, ({1}, {2})), 1: (2, ({3}, {2})),
                                                      2: (4, ([], {3})), 3: (6, ([], []))}))
 
+    def test_scc_dag(self):
+        g0 = self.g0.component(0).scc_dag()
+        self.assertDictEqual(g0.node_weights(), {Node(frozenset({n0})): 7, Node(
+            frozenset({n1, n2, n3, n4, n5, n6, n7, n8})): 36, Node(frozenset({n9})): 5})
+        self.assertSetEqual(g0.links, {
+            (Node(frozenset({n0})), Node(frozenset({n1, n2, n3, n4, n5, n6, n7, n8}))),
+            (Node(frozenset({n1, n2, n3, n4, n5, n6, n7, n8})), Node(frozenset({n9})))})
+
     def test_minimal_path_nodes(self):
         self.assertListEqual(self.g3.minimal_path_nodes(6, 9), [n6, n7, n9])
 
@@ -989,6 +997,15 @@ class TestWeightedLinksDirectedGraph(TestCase):
     def test_nodes_set_subgraph(self):
         self.assertEqual(self.g2.subgraph({n0, n1, n2, n3}), WeightedLinksDirectedGraph(
             {1: ({0: 2, 2: 6}, {3: 1}), 2: ({}, {0: 2, 3: -1})}))
+
+    def test_scc_dag(self):
+        g0 = self.g0.component(0).scc_dag()
+        self.assertSetEqual(g0.nodes, {Node(frozenset({n0})),
+                                       Node(frozenset({n1, n2, n3, n4, n5, n6, n7, n8})),
+                                       Node(frozenset({n9}))})
+        self.assertDictEqual(g0.link_weights(), {
+            (Node(frozenset({n0})), Node(frozenset({n1, n2, n3, n4, n5, n6, n7, n8}))): 6,
+            (Node(frozenset({n1, n2, n3, n4, n5, n6, n7, n8})), Node(frozenset({n9}))): 3})
 
     def test_minimal_path_links(self):
         self.assertListEqual(self.g0.minimal_path_links(1, 5), [n1, n2, n3, n7, n5])
@@ -1257,6 +1274,14 @@ class TestWeightedDirectedGraph(TestCase):
         self.assertEqual(self.g2.subgraph({n0, n1, n2, n5}), WeightedDirectedGraph(
             {0: (7, ({2: 2, 5: 4}, {1: 2})), 1: (6, ({2: 6}, {})), 2: (2, ({5: 3}, {})),
              5: (5, ({}, {}))}))
+
+    def test_scc_dag(self):
+        g0 = self.g0.component(0).scc_dag()
+        self.assertDictEqual(g0.node_weights(), {Node(frozenset({n0})): 7, Node(
+            frozenset({n1, n2, n3, n4, n5, n6, n7, n8})): 36, Node(frozenset({n9})): 5})
+        self.assertDictEqual(g0.link_weights(), {
+            (Node(frozenset({n0})), Node(frozenset({n1, n2, n3, n4, n5, n6, n7, n8}))): 6,
+            (Node(frozenset({n1, n2, n3, n4, n5, n6, n7, n8})), Node(frozenset({n9}))): 3})
 
     def test_minimal_path(self):
         self.assertListEqual(self.g0.minimal_path(n1, n13), [])
