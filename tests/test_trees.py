@@ -12,6 +12,18 @@ eps, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, 
     "y"), Node("z")
 
 
+def test_binary_heap():
+    l = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    tree = binary_heap(l)
+    assert tree.root == n9
+    assert tree.leaves == {n0, n1, n2, n3, n4}
+    for n in {5, 6, 7, 8}:
+        if tree.subtree(n).left:
+            assert tree.subtree(n).left.root < n
+        if tree.subtree(n).right:
+            assert tree.subtree(n).right.root < n
+
+
 class TestBinTree(TestCase):
     def setUp(self):
         self.tree = BinTree(eps,
