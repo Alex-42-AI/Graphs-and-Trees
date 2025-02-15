@@ -303,7 +303,7 @@ class UndirectedGraph(Graph):
         """
         Args:
             root: a present node.
-            dfs: a boolean flag, answering to whether the search algorithm should use DFS or BFS.
+            dfs: a boolean flag, indicating whether the search algorithm should use DFS or BFS.
         Returns:
              A tree representation of the graph with root n.
         """
@@ -1224,7 +1224,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         """
         Args:
             n: A present node.
-            dfs: a boolean flag, answering to whether the search algorithm should use DFS or BFS.
+            dfs: a boolean flag, indicating whether the search algorithm should use DFS or BFS.
         Returns:
              A weighted tree representation of the graph with root n.
         """
