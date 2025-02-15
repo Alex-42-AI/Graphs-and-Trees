@@ -12,6 +12,28 @@ from .undirected_graph import Node, UndirectedGraph, Iterable, reduce, \
     WeightedNodesUndirectedGraph
 
 
+def build_heap(ll: list[float]):
+    """
+    Args:
+        ll: A list of real values.
+    Sort list ll such, that it could represent a binary heap.
+    """
+
+    def heapify(low: int, high: int, ind: int, f=max):
+        left, right = 2 * ind - low, 2 * ind - low + 1
+        res = ind
+        if left <= high and (el := ll[ind - 1]) != f(ll[left - 1], el):
+            res = left
+        if right <= high and (el := ll[res - 1]) != f(ll[right - 1], el):
+            res = right
+        if res != ind:
+            ll[ind - 1], ll[res - 1] = ll[res - 1], ll[ind - 1]
+            heapify(res - low - 1, high, res, f)
+
+    for i in range((h := len(ll)) // 2, 0, -1):
+        heapify(0, h, i)
+
+
 class BinTree:
     """
     Class for implementing a binary tree.
@@ -379,6 +401,53 @@ class BinTree:
         if self:
             return f"BinTree({self.root}, {repr(self.left)}, {repr(self.right)})"
         return "None"
+
+
+def print_zig_zag(b_t: BinTree):
+    """
+    Args:
+        b_t: BinTree
+    Print the nodes of b_t zigzag.
+    """
+
+    def bfs(from_left: bool, *trees: BinTree):
+        new = []
+        if from_left:
+            for t in trees:
+                if t.left and (t.left.left is not None or t.left.right is not None):
+                    new.insert(0, t.left), print(t.left.root, end=" ")
+                if t.right and (t.right.left is not None or t.right.right is not None):
+                    new.insert(0, t.right), print(t.right.root, end=" ")
+        else:
+            for t in trees:
+                if t.right and (t.right.left is not None or t.right.right is not None):
+                    new.insert(0, t.right), print(t.right.root, end=" ")
+                if t.left and (t.left.left is not None or t.left.right is not None):
+                    new.insert(0, t.left), print(t.left.root, end=" ")
+        if not new:
+            return
+        print(), bfs(not from_left, *new)
+
+    print(b_t.root), bfs(True, b_t)
+
+
+def binary_heap(l: list[float]) -> BinTree:
+    """
+    Args:
+        l: A list of real values.
+    Returns:
+        A binary heap of list l.
+    """
+
+    def helper(curr_root, i=0):
+        left = helper(l[2 * i + 1], 2 * i + 1) if 2 * i + 1 < n else None
+        right = helper(l[2 * i + 2], 2 * i + 2) if 2 * i + 2 < n else None
+        res = BinTree(curr_root, left, right)
+        return res
+
+    build_heap(l)
+    n = len(l)
+    return helper(l[0])
 
 
 class Tree:
