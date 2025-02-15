@@ -8,14 +8,14 @@ from itertools import permutations, product
 
 from .directed_graph import DirectedGraph, WeightedNodesDirectedGraph
 
-from .undirected_graph import Node, UndirectedGraph, Iterable, reduce, \
-    WeightedNodesUndirectedGraph
+from .undirected_graph import Node, UndirectedGraph, Iterable, reduce, WeightedNodesUndirectedGraph
 
 
-def build_heap(ll: list[float]):
+def build_heap(ll: list[float], f=max):
     """
     Args:
         ll: A list of real values.
+        f: Optimizing function, max by default.
     Sort list ll such, that it could represent a binary heap.
     """
 
@@ -31,7 +31,7 @@ def build_heap(ll: list[float]):
             heapify(res - low - 1, high, res, f)
 
     for i in range((h := len(ll)) // 2, 0, -1):
-        heapify(0, h, i)
+        heapify(0, h, i, f)
 
 
 class BinTree:
@@ -431,10 +431,11 @@ def print_zig_zag(b_t: BinTree):
     print(b_t.root), bfs(True, b_t)
 
 
-def binary_heap(l: list[float]) -> BinTree:
+def binary_heap(l: list[float], f=max) -> BinTree:
     """
     Args:
         l: A list of real values.
+        f: Optimizing function, max by default.
     Returns:
         A binary heap of list l.
     """
@@ -445,7 +446,7 @@ def binary_heap(l: list[float]) -> BinTree:
         res = BinTree(curr_root, left, right)
         return res
 
-    build_heap(l)
+    build_heap(l, f)
     n = len(l)
     return helper(l[0])
 
