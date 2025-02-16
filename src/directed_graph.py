@@ -118,6 +118,30 @@ def isomorphic_bijection(graph0: "DirectedGraph", graph1: "DirectedGraph") -> di
     return {}
 
 
+def compare(graph0: "DirectedGraph", graph1: "DirectedGraph") -> bool:
+    if type(graph0) != type(graph1):
+        return False
+    if isinstance(graph0, WeightedNodesDirectedGraph):
+        if graph0.node_weights() != graph1.node_weights():
+            return False
+    elif graph0.nodes != graph1.nodes:
+        return False
+    if isinstance(graph0, WeightedLinksDirectedGraph):
+        if graph0.link_weights() != graph1.link_weights():
+            return False
+    return graph0.links == graph1.links
+
+
+def string(graph: "DirectedGraph") -> str:
+    nodes = graph.nodes
+    if isinstance(graph, WeightedNodesDirectedGraph):
+        nodes = "{" + ", ".join(f"{n} -> {graph.node_weights(n)}" for n in graph.nodes) + "}"
+    links = "{" + ", ".join(
+        f"<{l[0]}, {l[1]}>" + (f" -> {graph.link_weights(l)}" if isinstance(graph, WeightedLinksDirectedGraph) else "")
+        for l in graph.links) + "}"
+    return f"<{nodes}, {links}>"
+
+
 class DirectedGraph(Graph):
     """
     Class for implementing an unweighted directed graph
@@ -755,12 +779,10 @@ class DirectedGraph(Graph):
         return combine_graphs(self, other)
 
     def __eq__(self, other: "DirectedGraph") -> bool:
-        if type(other) == DirectedGraph:
-            return (self.nodes, self.links) == (other.nodes, other.links)
-        return False
+        return compare(self, other)
 
     def __str__(self) -> str:
-        return "<" + str(self.nodes) + ", {" + ", ".join(f"<{l[0]}, {l[1]}>" for l in self.links) + "}>"
+        return string(self)
 
     def __repr__(self) -> str:
         return str(self)
@@ -923,15 +945,6 @@ class WeightedNodesDirectedGraph(DirectedGraph):
             A path between u and v with the least possible sum of node weights
         """
         return self.weighted_graph().minimal_path(u, v)
-
-    def __eq__(self, other: "WeightedNodesDirectedGraph") -> bool:
-        if type(other) == WeightedNodesDirectedGraph:
-            return (self.node_weights(), self.links) == (other.node_weights(), other.links)
-        return False
-
-    def __str__(self) -> str:
-        return "<{" + ", ".join(f"{n} -> {self.node_weights(n)}" for n in self.nodes) + "}, {" + ", ".join(
-            f"<{l[0]}, {l[1]}>" for l in self.links) + "}>"
 
 
 class WeightedLinksDirectedGraph(DirectedGraph):
@@ -1167,15 +1180,6 @@ class WeightedLinksDirectedGraph(DirectedGraph):
         """
         return self.weighted_graph().minimal_path(u, v)
 
-    def __eq__(self, other: "WeightedLinksDirectedGraph") -> bool:
-        if type(other) == WeightedLinksDirectedGraph:
-            return (self.nodes, self.link_weights()) == (other.nodes, other.link_weights())
-        return False
-
-    def __str__(self) -> str:
-        return "<" + str(self.nodes) + ", {" + ", ".join(
-            f"<{l[0]}, {l[1]}> -> {self.link_weights(l)}" for l in self.links) + "}>"
-
 
 class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGraph):
     """
@@ -1382,12 +1386,3 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                 return [l[0] for l in res[0]] + [res[0][-1][1]]
             return []
         raise KeyError("Unrecognized node(s)!")
-
-    def __eq__(self, other: "WeightedDirectedGraph") -> bool:
-        if type(other) == WeightedDirectedGraph:
-            return (self.node_weights(), self.link_weights()) == (other.node_weights(), other.link_weights())
-        return False
-
-    def __str__(self) -> str:
-        return "<{" + ", ".join(f"{n} -> {self.node_weights(n)}" for n in self.nodes) + ", " + ", ".join(
-            f"<{l[0]}, {l[1]}> -> {self.link_weights(l)}" for l in self.links) + "}>"
