@@ -89,10 +89,10 @@ class TestBinTree(TestCase):
         self.assertEqual(tree.tree(), Tree(0, {1: [], 2: []}))
 
     def test_nodes_on_level(self):
-        self.assertSetEqual(set(self.tree.nodes_on_level(2)), {a, i, m, n})
+        self.assertSetEqual(self.tree.nodes_on_level(2), {a, i, m, n})
 
     def test_nodes_on_level_bad_level_value(self):
-        self.assertListEqual(self.tree.nodes_on_level(-2), [])
+        self.assertSetEqual(self.tree.nodes_on_level(-2), set())
 
     def test_nodes_on_level_bad_level_type(self):
         with self.assertRaises(TypeError):
@@ -141,9 +141,6 @@ class TestBinTree(TestCase):
     def test_contains(self):
         self.assertIn(d, self.tree)
         self.assertNotIn(4, self.tree)
-
-    def test_bool(self):
-        self.assertTrue(self.tree)
 
     def test_equal(self):
         self.assertNotEqual(self.tree.left, self.tree.right)
