@@ -36,6 +36,53 @@ def build_heap(ll: list[float], f: Callable = max):
         heapify(0, h, i, f)
 
 
+def isomorphic_bijection(tree0: "Tree", tree1: "Tree") -> dict[Node, Node]:
+    if not isinstance(tree1, Tree):
+        return {}
+    weights = isinstance(tree0, WeightedTree) and isinstance(tree1, WeightedTree)
+    if weights:
+        this_weights, other_weights = defaultdict(int), defaultdict(int)
+        for w in tree0.weights().values():
+            this_weights[w] += 1
+        for w in tree1.weights().values():
+            other_weights[w] += 1
+        if this_weights != other_weights:
+            return {}
+    elif len(tree0.nodes) != len(tree1.nodes):
+        return {}
+    if len(tree0.nodes) != len(tree1.nodes) or len(tree0.leaves) != len(tree1.leaves) or len(
+            tree0.descendants(tree0.root)) != len(tree1.descendants(tree1.root)):
+        return {}
+    this_nodes_descendants, other_nodes_descendants = defaultdict(set), defaultdict(set)
+    for n in tree0.nodes:
+        this_nodes_descendants[len(tree0.descendants(n))].add(n)
+    for n in tree1.nodes:
+        other_nodes_descendants[len(tree1.descendants(n))].add(n)
+    if any(len(this_nodes_descendants[d]) != len(other_nodes_descendants[d]) for d in this_nodes_descendants):
+        return {}
+    this_nodes_descendants = list(sorted(map(list, this_nodes_descendants.values()), key=len))
+    other_nodes_descendants = list(sorted(map(list, other_nodes_descendants.values()), key=len))
+    for possibility in product(*map(permutations, this_nodes_descendants)):
+        flatten_self = sum(map(list, possibility), [])
+        flatten_other = sum(other_nodes_descendants, [])
+        map_dict = dict(zip(flatten_self, flatten_other))
+        possible = True
+        for n, u in map_dict.items():
+            for m, v in map_dict.items():
+                if weights and tree0.weights(n) != tree1.weights(u):
+                    possible = False
+                    break
+                if (m in tree0.descendants(n)) ^ (v in tree1.descendants(u)) or (n in tree0.descendants(m)) ^ (
+                        u in tree1.descendants(v)) or weights and tree0.weights(m) != tree1.weights(v):
+                    possible = False
+                    break
+            if not possible:
+                break
+        if possible:
+            return map_dict
+    return {}
+
+
 class BinTree:
     """
     Class for implementing a binary tree
@@ -778,36 +825,7 @@ class Tree:
         Returns:
             An isomorphic function between the nodes of the tree and those of the given tree, if such exists, otherwise empty dictionary. Let f be such a bijection and u and v be tree nodes. f(u) and f(v) are nodes in the other tree and f(u) is parent of f(v) exactly when the same applies for u and v. For weighted trees, the weights are considered.
         """
-        if isinstance(other, Tree):
-            if len(self.nodes) != len(other.nodes) or len(self.leaves) != len(other.leaves) or len(
-                    self.descendants(self.root)) != len(other.descendants(other.root)):
-                return {}
-            this_nodes_descendants, other_nodes_descendants = defaultdict(set), defaultdict(set)
-            for n in self.nodes:
-                this_nodes_descendants[len(self.descendants(n))].add(n)
-            for n in other.nodes:
-                other_nodes_descendants[len(other.descendants(n))].add(n)
-            if any(len(this_nodes_descendants[d]) != len(other_nodes_descendants[d]) for d in this_nodes_descendants):
-                return {}
-            this_nodes_descendants = list(sorted(map(list, this_nodes_descendants.values()), key=len))
-            other_nodes_descendants = list(sorted(map(list, other_nodes_descendants.values()), key=len))
-            for possibility in product(*map(permutations, this_nodes_descendants)):
-                flatten_self = sum(map(list, possibility), [])
-                flatten_other = sum(other_nodes_descendants, [])
-                map_dict = dict(zip(flatten_self, flatten_other))
-                possible = True
-                for n, u in map_dict.items():
-                    for m, v in map_dict.items():
-                        if (m in self.descendants(n)) ^ (v in other.descendants(u)) or (n in self.descendants(m)) ^ (
-                                u in other.descendants(v)):
-                            possible = False
-                            break
-                    if not possible:
-                        break
-                if possible:
-                    return map_dict
-            return {}
-        return {}
+        return isomorphic_bijection(self, other)
 
     def __contains__(self, u: Node) -> bool:
         """
@@ -1037,55 +1055,6 @@ class WeightedTree(Tree):
         return root_val[0] if (
                 sum(map(self.weights, (root_val := dp[self.root])[0])) > sum(map(self.weights, root_val[1]))) else \
             root_val[1]
-
-    def isomorphic_bijection(self, other: Tree) -> dict[Node, Node]:
-        if isinstance(other, WeightedTree):
-            if len(self.nodes) != len(other.nodes) or len(self.leaves) != len(other.leaves) or len(
-                    self.descendants(self.root)) != len(other.descendants(other.root)):
-                return {}
-            this_hierarchies, other_hierarchies = {}, {}
-            for n in self.nodes:
-                descendants = len(self.descendants(n))
-                if descendants not in this_hierarchies:
-                    this_hierarchies[descendants] = 1
-                else:
-                    this_hierarchies[descendants] += 1
-            for n in other.nodes:
-                descendants = len(other.descendants(n))
-                if descendants not in other_hierarchies:
-                    other_hierarchies[descendants] = 1
-                else:
-                    other_hierarchies[descendants] += 1
-            if this_hierarchies != other_hierarchies:
-                return {}
-            this_nodes_descendants = defaultdict(set)
-            other_nodes_descendants = defaultdict(set)
-            for n in self.nodes:
-                this_nodes_descendants[len(self.descendants(n))].add(n)
-            for n in other.nodes:
-                other_nodes_descendants[len(other.descendants(n))].add(n)
-            this_nodes_descendants = list(sorted(map(list, this_nodes_descendants.values()), key=len))
-            other_nodes_descendants = list(sorted(map(list, other_nodes_descendants.values()), key=len))
-            for possibility in product(*map(permutations, this_nodes_descendants)):
-                flatten_self = sum(map(list, possibility), [])
-                flatten_other = sum(other_nodes_descendants, [])
-                map_dict = dict(zip(flatten_self, flatten_other))
-                possible = True
-                for n, u in map_dict.items():
-                    if self.weights(n) != other.weights(u):
-                        possible = False
-                        break
-                    for m, v in map_dict.items():
-                        if (m in self.descendants(n)) ^ (v in other.descendants(u)) or (n in self.descendants(m)) ^ (
-                                u in other.descendants(v)) or self.weights(m) != other.weights(v):
-                            possible = False
-                            break
-                    if not possible:
-                        break
-                if possible:
-                    return map_dict
-            return {}
-        return super().isomorphic_bijection(other)
 
     def __eq__(self, other: "WeightedTree") -> bool:
         if type(other) == WeightedTree:
