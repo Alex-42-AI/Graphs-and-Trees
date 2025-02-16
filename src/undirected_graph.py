@@ -150,6 +150,30 @@ def isomorphic_bijection(graph0: "UndirectedGraph", graph1: "UndirectedGraph") -
     return {}
 
 
+def compare(graph0: "UndirectedGraph", graph1: "UndirectedGraph") -> bool:
+    if type(graph0) != type(graph1):
+        return False
+    if isinstance(graph0, WeightedNodesUndirectedGraph):
+        if graph0.node_weights() != graph1.node_weights():
+            return False
+    elif graph0.nodes != graph1.nodes:
+        return False
+    if isinstance(graph0, WeightedLinksUndirectedGraph):
+        if graph0.link_weights() != graph1.link_weights():
+            return False
+    return graph0.links == graph1.links
+
+
+def string(graph: "UndirectedGraph") -> str:
+    nodes = graph.nodes
+    if isinstance(graph, WeightedNodesUndirectedGraph):
+        nodes = "{" + ", ".join(f"{n} -> {graph.node_weights(n)}" for n in graph.nodes) + "}"
+    links = graph.links
+    if isinstance(graph, WeightedLinksUndirectedGraph):
+        links = "{" + ", ".join(f"{l} -> {graph.link_weights(l)}" for l in graph.links) + "}"
+    return f"<{nodes}, {links}>"
+
+
 class UndirectedGraph(Graph):
     """
     Class for implementing an unweighted undirected graph
@@ -1107,12 +1131,10 @@ class UndirectedGraph(Graph):
         return combine_graphs(self, other)
 
     def __eq__(self, other: "UndirectedGraph") -> bool:
-        if type(other) == UndirectedGraph:
-            return (self.nodes, self.links) == (other.nodes, other.links)
-        return False
+        return compare(self, other)
 
     def __str__(self) -> str:
-        return f"<{self.nodes}, {self.links}>"
+        return string(self)
 
     def __repr__(self) -> str:
         return str(self)
@@ -1322,14 +1344,6 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         if self.is_tree(True):
             return self.weighted_tree().weighted_independent_set()
         return helper(set())[0]
-
-    def __eq__(self, other: "WeightedNodesUndirectedGraph") -> bool:
-        if type(other) == WeightedNodesUndirectedGraph:
-            return (self.node_weights(), self.links) == (other.node_weights(), other.links)
-        return False
-
-    def __str__(self) -> str:
-        return "<{" + ", ".join(f"{n} -> {self.node_weights(n)}" for n in self.nodes) + "}, " + str(self.links) + ">"
 
 
 class WeightedLinksUndirectedGraph(UndirectedGraph):
@@ -1555,14 +1569,6 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         """
         return self.weighted_graph().minimal_path(u, v)
 
-    def __eq__(self, other: "WeightedLinksUndirectedGraph") -> bool:
-        if type(other) == WeightedLinksUndirectedGraph:
-            return (self.nodes, self.link_weights()) == (other.nodes, other.link_weights())
-        return False
-
-    def __str__(self) -> str:
-        return "<" + str(self.nodes) + ", {" + ", ".join(f"{l} -> {self.link_weights(l)}" for l in self.links) + "}>"
-
 
 class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirectedGraph):
     """
@@ -1722,12 +1728,3 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
                 return [l.u for l in res[0]] + [res[0][-1].v]
             return []
         raise KeyError("Unrecognized node(s)!")
-
-    def __eq__(self, other: "WeightedUndirectedGraph") -> bool:
-        if type(other) == WeightedUndirectedGraph:
-            return (self.node_weights(), self.link_weights()) == (other.node_weights(), other.link_weights())
-        return False
-
-    def __str__(self) -> str:
-        return "<{" + ", ".join(f"{n} -> {self.node_weights(n)}" for n in self.nodes) + "}, {" + ", ".join(
-            f"{l} -> {self.link_weights(l)}" for l in self.links) + "}>"
