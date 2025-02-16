@@ -1,5 +1,5 @@
 """
-Module for implementing trees and working with them.
+Module for implementing trees and working with them
 """
 
 from typing import Callable
@@ -16,9 +16,9 @@ from .undirected_graph import Node, UndirectedGraph, Iterable, reduce, WeightedN
 def build_heap(ll: list[float], f: Callable = max):
     """
     Args:
-        ll: A list of real values.
-        f: Optimizing function, max by default.
-    Sort list ll such, that it could represent a binary heap.
+        ll: A list of real values
+        f: Optimizing function, max by default
+    Sort list ll such, that it could represent a binary heap
     """
 
     def heapify(low: int, high: int, ind: int, f=max):
@@ -38,15 +38,15 @@ def build_heap(ll: list[float], f: Callable = max):
 
 class BinTree:
     """
-    Class for implementing a binary tree.
+    Class for implementing a binary tree
     """
 
     def __init__(self, root=None, left=None, right=None) -> None:
         """
         Args:
-            root: The root of the binary tree.
-            left: The left subtree of the binary tree.
-            right: The right subtree of the binary tree.
+            root: The root of the binary tree
+            left: The left subtree of the binary tree
+            right: The right subtree of the binary tree
         """
         self.__root = root if isinstance(root, Node) else Node(root)
         self.__left, self.__right = None, None
@@ -63,7 +63,7 @@ class BinTree:
     def root(self) -> Node:
         """
         Returns:
-            Tree root.
+            Tree root
         """
         return self.__root
 
@@ -71,7 +71,7 @@ class BinTree:
     def left(self) -> "BinTree":
         """
         Returns:
-            Left subtree.
+            Left subtree
         """
         return self.__left
 
@@ -79,7 +79,7 @@ class BinTree:
     def right(self) -> "BinTree":
         """
         Returns:
-            Right subtree.
+            Right subtree
         """
         return self.__right
 
@@ -87,7 +87,7 @@ class BinTree:
     def leaves(self) -> set[Node]:
         """
         Returns:
-            Tree leaves.
+            Tree leaves
         """
 
         def dfs(tree):
@@ -102,15 +102,14 @@ class BinTree:
     def copy(self) -> "BinTree":
         """
         Returns:
-            An identical copy of the tree.
+            An identical copy of the tree
         """
         return BinTree(self.root, self.left if self.left is None else self.left.copy(),
                        self.right if self.right is None else self.right.copy())
 
     def rotate_left(self) -> "BinTree":
         """
-        Left rotation of the tree makes it so, that the
-        root is replaced by the current right subtree root.
+        Left rotation of the tree makes it so, that the root is replaced by the current right subtree root
         """
         self.__root, self.__left, self.__right = self.right.root, BinTree(self.root, self.left,
                                                                           self.right.left), self.right.right
@@ -118,20 +117,18 @@ class BinTree:
 
     def rotate_right(self) -> "BinTree":
         """
-        Right rotation of the tree makes it so, that the
-        root is replaced by the current left subtree root.
+        Right rotation of the tree makes it so, that the root is replaced by the current left subtree root
         """
-        self.__root, self.__left, self.__right = self.left.root, self.left.left, BinTree(self.root,
-                                                                                         self.left.right,
+        self.__root, self.__left, self.__right = self.left.root, self.left.left, BinTree(self.root, self.left.right,
                                                                                          self.right)
         return self
 
     def subtree(self, u: Node) -> "BinTree":
         """
         Args:
-            u: A present node.
+            u: A present node
         Returns:
-            The subtree rooted at node u.
+            The subtree rooted at node u
         """
 
         def dfs(tree):
@@ -154,7 +151,7 @@ class BinTree:
     def tree(self) -> "Tree":
         """
         Returns:
-            The Tree class version of the tree.
+            The Tree class version of the tree
         """
         res = Tree(self.root)
         if self.left:
@@ -168,9 +165,9 @@ class BinTree:
     def nodes_on_level(self, level: int) -> set[Node]:
         """
         Args:
-            level: Distance of a node from the root.
+            level: Distance of a node from the root
         Returns:
-            A list of all nodes on the given level.
+            A list of all nodes on the given level
         """
 
         def dfs(l, tree):
@@ -188,7 +185,7 @@ class BinTree:
     def width(self) -> int:
         """
         Returns:
-            The greatest number of nodes on any level.
+            The greatest number of nodes on any level
         """
         res = len(self.nodes_on_level(self.height()))
         for i in range(self.height() - 1, -1, -1):
@@ -200,7 +197,7 @@ class BinTree:
     def height(self) -> int:
         """
         Returns:
-            Tree height.
+            Tree height
         """
 
         def dfs(tree):
@@ -213,7 +210,7 @@ class BinTree:
     def count_nodes(self) -> int:
         """
         Returns:
-            The number of nodes.
+            The number of nodes
         """
 
         def dfs(tree):
@@ -228,10 +225,9 @@ class BinTree:
     def code_in_morse(self, u: Node) -> str:
         """
         Args:
-            u: A present node.
+            u: A present node
         Returns:
-            The morse code of node u, based on its position
-            in the tree. Left is '.' and right is '-'
+            The morse code of node u, based on its position in the tree. Left is '.' and right is '-'
         """
 
         def dfs(tree):
@@ -256,10 +252,8 @@ class BinTree:
     def encode(self, message: str) -> str:
         """
         Args:
-            message: string type parameter.
-        Each character in message needs to be a node value in the tree.
-        Otherwise, instead of being encoded, it's passed as it is. Finally,
-        each character encoding is concatenated and the result is returned.
+            message: string type parameter
+        Each character in message needs to be a node value in the tree. Otherwise, instead of being encoded, it's passed as it is. Finally, each character encoding is concatenated and the result is returned
         """
         res = ""
         for c in message:
@@ -276,13 +270,13 @@ class BinTree:
     def inverted(self) -> "BinTree":
         """
         Returns:
-            An inverted copy of the tree.
+            An inverted copy of the tree
         """
         return ~self.copy()
 
     def preorder(self) -> list[Node]:
         """
-        List out the nodes in a preorder traversal type (root, left, right).
+        List out the nodes in a preorder traversal type (root, left, right)
         """
 
         def dfs(tree, traversal):
@@ -297,7 +291,7 @@ class BinTree:
 
     def in_order(self) -> list[Node]:
         """
-        List out the nodes in an in-order traversal type (left, root, right).
+        List out the nodes in an in-order traversal type (left, root, right)
         """
 
         def dfs(tree, traversal):
@@ -312,7 +306,7 @@ class BinTree:
 
     def post_order(self) -> list[Node]:
         """
-        List out the nodes in a post-order traversal type (left, right, root).
+        List out the nodes in a post-order traversal type (left, right, root)
         """
 
         def dfs(tree, traversal):
@@ -327,8 +321,8 @@ class BinTree:
     def traverse(self, traversal_type: str = "in-order") -> list[Node]:
         """
         Args:
-            traversal_type: in-order, preorder, or postorder.
-        Traverse the tree nodes in any traversal type (in-order by default).
+            traversal_type: in-order, preorder, or postorder
+        Traverse the tree nodes in any traversal type (in-order by default)
         """
         if traversal_type.lower() == "preorder":
             return self.preorder()
@@ -340,7 +334,7 @@ class BinTree:
 
     def __invert__(self) -> "BinTree":
         """
-        Invert the tree left to right.
+        Invert the tree left to right
         """
 
         def dfs(tree):
@@ -355,9 +349,9 @@ class BinTree:
     def __contains__(self, u: Node) -> bool:
         """
         Args:
-            u: A Node object.
+            u: A Node object
         Returns:
-            Whether u is a node, present in the tree.
+            Whether u is a node, present in the tree
         """
         if not isinstance(u, Node):
             u = Node(u)
@@ -370,9 +364,9 @@ class BinTree:
     def __eq__(self, other: "BinTree") -> bool:
         """
         Args:
-            other: Another binary tree.
+            other: Another binary tree
         Returns:
-            Whether both trees are equal.
+            Whether both trees are equal
         """
         if type(other) == BinTree:
             return (self.root, self.left, self.right) == (other.root, other.left, other.right)
@@ -399,7 +393,7 @@ def print_zig_zag(b_t: BinTree):
     """
     Args:
         b_t: BinTree
-    Print the nodes of b_t zigzag.
+    Print the nodes of b_t zigzag
     """
 
     def bfs(from_left: bool, *trees: BinTree):
@@ -426,10 +420,10 @@ def print_zig_zag(b_t: BinTree):
 def binary_heap(l: list[float], f: Callable = max) -> BinTree:
     """
     Args:
-        l: A list of real values.
-        f: Optimizing function, max by default.
+        l: A list of real values
+        f: Optimizing function, max by default
     Returns:
-        A binary heap of list l.
+        A binary heap of list l
     """
 
     def helper(curr_root, i=0):
@@ -445,20 +439,22 @@ def binary_heap(l: list[float], f: Callable = max) -> BinTree:
 
 class Tree:
     """
-    Class for implementing a tree with multiple descendants.
+    Class for implementing a tree with multiple descendants
     """
 
     def __init__(self, root: Node, inheritance: dict[Node, Iterable[Node]] = {}) -> None:
         """
         Args:
-            root: Root node.
-            inheritance: Inheritance dictionary.
+            root: Root node
+            inheritance: Inheritance dictionary
         """
         if not isinstance(root, Node):
             root = Node(root)
         self.__root = root
         self.__hierarchy, self.__parent = {root: set()}, {}
         self.__nodes, self.__leaves = {root}, {root}
+        if root in inheritance:
+            inheritance.pop(root)
         remaining = reduce(lambda x, y: x.union(y), inheritance.values(), set())
         remaining = set(map(lambda x: x if isinstance(x, Node) else Node(x), remaining))
         if not (root_desc := set(inheritance) - remaining) and inheritance:
@@ -476,7 +472,7 @@ class Tree:
     def root(self) -> Node:
         """
         Returns:
-            Root.
+            Tree root
         """
         return self.__root
 
@@ -484,7 +480,7 @@ class Tree:
     def nodes(self) -> set[Node]:
         """
         Returns:
-            Nodes.
+            Nodes
         """
         return self.__nodes.copy()
 
@@ -492,16 +488,16 @@ class Tree:
     def leaves(self) -> set[Node]:
         """
         Returns:
-            Leaves.
+            Leaves
         """
         return self.__leaves.copy()
 
     def leaf(self, n: Node) -> bool:
         """
         Args:
-            n: A present node.
+            n: A present node
         Returns:
-            Whether node n is a leaf.
+            Whether node n is a leaf
         """
         if not isinstance(n, Node):
             n = Node(n)
@@ -512,16 +508,16 @@ class Tree:
     def add(self, curr: Node, u: Node, *rest: Node) -> "Tree":
         """
         Args:
-            curr: A present node.
-            u: A new node.
-            rest: Other new nodes.
-        Add new nodes as descendants of a given present node.
+            curr: A present node
+            u: A new node
+            rest: Other new nodes
+        Add new nodes as descendants of a given present node
         """
         if not isinstance(curr, Node):
             curr = Node(curr)
         if curr in self:
             new_nodes = False
-            for v in (u, *rest):
+            for v in {u, *rest}:
                 if not isinstance(v, Node):
                     v = Node(v)
                 if v not in self:
@@ -538,9 +534,8 @@ class Tree:
     def add_tree(self, tree: "Tree") -> "Tree":
         """
         Args:
-            tree: A Tree object, the root of which is a present node.
-        Add an entire tree, the root of which is an already present node.
-        It expands the tree from there.
+            tree: A Tree object, the root of which is a present node
+        Add an entire tree, the root of which is an already present node. It expands the tree from there
         """
         if isinstance(tree, BinTree):
             tree = tree.tree()
@@ -558,10 +553,9 @@ class Tree:
     def remove(self, u: Node, subtree: bool = True) -> "Tree":
         """
         Args:
-            u: A present node.
-            subtree: Boolean flag, answering to whether to remove the subtree, rooted in node u.
-        Remove a node and make its descendants direct
-        descendants of its parent node if subtree is False.
+            u: A present node
+            subtree: Boolean flag, answering to whether to remove the subtree, rooted in node u
+        Remove a node and make its descendants direct descendants of its parent node if subtree is False
         """
         if not isinstance(u, Node):
             u = Node(u)
@@ -570,7 +564,7 @@ class Tree:
                 raise ValueError("Can't remove root!")
             if subtree:
                 for d in self.descendants(u):
-                    self.remove(d, True)
+                    self.remove(d)
             v = self.parent(u)
             leaf = self.leaf(u)
             self.__nodes.remove(u), self.__parent.pop(u)
@@ -587,7 +581,7 @@ class Tree:
     def height(self) -> int:
         """
         Returns:
-            Tree height.
+            Tree height
         """
 
         def helper(x):
@@ -598,9 +592,9 @@ class Tree:
     def parent(self, u: Node = None) -> dict[Node, Node] | Node:
         """
         Args:
-            u: A present node or None.
+            u: A present node or None
         Returns:
-            The parent node of node u if it's given, otherwise the parent of each node.
+            The parent node of node u if it's given, otherwise the parent of each node
         """
         if u is None:
             return self.__parent.copy()
@@ -613,9 +607,9 @@ class Tree:
     def hierarchy(self, u: Node = None) -> dict[Node, set[Node]] | set[Node]:
         """
         Args:
-            u: A present node or None.
+            u: A present node or None
         Returns:
-            Descendants of node u if it's given, otherwise the descendants of each node.
+            Descendants of node u if it's given, otherwise the descendants of each node
         """
         if u is None:
             return {n: self.hierarchy(n) for n in self.nodes}
@@ -626,25 +620,25 @@ class Tree:
     def descendants(self, u: Node) -> set[Node]:
         """
         Args:
-            u: A present node.
+            u: A present node
         Returns:
-            The descendants of node u.
+            The descendants of node u
         """
         return self.hierarchy(u)
 
     def copy(self) -> "Tree":
         """
         Returns:
-            An identical copy of the tree.
+            An identical copy of the tree
         """
         return Tree(self.root, {u: self.descendants(u) for u in self.nodes - {self.root}})
 
     def subtree(self, u: Node) -> "Tree":
         """
         Args:
-            u: A present node.
+            u: A present node
         Returns:
-            The subtree, rooted in node u.
+            The subtree, rooted in node u
         """
         if not isinstance(u, Node):
             u = Node(u)
@@ -661,27 +655,25 @@ class Tree:
     def undirected_graph(self) -> "UndirectedGraph":
         """
         Returns:
-            The undirected graph version of the tree.
+            The undirected graph version of the tree
         """
         return UndirectedGraph(self.hierarchy())
 
     def directed_graph(self, from_root: bool = True) -> DirectedGraph:
         """
         Args:
-            from_root: Boolean flag, answering to whether the links point to or from the root.
+            from_root: Boolean flag, answering to whether the links point to or from the root
         Returns:
-            A directed graph version of the tree.
+            A directed graph version of the tree
         """
-        if from_root:
-            return DirectedGraph({k: ([], v) for k, v in self.hierarchy().items()})
-        return DirectedGraph({k: (v, []) for k, v in self.hierarchy().items()})
+        return DirectedGraph({k: ([], v) if from_root else (v, []) for k, v in self.hierarchy().items()})
 
     def weighted_tree(self, weights: dict[Node, float] = None) -> "WeightedTree":
         """
         Args:
-            weights: A dictionary, mapping nodes to weights.
+            weights: A dictionary, mapping nodes to weights
         Returns:
-            The weighted tree version of the tree.
+            The weighted tree version of the tree
         """
         if weights is None:
             weights = {n: 0 for n in self.nodes}
@@ -693,9 +685,9 @@ class Tree:
     def node_depth(self, u: Node) -> int:
         """
         Args:
-            u: A present node.
+            u: A present node
         Returns:
-            The distance (in links) from the root to a node u.
+            The distance (in links) from the root to a node u
         """
         if not isinstance(u, Node):
             u = Node(u)
@@ -710,9 +702,9 @@ class Tree:
     def path_to(self, u: Node) -> list[Node]:
         """
         Args:
-            u: A present node.
+            u: A present node
         Returns:
-            The path from the root to node u.
+            The path from the root to node u
         """
         if not isinstance(u, Node):
             u = Node(u)
@@ -727,14 +719,14 @@ class Tree:
     def vertex_cover(self) -> set[Node]:
         """
         Returns:
-            A minimum set of nodes, that cover all links in the tree.
+            A minimum set of nodes, that cover all links in the tree
         """
         return self.nodes - self.independent_set()
 
     def dominating_set(self) -> set[Node]:
         """
         Returns:
-            A minimum set of nodes, that cover all nodes in the tree.
+            A minimum set of nodes, that cover all nodes in the tree
         """
 
         def dfs(r):
@@ -755,20 +747,18 @@ class Tree:
                     if min_no_root is None or len(dp[d][0]) < len(dp[min_no_root][0]):
                         min_no_root = d
             for d in self.descendants(r):
-                dp[r][1].update(dp[d][1] if len(dp[d][1]) < len(dp[d][0])
-                                            and d != min_no_root else dp[d][0])
+                dp[r][1].update(dp[d][1] if len(dp[d][1]) < len(dp[d][0]) and d != min_no_root else dp[d][0])
 
         if self.nodes == {self.root}:
             return {self.root}
         dp = {n: [{n}, set()] for n in self.nodes}
         dfs(self.root)
-        return root_val[0] \
-            if len((root_val := dp[self.root])[0]) <= len(root_val[1]) else root_val[1]
+        return root_val[0] if len((root_val := dp[self.root])[0]) <= len(root_val[1]) else root_val[1]
 
     def independent_set(self) -> set[Node]:
         """
         Returns:
-            A maximum set of nodes, none of which is a parent of any other.
+            A maximum set of nodes, none of which is a parent of any other
         """
 
         def dfs(x: Node):
@@ -779,18 +769,14 @@ class Tree:
 
         dp = {n: [{n}, set()] for n in self.nodes}
         dfs(self.root)
-        return dp[self.root][0] \
-            if len(dp[self.root][0]) > len(dp[self.root][1]) else dp[self.root][1]
+        return dp[self.root][0] if len(dp[self.root][0]) > len(dp[self.root][1]) else dp[self.root][1]
 
     def isomorphic_bijection(self, other: "Tree") -> dict[Node, Node]:
         """
         Args:
             other: another Tree object
         Returns:
-            An isomorphic function between the nodes of the tree and those of the given tree, if
-            such exists, otherwise empty dictionary. Let f be such a bijection and u and v be tree
-            nodes. f(u) and f(v) are nodes in the other tree and f(u) is parent of f(v) exactly
-            when the same applies for u and v. For weighted trees, the weights are considered.
+            An isomorphic function between the nodes of the tree and those of the given tree, if such exists, otherwise empty dictionary. Let f be such a bijection and u and v be tree nodes. f(u) and f(v) are nodes in the other tree and f(u) is parent of f(v) exactly when the same applies for u and v. For weighted trees, the weights are considered.
         """
         if isinstance(other, Tree):
             if len(self.nodes) != len(other.nodes) or len(self.leaves) != len(other.leaves) or len(
@@ -801,13 +787,10 @@ class Tree:
                 this_nodes_descendants[len(self.descendants(n))].add(n)
             for n in other.nodes:
                 other_nodes_descendants[len(other.descendants(n))].add(n)
-            if any(len(this_nodes_descendants[d]) != len(other_nodes_descendants[d]) for d in
-                   this_nodes_descendants):
+            if any(len(this_nodes_descendants[d]) != len(other_nodes_descendants[d]) for d in this_nodes_descendants):
                 return {}
-            this_nodes_descendants = list(
-                sorted(map(list, this_nodes_descendants.values()), key=len))
-            other_nodes_descendants = list(
-                sorted(map(list, other_nodes_descendants.values()), key=len))
+            this_nodes_descendants = list(sorted(map(list, this_nodes_descendants.values()), key=len))
+            other_nodes_descendants = list(sorted(map(list, other_nodes_descendants.values()), key=len))
             for possibility in product(*map(permutations, this_nodes_descendants)):
                 flatten_self = sum(map(list, possibility), [])
                 flatten_other = sum(other_nodes_descendants, [])
@@ -815,8 +798,8 @@ class Tree:
                 possible = True
                 for n, u in map_dict.items():
                     for m, v in map_dict.items():
-                        if (m in self.descendants(n)) ^ (v in other.descendants(u)) or (
-                                n in self.descendants(m)) ^ (u in other.descendants(v)):
+                        if (m in self.descendants(n)) ^ (v in other.descendants(u)) or (n in self.descendants(m)) ^ (
+                                u in other.descendants(v)):
                             possible = False
                             break
                     if not possible:
@@ -829,9 +812,9 @@ class Tree:
     def __contains__(self, u: Node) -> bool:
         """
         Args:
-            u: A Node object.
+            u: A Node object
         Returns:
-            Whether u is a node in the tree.
+            Whether u is a node in the tree
         """
         if not isinstance(u, Node):
             u = Node(u)
@@ -840,9 +823,9 @@ class Tree:
     def __eq__(self, other: "Tree") -> bool:
         """
         Args:
-            other: a Tree object.
+            other: a Tree object
         Returns:
-            Whether both trees are equal.
+            Whether both trees are equal
         """
         if type(other) == Tree:
             return self.hierarchy() == other.hierarchy()
@@ -867,16 +850,15 @@ class Tree:
 
 class WeightedTree(Tree):
     """
-    Class for implementing a tree with node weights.
+    Class for implementing a tree with node weights
     """
 
     def __init__(self, root_and_weight: tuple[Node, float],
                  inheritance: dict[Node, tuple[float, Iterable[Node]]] = {}) -> None:
         """
         Args:
-            root_and_weight: A tuple of the root node and its weight.
-            inheritance: An inheritance dictionary. Each node is mapped to a tuple, where the first
-            element is its weight and the second element is the set of its descendants.
+            root_and_weight: A tuple of the root node and its weight
+            inheritance: An inheritance dictionary. Each node is mapped to a tuple, where the first element is its weight and the second element is the set of its descendants.
         """
         super().__init__(root := root_and_weight[0])
         if not isinstance(root, Node):
@@ -894,9 +876,9 @@ class WeightedTree(Tree):
     def weights(self, u: Node = None) -> dict[Node, float] | float:
         """
         Args:
-            u: A present node or None.
+            u: A present node or None
         Returns:
-            The weight of node n or the dictionary with all node weights.
+            The weight of node n or the dictionary with all node weights
         """
         if u is None:
             return {n: self.weights(n) for n in self.nodes}
@@ -932,7 +914,7 @@ class WeightedTree(Tree):
         if u in self:
             if subtree:
                 for d in self.descendants(u):
-                    self.remove(d, True)
+                    self.remove(d)
             self.__weights.pop(u)
             super().remove(u, subtree)
         return self
@@ -940,9 +922,9 @@ class WeightedTree(Tree):
     def set_weight(self, u: Node, w: float) -> "WeightedTree":
         """
         Args:
-            u: A present node.
-            w: The new weight of node u.
-        Set the weight of node u to w.
+            u: A present node
+            w: The new weight of node u
+        Set the weight of node u to w
         """
         if not isinstance(u, Node):
             u = Node(u)
@@ -955,9 +937,9 @@ class WeightedTree(Tree):
     def increase_weight(self, u: Node, w: float) -> "WeightedTree":
         """
         Args:
-            u: A present node.
-            w: A real value.
-        Increase the weight of node u by w.
+            u: A present node
+            w: A real value
+        Increase the weight of node u by w
         """
         if not isinstance(u, Node):
             u = Node(u)
@@ -971,8 +953,7 @@ class WeightedTree(Tree):
         return self
 
     def copy(self) -> "WeightedTree":
-        inheritance = {u: (self.weights(u), {v: self.weights(v) for v in self.descendants(u)}) for
-                       u in self.nodes}
+        inheritance = {u: (self.weights(u), {v: self.weights(v) for v in self.descendants(u)}) for u in self.nodes}
         return WeightedTree((self.root, self.weights(self.root)), inheritance)
 
     def subtree(self, u: Node) -> "WeightedTree":
@@ -989,27 +970,23 @@ class WeightedTree(Tree):
         return res
 
     def undirected_graph(self) -> "WeightedNodesUndirectedGraph":
-        return WeightedNodesUndirectedGraph(
-            {n: (self.weights(n), self.descendants(n)) for n in self.nodes})
+        return WeightedNodesUndirectedGraph({n: (self.weights(n), self.descendants(n)) for n in self.nodes})
 
     def directed_graph(self, from_root: bool = True) -> WeightedNodesDirectedGraph:
-        if from_root:
-            return WeightedNodesDirectedGraph(
-                {k: (self.weights(k), ([], v)) for k, v in self.hierarchy().items()})
         return WeightedNodesDirectedGraph(
-            {k: (self.weights(k), (v, [])) for k, v in self.hierarchy().items()})
+            {k: (self.weights(k), ([], v) if from_root else (v, [])) for k, v in self.hierarchy().items()})
 
     def weighted_vertex_cover(self) -> set[Node]:
         """
         Returns:
-            A minimum by sum of the weights set of nodes, that cover all links in the tree.
+            A minimum by sum of the weights set of nodes, that cover all links in the tree
         """
         return self.nodes - self.weighted_independent_set()
 
     def weighted_dominating_set(self) -> set[Node]:
         """
         Returns:
-            A minimum by sum of the weights set of nodes, that cover all nodes in the tree.
+            A minimum by sum of the weights set of nodes, that cover all nodes in the tree
         """
 
         def dfs(r):
@@ -1028,11 +1005,9 @@ class WeightedTree(Tree):
             for d in self.descendants(r):
                 if not self.leaf(d):
                     dfs(d)
-                    dp[r][0].update(
-                        dp[d][0] if (d_weights_sum := sum(map(self.weights, dp[d][0]))) < sum(
-                            map(self.weights, dp[d][1])) else dp[d][1])
-                    if min_no_root is None or d_weights_sum < sum(
-                            map(self.weights, dp[min_no_root][0])):
+                    dp[r][0].update(dp[d][0] if (d_weights_sum := sum(map(self.weights, dp[d][0]))) < sum(
+                        map(self.weights, dp[d][1])) else dp[d][1])
+                    if min_no_root is None or d_weights_sum < sum(map(self.weights, dp[min_no_root][0])):
                         min_no_root = d
             for d in self.descendants(r):
                 dp[r][1].update(dp[d][1] if sum(map(self.weights, dp[d][1])) < sum(
@@ -1041,26 +1016,27 @@ class WeightedTree(Tree):
         dp = {n: [{n}, set()] for n in self.nodes}
         dfs(self.root)
         root_val = dp[self.root]
-        return root_val[0] if sum(map(self.weights, root_val[0])) <= sum(
-            map(self.weights, root_val[1])) else root_val[1]
+        return root_val[0] if sum(map(self.weights, root_val[0])) <= sum(map(self.weights, root_val[1])) else root_val[
+            1]
 
     def weighted_independent_set(self) -> set[Node]:
         """
         Returns:
-            A set of nodes with a maximum possible sum of the weights, none of which is a parent of any other.
+            A set of nodes with a maximum possible sum of the weights, none of which is a parent of any other
         """
 
         def dfs(x):
             for y in self.descendants(x):
                 dfs(y)
                 dp[x][0].update(dp[y][1])
-                dp[x][1].update(dp[y][0] if sum(map(self.weights, dp[y][0])) > sum(
-                    map(self.weights, dp[y][1])) else dp[y][1])
+                dp[x][1].update(
+                    dp[y][0] if sum(map(self.weights, dp[y][0])) > sum(map(self.weights, dp[y][1])) else dp[y][1])
 
         dp = {n: [{n}, set()] for n in self.nodes}
         dfs(self.root)
-        return root_val[0] if (sum(map(self.weights, (root_val := dp[self.root])[0])) > sum(
-            map(self.weights, root_val[1]))) else root_val[1]
+        return root_val[0] if (
+                sum(map(self.weights, (root_val := dp[self.root])[0])) > sum(map(self.weights, root_val[1]))) else \
+            root_val[1]
 
     def isomorphic_bijection(self, other: Tree) -> dict[Node, Node]:
         if isinstance(other, WeightedTree):
@@ -1088,10 +1064,8 @@ class WeightedTree(Tree):
                 this_nodes_descendants[len(self.descendants(n))].add(n)
             for n in other.nodes:
                 other_nodes_descendants[len(other.descendants(n))].add(n)
-            this_nodes_descendants = list(
-                sorted(map(list, this_nodes_descendants.values()), key=len))
-            other_nodes_descendants = list(
-                sorted(map(list, other_nodes_descendants.values()), key=len))
+            this_nodes_descendants = list(sorted(map(list, this_nodes_descendants.values()), key=len))
+            other_nodes_descendants = list(sorted(map(list, other_nodes_descendants.values()), key=len))
             for possibility in product(*map(permutations, this_nodes_descendants)):
                 flatten_self = sum(map(list, possibility), [])
                 flatten_other = sum(other_nodes_descendants, [])
@@ -1102,8 +1076,7 @@ class WeightedTree(Tree):
                         possible = False
                         break
                     for m, v in map_dict.items():
-                        if (m in self.descendants(n)) ^ (v in other.descendants(u)) or (
-                                n in self.descendants(m)) ^ (
+                        if (m in self.descendants(n)) ^ (v in other.descendants(u)) or (n in self.descendants(m)) ^ (
                                 u in other.descendants(v)) or self.weights(m) != other.weights(v):
                             possible = False
                             break
