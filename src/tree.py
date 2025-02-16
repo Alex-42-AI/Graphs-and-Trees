@@ -83,6 +83,26 @@ def isomorphic_bijection(tree0: "Tree", tree1: "Tree") -> dict[Node, Node]:
     return {}
 
 
+def compare(tree0: "Tree", tree1: "Tree") -> bool:
+    if type(tree0) != type(tree1):
+        return False
+    if isinstance(tree0, WeightedTree) and tree0.weights() != tree1.weights():
+        return False
+    return tree0.hierarchy() == tree1.hierarchy()
+
+
+def string(tree: "Tree") -> str:
+    def helper(r, f, i=0, flags=()):
+        res, total_descendants = f(r), len(tree.descendants(r))
+        line = "".join([" │"[not j % 4 and (flags + (True,))[j // 4]] for j in range(i)])
+        for j, d in enumerate(tree.descendants(r)):
+            res += f"\n {line + "├└"[j + 1 == total_descendants]}──"
+            res += helper(d, f, i + 4, flags + (j + 1 < total_descendants,))
+        return res
+
+    return helper(tree.root, lambda x: f"{x}->{tree.weights(x)}" if isinstance(tree, WeightedTree) else str(x))
+
+
 class BinTree:
     """
     Class for implementing a binary tree
@@ -845,20 +865,10 @@ class Tree:
         Returns:
             Whether both trees are equal
         """
-        if type(other) == Tree:
-            return self.hierarchy() == other.hierarchy()
-        return False
+        return compare(self, other)
 
     def __str__(self) -> str:
-        def helper(r, i=0, flags=()):
-            res, total_descendants = str(r), len(self.descendants(r))
-            line = "".join([" │"[not j % 4 and (flags + (True,))[j // 4]] for j in range(i)])
-            for j, d in enumerate(self.descendants(r)):
-                res += f"\n {line + "├└"[j + 1 == total_descendants]}──"
-                res += helper(d, i + 4, flags + (j + 1 < total_descendants,))
-            return res
-
-        return helper(self.root)
+        return string(self)
 
     def __repr__(self) -> str:
         inheritance = self.hierarchy().copy()
@@ -1055,22 +1065,6 @@ class WeightedTree(Tree):
         return root_val[0] if (
                 sum(map(self.weights, (root_val := dp[self.root])[0])) > sum(map(self.weights, root_val[1]))) else \
             root_val[1]
-
-    def __eq__(self, other: "WeightedTree") -> bool:
-        if type(other) == WeightedTree:
-            return (self.hierarchy(), self.weights()) == (other.hierarchy(), other.weights())
-        return False
-
-    def __str__(self) -> str:
-        def helper(r, i=0, flags=()):
-            res, total_descendants = f"{r}->{self.weights(r)}", len(self.descendants(r))
-            line = "".join([" │"[not j % 4 and (flags + (True,))[j // 4]] for j in range(i)])
-            for j, d in enumerate(self.descendants(r)):
-                res += f"\n {line + "├└"[j + 1 == total_descendants]}──"
-                res += helper(d, i + 4, flags + (j + 1 < total_descendants,))
-            return res
-
-        return helper(self.root)
 
     def __repr__(self) -> str:
         inheritance = {k: (self.weights(k), v) for k, v in self.hierarchy().items()}
