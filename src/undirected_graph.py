@@ -91,6 +91,65 @@ def combine_graphs(graph0: "UndirectedGraph", graph1: "UndirectedGraph") -> "Und
     return res
 
 
+def isomorphic_bijection(graph0: "UndirectedGraph", graph1: "UndirectedGraph") -> dict[Node, Node]:
+    if not isinstance(graph1, UndirectedGraph):
+        return {}
+    node_weights = isinstance(graph0, WeightedNodesUndirectedGraph) and isinstance(graph1,
+                                                                                   WeightedNodesUndirectedGraph)
+    link_weights = isinstance(graph0, WeightedLinksUndirectedGraph) and isinstance(graph1,
+                                                                                   WeightedLinksUndirectedGraph)
+    if node_weights:
+        this_weights, other_weights = defaultdict(int), defaultdict(int)
+        for w in graph0.node_weights().values():
+            this_weights[w] += 1
+        for w in graph1.node_weights().values():
+            other_weights[w] += 1
+        if this_weights != other_weights:
+            return {}
+    elif len(graph0.nodes) != len(graph1.nodes):
+        return {}
+    if link_weights:
+        this_weights, other_weights = defaultdict(int), defaultdict(int)
+        for w in graph0.link_weights().values():
+            this_weights[w] += 1
+        for w in graph1.link_weights().values():
+            other_weights[w] += 1
+        if this_weights != other_weights:
+            return {}
+    elif len(graph0.links) != len(graph1.links):
+        return {}
+    this_nodes_degrees, other_nodes_degrees = defaultdict(set), defaultdict(set)
+    for n in graph0.nodes:
+        this_nodes_degrees[graph0.degrees(n)].add(n)
+    for n in graph1.nodes:
+        other_nodes_degrees[graph1.degrees(n)].add(n)
+    if any(len(this_nodes_degrees[d]) != len(other_nodes_degrees[d]) for d in this_nodes_degrees):
+        return {}
+    this_nodes_degrees = sorted(map(list, this_nodes_degrees.values()), key=len)
+    other_nodes_degrees = sorted(map(list, other_nodes_degrees.values()), key=len)
+    for possibility in product(*map(permutations, this_nodes_degrees)):
+        flatten_self = sum(map(list, possibility), [])
+        flatten_other = sum(other_nodes_degrees, [])
+        map_dict = dict(zip(flatten_self, flatten_other))
+        possible = True
+        for n, u in map_dict.items():
+            for m, v in map_dict.items():
+                if node_weights and graph0.node_weights(n) != graph1.node_weights(u):
+                    possible = False
+                    break
+                link_matching = (m in graph0.neighbors(n)) == (v in graph1.neighbors(u))
+                if link_weights:
+                    link_matching = graph0.link_weights().get(Link(n, m)) == graph1.link_weights().get(Link(u, v))
+                if not link_matching or node_weights and graph0.node_weights(m) != graph1.node_weights(v):
+                    possible = False
+                    break
+            if not possible:
+                break
+        if possible:
+            return map_dict
+    return {}
+
+
 class UndirectedGraph(Graph):
     """
     Class for implementing an unweighted undirected graph
@@ -1028,34 +1087,7 @@ class UndirectedGraph(Graph):
         return dfs(u, [u])
 
     def isomorphic_bijection(self, other: "UndirectedGraph") -> dict[Node, Node]:
-        if isinstance(other, UndirectedGraph):
-            if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
-                return {}
-            this_nodes_degrees, other_nodes_degrees = defaultdict(set), defaultdict(set)
-            for n in self.nodes:
-                this_nodes_degrees[self.degrees(n)].add(n)
-            for n in other.nodes:
-                other_nodes_degrees[other.degrees(n)].add(n)
-            if any(len(this_nodes_degrees[d]) != len(other_nodes_degrees[d]) for d in this_nodes_degrees):
-                return {}
-            this_nodes_degrees = sorted(map(list, this_nodes_degrees.values()), key=len)
-            other_nodes_degrees = sorted(map(list, other_nodes_degrees.values()), key=len)
-            for possibility in product(*map(permutations, this_nodes_degrees)):
-                flatten_self = sum(map(list, possibility), [])
-                flatten_other = sum(other_nodes_degrees, [])
-                map_dict = dict(zip(flatten_self, flatten_other))
-                possible = True
-                for n, u in map_dict.items():
-                    for m, v in map_dict.items():
-                        if (m in self.neighbors(n)) ^ (v in other.neighbors(u)):
-                            possible = False
-                            break
-                    if not possible:
-                        break
-                if possible:
-                    return map_dict
-            return {}
-        return {}
+        return isomorphic_bijection(self, other)
 
     def __bool__(self) -> bool:
         return bool(self.nodes)
@@ -1291,47 +1323,6 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
             return self.weighted_tree().weighted_independent_set()
         return helper(set())[0]
 
-    def isomorphic_bijection(self, other: UndirectedGraph) -> dict[Node, Node]:
-        if isinstance(other, WeightedNodesUndirectedGraph):
-            if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
-                return {}
-            this_weights, other_weights = defaultdict(int), defaultdict(int)
-            for w in self.node_weights().values():
-                this_weights[w] += 1
-            for w in other.node_weights().values():
-                other_weights[w] += 1
-            if this_weights != other_weights:
-                return {}
-            this_nodes_degrees, other_nodes_degrees = defaultdict(set), defaultdict(set)
-            for n in self.nodes:
-                this_nodes_degrees[self.degrees(n)].add(n)
-            for n in other.nodes:
-                other_nodes_degrees[other.degrees(n)].add(n)
-            if any(len(this_nodes_degrees[d]) != len(other_nodes_degrees[d]) for d in this_nodes_degrees):
-                return {}
-            this_nodes_degrees = sorted(map(list, this_nodes_degrees.values()), key=len)
-            other_nodes_degrees = sorted(map(list, other_nodes_degrees.values()), key=len)
-            for possibility in product(*map(permutations, this_nodes_degrees)):
-                flatten_self = sum(map(list, possibility), [])
-                flatten_other = sum(other_nodes_degrees, [])
-                map_dict = dict(zip(flatten_self, flatten_other))
-                possible = True
-                for n, u in map_dict.items():
-                    if self.node_weights(n) != other.node_weights(u):
-                        possible = False
-                        break
-                    for m, v in map_dict.items():
-                        if (m in self.neighbors(n)) ^ (v in other.neighbors(u)) or self.node_weights(
-                                m) != other.node_weights(v):
-                            possible = False
-                            break
-                    if not possible:
-                        break
-                if possible:
-                    return map_dict
-            return {}
-        return super().isomorphic_bijection(other)
-
     def __eq__(self, other: "WeightedNodesUndirectedGraph") -> bool:
         if type(other) == WeightedNodesUndirectedGraph:
             return (self.node_weights(), self.links) == (other.node_weights(), other.links)
@@ -1564,43 +1555,6 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         """
         return self.weighted_graph().minimal_path(u, v)
 
-    def isomorphic_bijection(self, other: UndirectedGraph) -> dict[Node, Node]:
-        if isinstance(other, WeightedLinksUndirectedGraph):
-            if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
-                return {}
-            this_weights, other_weights = defaultdict(int), defaultdict(int)
-            for w in self.link_weights().values():
-                this_weights[w] += 1
-            for w in other.link_weights().values():
-                other_weights[w] += 1
-            if this_weights != other_weights:
-                return {}
-            this_nodes_degrees, other_nodes_degrees = defaultdict(set), defaultdict(set)
-            for n in self.nodes:
-                this_nodes_degrees[self.degrees(n)].add(n)
-            for n in other.nodes:
-                other_nodes_degrees[other.degrees(n)].add(n)
-            if any(len(this_nodes_degrees[d]) != len(other_nodes_degrees[d]) for d in this_nodes_degrees):
-                return {}
-            this_nodes_degrees = sorted(map(list, this_nodes_degrees.values()), key=len)
-            other_nodes_degrees = sorted(map(list, other_nodes_degrees.values()), key=len)
-            for possibility in product(*map(permutations, this_nodes_degrees)):
-                flatten_self = sum(map(list, possibility), [])
-                flatten_other = sum(other_nodes_degrees, [])
-                map_dict = dict(zip(flatten_self, flatten_other))
-                possible = True
-                for n, u in map_dict.items():
-                    for m, v in map_dict.items():
-                        if self.link_weights().get(Link(n, m)) != other.link_weights().get(Link(u, v)):
-                            possible = False
-                            break
-                    if not possible:
-                        break
-                if possible:
-                    return map_dict
-            return {}
-        return super().isomorphic_bijection(other)
-
     def __eq__(self, other: "WeightedLinksUndirectedGraph") -> bool:
         if type(other) == WeightedLinksUndirectedGraph:
             return (self.nodes, self.link_weights()) == (other.nodes, other.link_weights())
@@ -1768,55 +1722,6 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
                 return [l.u for l in res[0]] + [res[0][-1].v]
             return []
         raise KeyError("Unrecognized node(s)!")
-
-    def isomorphic_bijection(self, other: UndirectedGraph) -> dict[Node, Node]:
-        if isinstance(other, WeightedUndirectedGraph):
-            if len(self.links) != len(other.links) or len(self.nodes) != len(other.nodes):
-                return {}
-            this_node_weights, other_node_weights = defaultdict(int), defaultdict(int)
-            this_link_weights, other_link_weights = defaultdict(int), defaultdict(int)
-            for w in self.link_weights().values():
-                this_link_weights[w] += 1
-            for w in other.link_weights().values():
-                other_link_weights[w] += 1
-            for w in self.node_weights().values():
-                this_node_weights[w] += 1
-            for w in other.node_weights().values():
-                other_node_weights[w] += 1
-            if this_node_weights != other_node_weights or this_link_weights != other_link_weights:
-                return {}
-            this_nodes_degrees, other_nodes_degrees = defaultdict(set), defaultdict(set)
-            for n in self.nodes:
-                this_nodes_degrees[self.degrees(n)].add(n)
-            for n in other.nodes:
-                other_nodes_degrees[other.degrees(n)].add(n)
-            if any(len(this_nodes_degrees[d]) != len(other_nodes_degrees[d]) for d in this_nodes_degrees):
-                return {}
-            this_nodes_degrees = sorted(map(list, this_nodes_degrees.values()), key=len)
-            other_nodes_degrees = sorted(map(list, other_nodes_degrees.values()), key=len)
-            for possibility in product(*map(permutations, this_nodes_degrees)):
-                flatten_self = sum(map(list, possibility), [])
-                flatten_other = sum(other_nodes_degrees, [])
-                map_dict = dict(zip(flatten_self, flatten_other))
-                possible = True
-                for n, u in map_dict.items():
-                    if self.node_weights(n) != other.node_weights(u):
-                        possible = False
-                        break
-                    for m, v in map_dict.items():
-                        if self.link_weights().get(Link(n, m)) != other.link_weights().get(
-                                Link(u, v)) or self.node_weights(m) != other.node_weights(v):
-                            possible = False
-                            break
-                    if not possible:
-                        break
-                if possible:
-                    return map_dict
-            return {}
-        if isinstance(other, (WeightedNodesUndirectedGraph, WeightedLinksUndirectedGraph)):
-            res = type(other).isomorphic_bijection(other, self)
-            return {v: k for k, v in res.items()}
-        return UndirectedGraph.isomorphic_bijection(self, other)
 
     def __eq__(self, other: "WeightedUndirectedGraph") -> bool:
         if type(other) == WeightedUndirectedGraph:
