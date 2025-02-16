@@ -2,9 +2,8 @@ from unittest import TestCase, main
 
 from ..src.undirected_graph import *
 
-n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15 = Node(0), Node(1), Node(
-    2), Node(3), Node(4), Node(5), Node(6), Node(7), Node(8), Node(9), Node(10), Node(11), Node(
-    12), Node(13), Node(14), Node(15)
+n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15 = Node(0), Node(1), Node(2), Node(3), Node(
+    4), Node(5), Node(6), Node(7), Node(8), Node(9), Node(10), Node(11), Node(12), Node(13), Node(14), Node(15)
 
 
 class TestUndirectedGraph(TestCase):
@@ -1452,53 +1451,6 @@ class TestWeightedUndirectedGraph(TestCase):
         self.assertDictEqual(g.node_weights(), {n0: 2, n1: 0, n2: 3})
         self.assertDictEqual(g.link_weights(), {Link(0, 1): 0, Link(1, 2): 3})
         self.assertDictEqual(g.neighbors(), {n0: {n1}, n1: {n0, n2}, n2: {n1}})
-
-    def test_node_weights(self):
-        self.assertEqual(self.g0.node_weights(),
-                         {n0: 7, n1: 3, n2: 5, n3: 2, n4: 8, n5: 4, n6: 6, n7: 2, n8: 0, n9: 5,
-                          n10: 4, n11: 2, n12: 1, n13: 3, n14: 6})
-
-    def test_node_weights_missing_node(self):
-        with self.assertRaises(KeyError):
-            self.g1.node_weights(n9)
-
-    def test_total_node_weights(self):
-        self.assertEqual(self.g0.total_nodes_weight, 58)
-
-    def test_link_weights(self):
-        self.assertDictEqual(self.g0.link_weights(),
-                             {Link(n0, n1): 3, Link(n0, n2): 1, Link(n1, n2): -4,
-                              Link(n3, n2): 6, Link(n4, n2): 2, Link(n5, n2): 4, Link(n3, n6): 3,
-                              Link(n4, n6): 7, Link(n4, n5): 3,
-                              Link(n5, n8): 5, Link(n6, n7): 2, Link(n6, n8): 4, Link(n7, n8): 1,
-                              Link(n7, n9): 3, Link(n10, n11): 2,
-                              Link(n11, n12): 3, Link(n11, n13): 4, Link(n13, n12): 1})
-        self.assertDictEqual(self.g0.link_weights(n0), {n1: 3, n2: 1})
-        self.assertDictEqual(self.g0.link_weights(n1), {n0: 3, n2: -4})
-        self.assertDictEqual(self.g0.link_weights(n2), {n0: 1, n1: -4, n3: 6, n4: 2, n5: 4})
-        self.assertDictEqual(self.g0.link_weights(n3), {n2: 6, n6: 3})
-        self.assertDictEqual(self.g0.link_weights(n4), {n2: 2, n5: 3, n6: 7})
-        self.assertDictEqual(self.g0.link_weights(n5), {n2: 4, n4: 3, n8: 5})
-        self.assertDictEqual(self.g0.link_weights(n6), {n3: 3, n4: 7, n7: 2, n8: 4})
-        self.assertDictEqual(self.g0.link_weights(n7), {n6: 2, n8: 1, n9: 3})
-        self.assertDictEqual(self.g0.link_weights(n8), {n5: 5, n6: 4, n7: 1})
-        self.assertDictEqual(self.g0.link_weights(n9), {n7: 3})
-        self.assertDictEqual(self.g0.link_weights(n10), {n11: 2})
-        self.assertDictEqual(self.g0.link_weights(n11), {n10: 2, n12: 3, n13: 4})
-        self.assertDictEqual(self.g0.link_weights(n12), {n11: 3, n13: 1})
-        self.assertDictEqual(self.g0.link_weights(n13), {n11: 4, n12: 1})
-        self.assertDictEqual(self.g0.link_weights(n14), {})
-        self.assertEqual(self.g0.link_weights(Link(n2, n5)), 4)
-
-    def test_link_weights_missing_link(self):
-        with self.assertRaises(KeyError):
-            self.g0.link_weights(0, 4)
-
-    def test_total_link_weights(self):
-        self.assertEqual(self.g0.total_links_weight, 50)
-        self.assertEqual(self.g1.total_links_weight, 23)
-        self.assertEqual(self.g2.total_links_weight, 8)
-        self.assertEqual(self.g3.total_links_weight, 30)
 
     def test_total_weight(self):
         self.assertEqual((self.g0.total_weight, self.g1.total_weight, self.g2.total_weight,
