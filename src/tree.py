@@ -104,9 +104,8 @@ class BinTree:
         Returns:
             An identical copy of the tree.
         """
-        if self:
-            return BinTree(self.root, self.left if self.left is None else self.left.copy(),
-                           self.right if self.right is None else self.right.copy())
+        return BinTree(self.root, self.left if self.left is None else self.left.copy(),
+                       self.right if self.right is None else self.right.copy())
 
     def rotate_left(self) -> "BinTree":
         """
@@ -166,7 +165,7 @@ class BinTree:
             res.add_tree(self.right.tree())
         return res
 
-    def nodes_on_level(self, level: int) -> list[Node]:
+    def nodes_on_level(self, level: int) -> set[Node]:
         """
         Args:
             level: Distance of a node from the root.
@@ -182,7 +181,7 @@ class BinTree:
             return dfs(l - 1, tree.left) + dfs(l - 1, tree.right)
 
         try:
-            return dfs(int(level), self)
+            return set(dfs(int(level), self))
         except TypeError:
             raise TypeError("Integer expected!")
 
@@ -368,13 +367,6 @@ class BinTree:
             return True
         return self.right and u in self.right
 
-    def __bool__(self):
-        """
-        Returns:
-            Whether the tree is not empty (if it has a root value and has left or right subtrees).
-        """
-        return self.root.value is not None or bool(self.left) or bool(self.right)
-
     def __eq__(self, other: "BinTree") -> bool:
         """
         Args:
@@ -400,9 +392,7 @@ class BinTree:
         return helper(self)
 
     def __repr__(self) -> str:
-        if self:
-            return f"BinTree({self.root}, {repr(self.left)}, {repr(self.right)})"
-        return "None"
+        return f"BinTree({self.root}, {repr(self.left)}, {repr(self.right)})"
 
 
 def print_zig_zag(b_t: BinTree):
