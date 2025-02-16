@@ -1327,7 +1327,7 @@ class TestWeightedDirectedGraph(TestCase):
 
     def test_str(self):
         self.assertEqual(str(self.g0), "<{" + ", ".join(
-            f"{n} -> {self.g0.node_weights(n)}" for n in self.g0.nodes) + ", " + ", ".join(
+            f"{n} -> {self.g0.node_weights(n)}" for n in self.g0.nodes) + "}, {" + ", ".join(
             f"<{l[0]}, {l[1]}> -> {self.g0.link_weights(l)}" for l in self.g0.links) + "}>")
 
     def test_repr(self):
