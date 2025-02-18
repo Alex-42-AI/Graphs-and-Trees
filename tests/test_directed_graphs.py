@@ -1,11 +1,9 @@
 from unittest import TestCase, main
 
-from ..src.undirected_graph import (Node, UndirectedGraph, WeightedNodesUndirectedGraph, WeightedLinksUndirectedGraph,
-                                    WeightedUndirectedGraph)
+from undirected_graph import (Node, UndirectedGraph, WeightedNodesUndirectedGraph, WeightedLinksUndirectedGraph,
+                              WeightedUndirectedGraph, reduce)
 
-from ..src.directed_graph import *
-
-from functools import reduce
+from directed_graph import *
 
 n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15 = Node(0), Node(1), Node(2), Node(3), Node(
     4), Node(5), Node(6), Node(7), Node(8), Node(9), Node(10), Node(11), Node(12), Node(13), Node(14), Node(15)
@@ -181,7 +179,7 @@ class TestDirectedGraph(TestCase):
         self.assertDictEqual(g2.link_weights(), link_weights)
 
     def test_undirected(self):
-        self.assertEqual(self.g0.undirected(), UndirectedGraph(
+        self.assertTrue(self.g0.undirected() == UndirectedGraph(
             {n0: {n1, n2}, n1: {n2, n8}, n2: {n3, n4}, n3: {n6, n7, n8}, n4: {n5, n6},
              n5: {n6, n7}, n7: {n8, n9}, n10: {n11}, n11: {n12, n13}, n12: {n13}, n14: []}))
 
