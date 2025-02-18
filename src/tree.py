@@ -10,9 +10,9 @@ from collections import defaultdict
 
 from itertools import permutations, product
 
-from .directed_graph import DirectedGraph, WeightedNodesDirectedGraph
+from directed_graph import DirectedGraph, WeightedNodesDirectedGraph
 
-from .undirected_graph import Node, UndirectedGraph, WeightedNodesUndirectedGraph, Iterable, reduce
+from undirected_graph import Node, UndirectedGraph, WeightedNodesUndirectedGraph, Iterable, reduce
 
 
 def build_heap(ll: list[float], f: Callable = max):
