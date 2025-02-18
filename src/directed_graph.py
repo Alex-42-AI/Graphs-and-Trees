@@ -2,6 +2,8 @@
 Module for implementing directed graphs
 """
 
+__all__ = ["DirectedGraph", "WeightedNodesDirectedGraph", "WeightedLinksDirectedGraph", "WeightedDirectedGraph"]
+
 from .base import combine_directed, isomorphic_bijection_directed
 
 from .undirected_graph import *
