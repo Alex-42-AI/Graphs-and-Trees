@@ -1,5 +1,5 @@
 """
-Module for implementing trees and working with them
+Module for implementing trees and functions for working with them
 """
 
 from typing import Callable
@@ -10,7 +10,7 @@ from itertools import permutations, product
 
 from .directed_graph import DirectedGraph, WeightedNodesDirectedGraph
 
-from .undirected_graph import Node, UndirectedGraph, Iterable, reduce, WeightedNodesUndirectedGraph
+from .undirected_graph import Node, UndirectedGraph, WeightedNodesUndirectedGraph, Iterable, reduce
 
 
 def build_heap(ll: list[float], f: Callable = max):
