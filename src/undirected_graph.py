@@ -36,6 +36,27 @@ def links_graph(graph: "UndirectedGraph") -> "UndirectedGraph":
     return UndirectedGraph(neighborhood)
 
 
+def cliques_graph(graph: "UndirectedGraph") -> "UndirectedGraph":
+    node_weights = hasattr(graph, "node_weights")
+    result = WeightedUndirectedGraph() if node_weights else UndirectedGraph()
+    cliques = graph.complementary().maximal_independent_sets()
+    if node_weights:
+        for u in cliques:
+            result.add((Node(frozenset(u)), sum(map(graph.node_weights, u))))
+        for i, u in enumerate(cliques):
+            for v in cliques[i + 1:]:
+                if common := u.intersection(v):
+                    result.connect(Node(frozenset(u)), {Node(frozenset(v)): sum(map(graph.node_weights, common))})
+    else:
+        for u in cliques:
+            result.add(Node(frozenset(u)))
+        for i, u in enumerate(cliques):
+            for v in cliques[i + 1:]:
+                if u.intersection(v):
+                    result.connect(Node(frozenset(u)), Node(frozenset(v)))
+    return result
+
+
 class UndirectedGraph(Graph):
     """
     Class for implementing an unweighted undirected graph
@@ -636,11 +657,7 @@ class UndirectedGraph(Graph):
             return [set()]
         if not self.connected():
             return reduce(lambda x, y: x + y, map(lambda g: g.cliques(k), self.connection_components()))
-        result = []
-        for p in combinations(self.nodes, abs(k)):
-            if self.clique(*p):
-                result.append(set(p))
-        return result
+        return [set(p) for p in combinations(self.nodes, abs(k)) if self.clique(*p)]
 
     def max_cliques(self) -> list[set[Node]]:
         """
@@ -688,13 +705,13 @@ class UndirectedGraph(Graph):
             All maximal by inclusion independent sets in the graph
         """
 
-        def generator(curr=set(), total=set(), i=0):
+        def generator(result=set(), total=set(), i=0):
             for j, n in enumerate(list(self.nodes)[i:]):
-                if curr.isdisjoint(self.neighbors(n)):
-                    for res in generator({n, *curr}, {n, *self.neighbors(n), *total}, i + j + 1):
+                if result.isdisjoint(self.neighbors(n)):
+                    for res in generator({n, *result}, {n, *self.neighbors(n), *total}, i + j + 1):
                         yield res
             if total == self.nodes:
-                yield curr
+                yield result
 
         return [i_s for i_s in generator()]
 
@@ -704,14 +721,7 @@ class UndirectedGraph(Graph):
         Returns:
             The clique graph of the original one
         """
-        result, cliques = UndirectedGraph(), self.complementary().maximal_independent_sets()
-        for u in cliques:
-            result.add(Node(frozenset(u)))
-        for i, u in enumerate(cliques):
-            for v in cliques[i + 1:]:
-                if u.intersection(v):
-                    result.connect(Node(frozenset(u)), Node(frozenset(v)))
-        return result
+        return cliques_graph(self)
 
     def chromatic_nodes_partition(self) -> list[set[Node]]:
         """
