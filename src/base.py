@@ -1,10 +1,14 @@
 """
-Module for implementing helper classes Node and Link and abstract base class Graph
+Module for implementing helper classes Node and Link, abstract base class Graph and helper functions
 """
 
 from typing import Iterable, Any
 
 from abc import ABC, abstractmethod
+
+from collections import defaultdict
+
+from itertools import permutations, product
 
 
 class Node:
@@ -435,3 +439,258 @@ class Graph(ABC):
     @abstractmethod
     def __repr__(self) -> str:
         pass
+
+
+def combine_undirected(graph0: "UndirectedGraph", graph1: "UndirectedGraph") -> "UndirectedGraph":
+    if not hasattr(graph1, "neighbors"):
+        raise TypeError(f"Addition not defined between type {type(graph0).__name__} and type {type(graph1).__name__}!")
+    if hasattr(graph0, "node_weights") and hasattr(graph0, "link_weights"):
+        if hasattr(graph1, "node_weights") and hasattr(graph1, "link_weights"):
+            res = graph0.copy()
+            for n in graph1.nodes:
+                if n in res:
+                    res.increase_weight(n, graph1.node_weights(n))
+                else:
+                    res.add((n, graph1.node_weights(n)))
+            for l in graph1.links:
+                if l in res.links:
+                    res.increase_weight(l, graph1.link_weights(l))
+                else:
+                    res.connect(l.u, {l.v: graph1.link_weights(l)})
+            return res
+        return graph0 + graph1.weighted_graph()
+    if hasattr(graph0, "node_weights"):
+        if hasattr(graph1, "link_weights"):
+            return graph0.weighted_graph() + graph1
+        if hasattr(graph1, "node_weights"):
+            res = graph0.copy()
+            for n in graph1.nodes:
+                if n in res:
+                    res.increase_weight(n, graph1.node_weights(n))
+                else:
+                    res.add((n, graph1.node_weights(n)))
+            for l in graph1.links:
+                res.connect(l.u, l.v)
+            return res
+        return graph0 + graph1.weighted_nodes_graph()
+    if hasattr(graph0, "link_weights"):
+        if hasattr(graph1, "node_weights"):
+            return graph1 + graph0
+        if hasattr(graph1, "link_weights"):
+            res = graph0.copy()
+            for n in graph1.nodes:
+                res.add(n)
+            for l in graph1.links:
+                if l in res.links:
+                    res.increase_weight(l, graph1.link_weights(l))
+                else:
+                    res.connect(l.u, {l.v: graph1.link_weights(l)})
+            return res
+        return graph0 + graph1.weighted_links_graph()
+    if hasattr(graph1, "node_weights") or hasattr(graph1, "link_weights"):
+        return graph1 + graph0
+    res = graph0.copy()
+    for n in graph1.nodes:
+        res.add(n)
+    for l in graph1.links:
+        res.connect(l.u, l.v)
+    return res
+
+
+def isomorphic_bijection_undirected(graph0: "UndirectedGraph", graph1: "UndirectedGraph") -> dict[Node, Node]:
+    if not hasattr(graph1, "neighbors"):
+        return {}
+    node_weights = hasattr(graph0, "node_weights") and hasattr(graph1, "node_weights")
+    link_weights = hasattr(graph0, "link_weights") and hasattr(graph1, "link_weights")
+    if node_weights:
+        this_weights, other_weights = defaultdict(int), defaultdict(int)
+        for w in graph0.node_weights().values():
+            this_weights[w] += 1
+        for w in graph1.node_weights().values():
+            other_weights[w] += 1
+        if this_weights != other_weights:
+            return {}
+    elif len(graph0.nodes) != len(graph1.nodes):
+        return {}
+    if link_weights:
+        this_weights, other_weights = defaultdict(int), defaultdict(int)
+        for w in graph0.link_weights().values():
+            this_weights[w] += 1
+        for w in graph1.link_weights().values():
+            other_weights[w] += 1
+        if this_weights != other_weights:
+            return {}
+    elif len(graph0.links) != len(graph1.links):
+        return {}
+    this_nodes_degrees, other_nodes_degrees = defaultdict(set), defaultdict(set)
+    for n in graph0.nodes:
+        this_nodes_degrees[graph0.degrees(n)].add(n)
+    for n in graph1.nodes:
+        other_nodes_degrees[graph1.degrees(n)].add(n)
+    if any(len(this_nodes_degrees[d]) != len(other_nodes_degrees[d]) for d in this_nodes_degrees):
+        return {}
+    this_nodes_degrees = sorted(map(list, this_nodes_degrees.values()), key=len)
+    other_nodes_degrees = sorted(map(list, other_nodes_degrees.values()), key=len)
+    for possibility in product(*map(permutations, this_nodes_degrees)):
+        flatten_self = sum(map(list, possibility), [])
+        flatten_other = sum(other_nodes_degrees, [])
+        map_dict = dict(zip(flatten_self, flatten_other))
+        possible = True
+        for n, u in map_dict.items():
+            for m, v in map_dict.items():
+                if node_weights and graph0.node_weights(n) != graph1.node_weights(u):
+                    possible = False
+                    break
+                link_matching = (m in graph0.neighbors(n)) == (v in graph1.neighbors(u))
+                if link_weights:
+                    link_matching = graph0.link_weights().get(Link(n, m)) == graph1.link_weights().get(Link(u, v))
+                if not link_matching or node_weights and graph0.node_weights(m) != graph1.node_weights(v):
+                    possible = False
+                    break
+            if not possible:
+                break
+        if possible:
+            return map_dict
+    return {}
+
+
+def combine_directed(graph0: "DirectedGraph", graph1: "DirectedGraph") -> "DirectedGraph":
+    if not hasattr(graph1, "transposed"):
+        raise TypeError(f"Addition not defined between class DirectedGraph and type {type(graph1).__name__}!")
+    if hasattr(graph0, "node_weights") and hasattr(graph0, "link_weights"):
+        if hasattr(graph1, "node_weights") and hasattr(graph1, "link_weights"):
+            res = graph0.copy()
+            for n in graph1.nodes:
+                if n in res:
+                    res.increase_weight(n, graph1.node_weights(n))
+                else:
+                    res.add((n, graph1.node_weights(n)))
+            for u, v in graph1.links:
+                if v in res.next(u):
+                    res.increase_weight((u, v), graph1.link_weights(u, v))
+                else:
+                    res.connect(v, {u: graph1.link_weights(u, v)})
+            return res
+        return graph0 + graph1.weighted_graph()
+    if hasattr(graph0, "node_weights"):
+        if hasattr(graph1, "link_weights"):
+            return graph0.weighted_graph() + graph1
+        if hasattr(graph1, "node_weights"):
+            res = graph0.copy()
+            for n in graph1.nodes:
+                if n in res:
+                    res.increase_weight(n, graph1.node_weights(n))
+                else:
+                    res.add((n, graph1.node_weights(n)))
+            for u, v in graph1.links:
+                res.connect(v, [u])
+            return res
+        return graph0 + graph1.weighted_nodes_graph()
+    if hasattr(graph0, "link_weights"):
+        if hasattr(graph1, "node_weights"):
+            return graph1 + graph0
+        if hasattr(graph1, "link_weights"):
+            res = graph0.copy()
+            for n in graph1.nodes:
+                res.add(n)
+            for u, v in graph1.links:
+                if v in res.next(u):
+                    res.increase_weight((u, v), graph1.link_weights(u, v))
+                else:
+                    res.connect(v, {u: graph1.link_weights((u, v))})
+            return res
+        return graph0 + graph1.weighted_links_graph()
+    if hasattr(graph1, "node_weights") or hasattr(graph1, "link_weights"):
+        return graph1 + graph0
+    res = graph0.copy()
+    for n in graph1.nodes:
+        res.add(n)
+    for u, v in graph1.links:
+        res.connect(v, [u])
+    return res
+
+
+def isomorphic_bijection_directed(graph0: "DirectedGraph", graph1: "DirectedGraph") -> dict[Node, Node]:
+    if not hasattr(graph1, "transposed"):
+        return {}
+    node_weights = hasattr(graph0, "node_weights") and hasattr(graph1, "node_weights")
+    link_weights = hasattr(graph0, "link_weights") and hasattr(graph1, "link_weights")
+    if node_weights:
+        this_weights, other_weights = defaultdict(int), defaultdict(int)
+        for w in graph0.node_weights().values():
+            this_weights[w] += 1
+        for w in graph1.node_weights().values():
+            other_weights[w] += 1
+        if this_weights != other_weights:
+            return {}
+    elif len(graph0.nodes) != len(graph1.nodes):
+        return {}
+    if link_weights:
+        this_weights, other_weights = defaultdict(int), defaultdict(int)
+        for w in graph0.link_weights().values():
+            this_weights[w] += 1
+        for w in graph1.link_weights().values():
+            other_weights[w] += 1
+        if this_weights != other_weights:
+            return {}
+    elif len(graph0.links) != len(graph1.links):
+        return {}
+    this_nodes_degrees, other_nodes_degrees = defaultdict(set), defaultdict(set)
+    for n in graph0.nodes:
+        this_nodes_degrees[graph0.degrees(n)].add(n)
+    for n in graph1.nodes:
+        other_nodes_degrees[graph1.degrees(n)].add(n)
+    if any(len(this_nodes_degrees[d]) != len(other_nodes_degrees[d]) for d in this_nodes_degrees):
+        return {}
+    this_nodes_degrees = sorted(map(list, this_nodes_degrees.values()), key=len)
+    other_nodes_degrees = sorted(map(list, other_nodes_degrees.values()), key=len)
+    for possibility in product(*map(permutations, this_nodes_degrees)):
+        flatten_self = sum(map(list, possibility), [])
+        flatten_other = sum(other_nodes_degrees, [])
+        map_dict = dict(zip(flatten_self, flatten_other))
+        possible = True
+        for n, u in map_dict.items():
+            for m, v in map_dict.items():
+                if node_weights and graph0.node_weights(n) != graph1.node_weights(u):
+                    possible = False
+                    break
+                link_matching = (m in graph0.next(n)) == (v in graph1.next(u))
+                if link_weights:
+                    link_matching = graph0.link_weights().get((n, m)) == graph1.link_weights().get((u, v))
+                if not link_matching or node_weights and graph0.node_weights(m) != graph1.node_weights(v):
+                    possible = False
+                    break
+            if not possible:
+                break
+        if possible:
+            return map_dict
+    return {}
+
+
+def compare(graph0: "Graph", graph1: "Graph") -> bool:
+    if type(graph0) != type(graph1):
+        return False
+    if hasattr(graph0, "node_weights"):
+        if graph0.node_weights() != graph1.node_weights():
+            return False
+    elif graph0.nodes != graph1.nodes:
+        return False
+    if hasattr(graph0, "link_weights"):
+        if graph0.link_weights() != graph1.link_weights():
+            return False
+    return graph0.links == graph1.links
+
+
+def string(graph: "Graph") -> str:
+    nodes = graph.nodes
+    if hasattr(graph, "node_weights"):
+        nodes = "{" + ", ".join(f"{n} -> {graph.node_weights(n)}" for n in nodes) + "}"
+    links = graph.links
+    if hasattr(graph, "neighbors"):
+        if hasattr(graph, "link_weights"):
+            links = "{" + ", ".join(f"{l} -> {graph.link_weights(l)}" for l in links) + "}"
+    else:
+        links = "{" + ", ".join(
+            f"<{l[0]}, {l[1]}>" + (f" -> {graph.link_weights(l)}" if hasattr(graph, "link_weights") else "") for l in
+            graph.links) + "}"
+    return f"<{nodes}, {links}>"
