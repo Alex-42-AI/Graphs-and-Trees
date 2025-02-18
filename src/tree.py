@@ -2,6 +2,8 @@
 Module for implementing trees and functions for working with them
 """
 
+__all__ = ["BinTree", "print_zig_zag", "build_heap", "binary_heap", "Tree", "WeightedTree"]
+
 from typing import Callable
 
 from collections import defaultdict
