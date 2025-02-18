@@ -2,144 +2,9 @@
 Module for implementing directed graphs
 """
 
-from .undirected_graph import *
+from base import combine_directed, isomorphic_bijection_directed
 
-
-def combine_graphs(graph0: "DirectedGraph", graph1: "DirectedGraph") -> "DirectedGraph":
-    if not isinstance(graph1, DirectedGraph):
-        raise TypeError(f"Addition not defined between class DirectedGraph and type {type(graph1).__name__}!")
-    if isinstance(graph0, WeightedDirectedGraph):
-        if isinstance(graph1, WeightedDirectedGraph):
-            res = graph0.copy()
-            for n in graph1.nodes:
-                if n in res:
-                    res.increase_weight(n, graph1.node_weights(n))
-                else:
-                    res.add((n, graph1.node_weights(n)))
-            for u, v in graph1.links:
-                if v in res.next(u):
-                    res.increase_weight((u, v), graph1.link_weights(u, v))
-                else:
-                    res.connect(v, {u: graph1.link_weights(u, v)})
-            return res
-        return graph0 + graph1.weighted_graph()
-    if isinstance(graph0, WeightedNodesDirectedGraph):
-        if isinstance(graph1, WeightedLinksDirectedGraph):
-            return graph0.weighted_graph() + graph1
-        if isinstance(graph1, WeightedNodesDirectedGraph):
-            res = graph0.copy()
-            for n in graph1.nodes:
-                if n in res:
-                    res.increase_weight(n, graph1.node_weights(n))
-                else:
-                    res.add((n, graph1.node_weights(n)))
-            for u, v in graph1.links:
-                res.connect(v, [u])
-            return res
-        return graph0 + graph1.weighted_nodes_graph()
-    if isinstance(graph0, WeightedLinksDirectedGraph):
-        if isinstance(graph1, WeightedNodesDirectedGraph):
-            return graph1 + graph0
-        if isinstance(graph1, WeightedLinksDirectedGraph):
-            res = graph0.copy()
-            for n in graph1.nodes:
-                res.add(n)
-            for u, v in graph1.links:
-                if v in res.next(u):
-                    res.increase_weight((u, v), graph1.link_weights(u, v))
-                else:
-                    res.connect(v, {u: graph1.link_weights((u, v))})
-            return res
-        return graph0 + graph1.weighted_links_graph()
-    if isinstance(graph1, (WeightedNodesDirectedGraph, WeightedLinksDirectedGraph)):
-        return graph1 + graph0
-    res = graph0.copy()
-    for n in graph1.nodes:
-        res.add(n)
-    for u, v in graph1.links:
-        res.connect(v, [u])
-    return res
-
-
-def isomorphic_bijection(graph0: "DirectedGraph", graph1: "DirectedGraph") -> dict[Node, Node]:
-    if not isinstance(graph1, DirectedGraph):
-        return {}
-    node_weights = isinstance(graph0, WeightedNodesDirectedGraph) and isinstance(graph1, WeightedNodesDirectedGraph)
-    link_weights = isinstance(graph0, WeightedLinksDirectedGraph) and isinstance(graph1, WeightedLinksDirectedGraph)
-    if node_weights:
-        this_weights, other_weights = defaultdict(int), defaultdict(int)
-        for w in graph0.node_weights().values():
-            this_weights[w] += 1
-        for w in graph1.node_weights().values():
-            other_weights[w] += 1
-        if this_weights != other_weights:
-            return {}
-    elif len(graph0.nodes) != len(graph1.nodes):
-        return {}
-    if link_weights:
-        this_weights, other_weights = defaultdict(int), defaultdict(int)
-        for w in graph0.link_weights().values():
-            this_weights[w] += 1
-        for w in graph1.link_weights().values():
-            other_weights[w] += 1
-        if this_weights != other_weights:
-            return {}
-    elif len(graph0.links) != len(graph1.links):
-        return {}
-    this_nodes_degrees, other_nodes_degrees = defaultdict(set), defaultdict(set)
-    for n in graph0.nodes:
-        this_nodes_degrees[graph0.degrees(n)].add(n)
-    for n in graph1.nodes:
-        other_nodes_degrees[graph1.degrees(n)].add(n)
-    if any(len(this_nodes_degrees[d]) != len(other_nodes_degrees[d]) for d in this_nodes_degrees):
-        return {}
-    this_nodes_degrees = sorted(map(list, this_nodes_degrees.values()), key=len)
-    other_nodes_degrees = sorted(map(list, other_nodes_degrees.values()), key=len)
-    for possibility in product(*map(permutations, this_nodes_degrees)):
-        flatten_self = sum(map(list, possibility), [])
-        flatten_other = sum(other_nodes_degrees, [])
-        map_dict = dict(zip(flatten_self, flatten_other))
-        possible = True
-        for n, u in map_dict.items():
-            for m, v in map_dict.items():
-                if node_weights and graph0.node_weights(n) != graph1.node_weights(u):
-                    possible = False
-                    break
-                link_matching = (m in graph0.next(n)) == (v in graph1.next(u))
-                if link_weights:
-                    link_matching = graph0.link_weights().get((n, m)) == graph1.link_weights().get((u, v))
-                if not link_matching or node_weights and graph0.node_weights(m) != graph1.node_weights(v):
-                    possible = False
-                    break
-            if not possible:
-                break
-        if possible:
-            return map_dict
-    return {}
-
-
-def compare(graph0: "DirectedGraph", graph1: "DirectedGraph") -> bool:
-    if type(graph0) != type(graph1):
-        return False
-    if isinstance(graph0, WeightedNodesDirectedGraph):
-        if graph0.node_weights() != graph1.node_weights():
-            return False
-    elif graph0.nodes != graph1.nodes:
-        return False
-    if isinstance(graph0, WeightedLinksDirectedGraph):
-        if graph0.link_weights() != graph1.link_weights():
-            return False
-    return graph0.links == graph1.links
-
-
-def string(graph: "DirectedGraph") -> str:
-    nodes = graph.nodes
-    if isinstance(graph, WeightedNodesDirectedGraph):
-        nodes = "{" + ", ".join(f"{n} -> {graph.node_weights(n)}" for n in graph.nodes) + "}"
-    links = "{" + ", ".join(
-        f"<{l[0]}, {l[1]}>" + (f" -> {graph.link_weights(l)}" if isinstance(graph, WeightedLinksDirectedGraph) else "")
-        for l in graph.links) + "}"
-    return f"<{nodes}, {links}>"
+from undirected_graph import *
 
 
 class DirectedGraph(Graph):
@@ -756,7 +621,7 @@ class DirectedGraph(Graph):
         return dfs(u, [u])
 
     def isomorphic_bijection(self, other: "DirectedGraph") -> dict[Node, Node]:
-        return isomorphic_bijection(self, other)
+        return isomorphic_bijection_directed(self, other)
 
     def __bool__(self) -> bool:
         return bool(self.nodes)
@@ -776,7 +641,7 @@ class DirectedGraph(Graph):
         Returns:
             Combination of two directed graphs
         """
-        return combine_graphs(self, other)
+        return combine_directed(self, other)
 
     def __eq__(self, other: "DirectedGraph") -> bool:
         return compare(self, other)
