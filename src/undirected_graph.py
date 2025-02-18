@@ -9,7 +9,7 @@ from functools import reduce
 
 from itertools import combinations
 
-from base import Node, Link, Graph, Iterable, combine_undirected, isomorphic_bijection_undirected, compare, string
+from .base import Node, Link, Graph, Iterable, combine_undirected, isomorphic_bijection_undirected, compare, string
 
 
 def links_graph(graph: "UndirectedGraph") -> "UndirectedGraph":
@@ -251,7 +251,7 @@ class UndirectedGraph(Graph):
              A tree representation of the graph with root n
         """
 
-        from tree import Tree
+        from .tree import Tree
 
         if root is None:
             root = self.nodes.pop()
@@ -1105,7 +1105,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
              A weighted tree representation of the graph with root n
         """
 
-        from tree import WeightedTree
+        from .tree import WeightedTree
 
         if n is None:
             n = self.nodes.pop()
