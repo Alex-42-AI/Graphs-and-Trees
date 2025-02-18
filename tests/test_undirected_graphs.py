@@ -970,6 +970,15 @@ class TestWeightedNodesUndirectedGraph(TestCase):
             {l02: {l05: 3, l25: 4, l12: 4}, l25: {l05: 1, l12: 4, l35: 1, l45: 1}, l12: {l14: 2},
              l13: {l12: 2, l14: 2, l35: 6}, l35: {l05: 1, l45: 1}, l05: {l45: 1}, l14: {l45: 5}}))
 
+    def test_cliques_graph(self):
+        n012, n123, n05, n34, n45, n56 = Node(frozenset({n0, n1, n2})), Node(frozenset({n1, n2, n3})), Node(
+            frozenset({n0, n5})), Node(frozenset({n3, n4})), Node(frozenset({n4, n5})), Node(frozenset({n5, n6}))
+        res = self.g2.cliques_graph()
+        self.assertDictEqual(res.node_weights(), {n012: 15, n123: 12, n05: 12, n34: 7, n45: 8, n56: 9})
+        self.assertDictEqual(res.link_weights(),
+                             {Link(n012, n123): 8, Link(n123, n34): 4, Link(n05, n012): 7, Link(n34, n45): 3,
+                              Link(n05, n45): 5, Link(n05, n56): 5, Link(n45, n56): 5})
+
     def test_weighted_graph(self):
         g1 = self.g1.weighted_graph()
         self.assertDictEqual(self.g1.node_weights(), g1.node_weights())
