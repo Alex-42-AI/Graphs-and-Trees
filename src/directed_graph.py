@@ -2,9 +2,9 @@
 Module for implementing directed graphs
 """
 
-from base import combine_directed, isomorphic_bijection_directed
+from .base import combine_directed, isomorphic_bijection_directed
 
-from undirected_graph import *
+from .undirected_graph import *
 
 
 class DirectedGraph(Graph):
@@ -169,7 +169,7 @@ class DirectedGraph(Graph):
             u: A present node
             pointed_by: A set of present nodes
             points_to: A set of present nodes
-        Remove all links from nodes in pointed_by to node u and from node u to nodes in points_to
+        Remove all links from .nodes in pointed_by to node u and from .node u to nodes in points_to
         """
         if not isinstance(u, Node):
             u = Node(u)
@@ -330,7 +330,7 @@ class DirectedGraph(Graph):
         """
         Returns:
             A topological sort of the nodes if the graph is a DAG, otherwise an empty list
-        A topological sort has the following property: Let u and v be nodes in the graph and let u come before v. Then there's no path from v to u in the graph. (That's also the reason a graph with cycles has no topological sort)
+        A topological sort has the following property: Let u and v be nodes in the graph and let u come before v. Then there's no path from .v to u in the graph. (That's also the reason a graph with cycles has no topological sort)
         """
         if not self.dag():
             return []
@@ -421,7 +421,7 @@ class DirectedGraph(Graph):
             n: A present node
         Returns:
             The maximal by inclusion strongly-connected component, to which a given node belongs
-        A strongly-connected component is a set of nodes, where there exists a path from every node to every other node
+        A strongly-connected component is a set of nodes, where there exists a path from .every node to every other node
         """
 
         def helper(x):
@@ -842,7 +842,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
             Information about link weights the following way:
             If no argument is passed, return the weights of all links;
             if a link or two nodes are passed, return the weight of the given link between them;
-            If one node is passed, return a dictionary with all nodes it points to and the weight of the link from that node to each of them
+            If one node is passed, return a dictionary with all nodes it points to and the weight of the link from .that node to each of them
         """
         if u_or_l is None:
             return self.__link_weights.copy()
@@ -1041,7 +1041,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
             u: First given node
             v: Second given node
         Returns:
-            A path from u to v with the least possible sum of link weights
+            A path from .u to v with the least possible sum of link weights
         """
         return self.weighted_graph().minimal_path(u, v)
 
