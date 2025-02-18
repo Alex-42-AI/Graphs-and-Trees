@@ -571,7 +571,7 @@ class TestWeightedNodesDirectedGraph(TestCase):
                               n6: {n1, n2}})
 
     def test_add_present_node(self):
-        self.assertEqual(self.g0, self.g0.add((0, 4), {1, 2}))
+        self.assertEqual(self.g0, self.g0.copy().add((0, 4), {1, 2}))
 
     def test_remove(self):
         g1 = self.g1.copy().remove(0, 1, 2)
@@ -585,7 +585,7 @@ class TestWeightedNodesDirectedGraph(TestCase):
         self.assertEqual(g0.node_weights(4), 6)
 
     def test_set_weight_missing_node(self):
-        self.assertEqual(self.g0, self.g0.set_weight(-4, 0))
+        self.assertEqual(self.g0, self.g0.copy().set_weight(-4, 0))
 
     def test_set_weight_bad_weight_type(self):
         with self.assertRaises(TypeError):
@@ -596,7 +596,7 @@ class TestWeightedNodesDirectedGraph(TestCase):
         self.assertEqual(g0.node_weights(4), 10)
 
     def test_increase_weight_missing_node(self):
-        self.assertEqual(self.g0, self.g0.set_weight(-4, 3))
+        self.assertEqual(self.g0, self.g0.copy().increase_weight(-4, 3))
 
     def test_increase_weight_bad_weight_type(self):
         with self.assertRaises(TypeError):
@@ -812,14 +812,14 @@ class TestWeightedLinksDirectedGraph(TestCase):
                               n6: {n1, n2}})
 
     def test_add_present_node(self):
-        self.assertEqual(self.g0, self.g0.add(0, {1, 2}))
+        self.assertEqual(self.g0, self.g0.copy().add(0, {1, 2}))
 
     def test_remove(self):
         g1 = self.g1.copy().remove(0, 1, 2)
         self.assertEqual(g1, WeightedLinksDirectedGraph({5: ({3: 2}, {4: 5})}))
 
     def test_remove_missing_node(self):
-        self.assertEqual(self.g0, self.g0.remove(-1, -2))
+        self.assertEqual(self.g0, self.g0.copy().remove(-1, -2))
 
     def test_connect(self):
         g1 = self.g1.copy().connect(3, {4: 2}, {2: 1})
@@ -857,7 +857,7 @@ class TestWeightedLinksDirectedGraph(TestCase):
         self.assertDictEqual(g0.link_weights(), res_link_weights)
 
     def test_set_weight_missing_link(self):
-        self.assertEqual(self.g0, self.g0.set_weight((n2, n6), 3))
+        self.assertEqual(self.g0, self.g0.copy().set_weight((n2, n6), 3))
 
     def test_set_weight_bad_weight_type(self):
         with self.assertRaises(TypeError):
@@ -870,7 +870,7 @@ class TestWeightedLinksDirectedGraph(TestCase):
         self.assertDictEqual(g0.link_weights(), res_link_weights)
 
     def test_increase_weight_missing_link(self):
-        self.assertEqual(self.g0, self.g0.increase_weight((n2, n6), 1))
+        self.assertEqual(self.g0, self.g0.copy().increase_weight((n2, n6), 1))
 
     def test_increase_weight_bad_weight_type(self):
         with self.assertRaises(TypeError):
@@ -1049,7 +1049,7 @@ class TestWeightedDirectedGraph(TestCase):
                               n6: {n1, n2}})
 
     def test_add_present_node(self):
-        self.assertEqual(self.g0, self.g0.add((0, 4), {1: 2, 2: 1}))
+        self.assertEqual(self.g0, self.g0.copy().add((0, 4), {1: 2, 2: 1}))
 
     def test_remove(self):
         g1 = self.g1.copy().remove(0, 1, 2)
