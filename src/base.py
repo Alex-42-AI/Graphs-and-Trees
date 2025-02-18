@@ -114,7 +114,7 @@ class Link:
         return hash(frozenset({self.u, self.v}))
 
     def __eq__(self, other: "Link") -> bool:
-        if type(other) is Link:
+        if type(other) == Link:
             return {self.u, self.v} == {other.u, other.v}
         return False
 
@@ -668,7 +668,7 @@ def isomorphic_bijection_directed(graph0: "DirectedGraph", graph1: "DirectedGrap
 
 
 def compare(graph0: "Graph", graph1: "Graph") -> bool:
-    if type(graph0) != type(graph1):
+    if type(graph0).__name__ != type(graph1).__name__:
         return False
     if hasattr(graph0, "node_weights"):
         if graph0.node_weights() != graph1.node_weights():
