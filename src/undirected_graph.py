@@ -498,7 +498,7 @@ class UndirectedGraph(Graph):
         def extend_0s(ll, max_l):
             return ll + (0,) * (max_l - len(ll))
 
-        def bfs(g, res, limit):
+        def bfs(g, res, limit=lambda _: True):
             queue, total = [res], {res}
             while queue:
                 for v in g.neighbors(queue.pop(0)) - total:
@@ -543,8 +543,8 @@ class UndirectedGraph(Graph):
                 return []
             for comp in comps:
                 max_priority = priority[comp[0]]
-                curr_graph = graph.subgraph(comp)
                 max_nodes = [n for n in comp if priority[n] == max_priority]
+                curr_graph = graph.subgraph(comp)
                 start, d = max_nodes[0], curr_graph.excentricity(max_nodes[0])
                 for n in max_nodes[1:]:
                     if (e := curr_graph.excentricity(n)) > d:
@@ -595,6 +595,7 @@ class UndirectedGraph(Graph):
             for u in self.nodes:
                 if (e := self.excentricity(u)) > d:
                     start, d = u, e
+            start = bfs(self, start)
         if not isinstance(start, Node):
             start = Node(start)
         if start not in self:
@@ -1212,7 +1213,8 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         if not self:
             return set()
         if not self.connected():
-            return reduce(lambda x, y: x.union(y), [comp.independent_set() for comp in self.connection_components()])
+            return reduce(lambda x, y: x.union(y),
+                          [comp.weighted_independent_set() for comp in self.connection_components()])
         if self.is_tree(True):
             return self.weighted_tree().weighted_independent_set()
         return helper(set())[0]
