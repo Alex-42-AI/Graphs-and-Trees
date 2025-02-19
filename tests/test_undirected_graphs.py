@@ -1000,17 +1000,19 @@ class TestWeightedNodesUndirectedGraph(TestCase):
             self.g0.minimal_path_nodes(2, -1)
 
     def test_weighted_vertex_cover(self):
-        res = self.g0.weighted_vertex_cover()
-        self.assertEqual(sum(map(self.g0.node_weights, res)), 23)
-        for l in self.g0.links:
+        res = (g0 := self.g0.component(0)).weighted_vertex_cover()
+        self.assertEqual(sum(map(g0.node_weights, res)), 20)
+        for l in g0.links:
             self.assertTrue({l.u, l.v}.intersection(res))
 
     def test_weighted_vertex_cover_on_tree_graph(self):
         self.assertSetEqual(self.g3.weighted_vertex_cover(), {n1, n2, n3, n5})
 
     def test_weighted_vertex_cover_on_disconnected_graph(self):
-        self.assertIn(self.g0.weighted_vertex_cover(),
-                      [{n1, n2, n5, n6, n7, n11, n12}, {n1, n2, n5, n6, n7, n8, n11, n12}])
+        res = self.g0.weighted_vertex_cover()
+        self.assertEqual(sum(map(self.g0.node_weights, res)), 23)
+        for l in self.g0.links:
+            self.assertTrue({l.u, l.v}.intersection(res))
 
     def test_weighted_dominating_set(self):
         self.assertSetEqual(self.g1.weighted_dominating_set(), {n1, n5})
