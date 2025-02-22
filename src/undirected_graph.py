@@ -498,14 +498,14 @@ class UndirectedGraph(Graph):
         def extend_0s(ll, max_l):
             return ll + (0,) * (max_l - len(ll))
 
-        def bfs(g, res, limit=lambda _: True):
-            queue, total = [res], {res}
-            while queue:
-                for v in g.neighbors(queue.pop(0)) - total:
-                    queue.append(v), total.add(v)
-                    if limit(v):
-                        res = v
-            return res
+        def find_start_node(graph, nodes=None):
+            if nodes is None:
+                nodes = list(graph.nodes)
+            start, d = nodes[0], graph.excentricity(nodes[0])
+            for n in nodes[1:]:
+                if (e := graph.excentricity(n)) > d:
+                    start, d = n, e
+            return start
 
         def helper(u, graph, priority):
             if graph.full():
@@ -543,12 +543,8 @@ class UndirectedGraph(Graph):
                 return []
             for comp in comps:
                 max_priority = priority[comp[0]]
-                max_nodes = [n for n in comp if priority[n] == max_priority]
                 curr_graph = graph.subgraph(comp)
-                start, d = max_nodes[0], curr_graph.excentricity(max_nodes[0])
-                for n in max_nodes[1:]:
-                    if (e := curr_graph.excentricity(n)) > d:
-                        start, d = n, e
+                start = find_start_node(curr_graph, [n for n in comp if priority[n] == max_priority])
                 new_neighbors = graph.neighbors(start)
                 if not (curr_sort := helper(start, curr_graph,
                                             {k: 2 * priority[k] + (k in new_neighbors) for k in comp})):
@@ -557,9 +553,10 @@ class UndirectedGraph(Graph):
             if set(order) == graph.nodes:
                 return order
             max_priority = priority[final[0]]
-            starting = bfs(curr_graph := graph.subgraph(final), final[-1], lambda x: priority[x] == max_priority)
-            new_neighbors = graph.neighbors(starting)
-            if not (curr_sort := helper(starting, curr_graph,
+            curr_graph = graph.subgraph(final)
+            start = find_start_node(curr_graph, [n for n in final if priority[n] == max_priority])
+            new_neighbors = graph.neighbors(start)
+            if not (curr_sort := helper(start, curr_graph,
                                         {k: 2 * priority[k] + (k in new_neighbors) for k in final})):
                 return []
             return order + curr_sort
@@ -591,11 +588,7 @@ class UndirectedGraph(Graph):
                 result += curr
             return result
         if start is None:
-            d = -1
-            for u in self.nodes:
-                if (e := self.excentricity(u)) > d:
-                    start, d = u, e
-            start = bfs(self, start)
+            start = find_start_node(self)
         if not isinstance(start, Node):
             start = Node(start)
         if start not in self:
