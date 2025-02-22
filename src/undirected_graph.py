@@ -1053,10 +1053,11 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         return self
 
     def remove(self, n: Node, *rest: Node) -> "WeightedNodesUndirectedGraph":
-        for u in self.nodes.intersection({n, *rest}):
-            if not isinstance(u, Node):
-                u = Node(u)
-            self.__node_weights.pop(u)
+        for u in {n, *rest}:
+            if u in self:
+                if not isinstance(u, Node):
+                    u = Node(u)
+                self.__node_weights.pop(u)
         return super().remove(n, *rest)
 
     def set_weight(self, u: Node, w: float) -> "WeightedNodesUndirectedGraph":
@@ -1268,7 +1269,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         return self
 
     def remove(self, n: Node, *rest: Node) -> "WeightedLinksUndirectedGraph":
-        for u in (n, *rest):
+        for u in {n, *rest}:
             if u in self:
                 for v in self.neighbors(u):
                     self.__link_weights.pop(Link(u, v))
@@ -1470,7 +1471,7 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
         return self
 
     def remove(self, u: Node, *rest: Node) -> "WeightedUndirectedGraph":
-        for n in (u, *rest):
+        for n in {u, *rest}:
             if not isinstance(n, Node):
                 n = Node(n)
             if n in self:
