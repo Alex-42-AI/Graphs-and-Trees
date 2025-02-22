@@ -336,17 +336,14 @@ class DirectedGraph(Graph):
         """
         if not self.dag():
             return []
-        layer, total = self.sources, set()
-        res = list(layer)
+        tmp = DirectedGraph.copy(self)
+        layer, res = tmp.sources, []
         while layer:
-            new = set()
-            total.update(layer)
-            for u in layer:
-                new.update(self.next(u))
-            for u in new.copy():
-                if any(v not in total for v in self.prev(u)):
-                    new.remove(u)
-            res, layer = res + list(new), new.copy()
+            res.append(u := layer.pop())
+            for v in tmp.next(u):
+                tmp.disconnect(v, {u})
+                if tmp.source(v):
+                    layer.add(v)
         return res
 
     def get_shortest_path(self, u: Node, v: Node) -> list[Node]:
