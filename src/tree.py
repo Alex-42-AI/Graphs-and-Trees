@@ -934,7 +934,7 @@ class WeightedTree(Tree):
         queue = [*tree.descendants(root := tree.root)]
         self.increase_weight(root, tree.weights(root))
         while queue:
-            self.set_weight((u := queue.pop(0)), tree.weights(u))
+            self.set_weight(u := queue.pop(0), tree.weights(u))
             queue += self.descendants(u)
         return self
 
