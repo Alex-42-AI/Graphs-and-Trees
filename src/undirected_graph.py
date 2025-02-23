@@ -13,26 +13,28 @@ from base import Node, Link, Graph, Iterable, combine_undirected, isomorphic_bij
 
 
 def links_graph(graph: "UndirectedGraph") -> "UndirectedGraph":
+    links = list(graph.links)
     if isinstance(graph, WeightedUndirectedGraph):
-        result = WeightedUndirectedGraph({Node(l): (graph.link_weights(l), {}) for l in graph.links})
-        for l0 in graph.links:
-            for l1 in graph.links:
+        result = WeightedUndirectedGraph({Node(l): (graph.link_weights(l), {}) for l in links})
+        for i, l0 in enumerate(links):
+            for l1 in links[i + 1:]:
                 if l0 != l1 and (s := {l0.u, l0.v}.intersection({l1.u, l1.v})):
                     result.connect(Node(l0), {Node(l1): graph.node_weights(s.pop())})
         return result
     if isinstance(graph, WeightedNodesUndirectedGraph):
-        result = WeightedLinksUndirectedGraph({Node(l): {} for l in graph.links})
-        for l0 in graph.links:
-            for l1 in graph.links:
+        result = WeightedLinksUndirectedGraph({Node(l): {} for l in links})
+        for i, l0 in enumerate(links):
+            for l1 in links[i + 1:]:
                 if l0 != l1 and (s := {l0.u, l0.v}.intersection({l1.u, l1.v})):
                     result.connect(Node(l0), {Node(l1): graph.node_weights(s.pop())})
         return result
     if isinstance(graph, WeightedLinksUndirectedGraph):
         neighborhood = {
-            Node(l0): (graph.link_weights(l0), [Node(l1) for l1 in graph.links if (l1.u in l0) ^ (l1.v in l0)]) for l0
-            in graph.links}
+            Node(l0): (graph.link_weights(l0), [Node(l1) for l1 in links[i + 1:] if (l1.u in l0) ^ (l1.v in l0)])
+            for i, l0 in enumerate(links)}
         return WeightedNodesUndirectedGraph(neighborhood)
-    neighborhood = {Node(l0): [Node(l1) for l1 in graph.links if (l1.u in l0) or (l1.v in l0)] for l0 in graph.links}
+    neighborhood = {Node(l0): [Node(l1) for l1 in links[i + 1:] if (l1.u in l0) or (l1.v in l0)] for i, l0 in
+                    enumerate(links)}
     return UndirectedGraph(neighborhood)
 
 
