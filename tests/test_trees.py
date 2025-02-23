@@ -6,13 +6,10 @@ from directed_graph import DirectedGraph, WeightedNodesDirectedGraph
 
 from tree import *
 
-n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15 = Node(0), Node(1), Node(2), Node(3), Node(
-    4), Node(5), Node(6), Node(7), Node(8), Node(9), Node(10), Node(11), Node(12), Node(13), Node(14), Node(15)
+n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15 = map(Node, range(16))
 
-eps, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z = Node(""), Node("a"), Node(
-    "b"), Node("c"), Node("d"), Node("e"), Node("f"), Node("g"), Node("h"), Node("i"), Node("j"), Node("k"), Node(
-    "l"), Node("m"), Node("n"), Node("o"), Node("p"), Node("q"), Node("r"), Node("s"), Node("t"), Node("u"), Node(
-    "v"), Node("w"), Node("x"), Node("y"), Node("z")
+eps, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z = Node(""), *map(Node,
+                                                                                                   "abcdefghijklmnopqrstuvwxyz")
 
 
 def test_binary_heap():
