@@ -39,7 +39,7 @@ def links_graph(graph: "UndirectedGraph") -> "UndirectedGraph":
 
 
 def cliques_graph(graph: "UndirectedGraph") -> "UndirectedGraph":
-    node_weights = hasattr(graph, "node_weights")
+    node_weights = isinstance(graph, WeightedNodesUndirectedGraph)
     result = WeightedUndirectedGraph() if node_weights else UndirectedGraph()
     cliques = graph.complementary().maximal_independent_sets()
     if node_weights:
