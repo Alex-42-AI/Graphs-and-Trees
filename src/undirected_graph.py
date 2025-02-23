@@ -252,7 +252,7 @@ class UndirectedGraph(Graph):
             return True
         queue, total = [u := self.nodes.pop()], {u}
         while queue:
-            queue += list((next_nodes := self.neighbors(queue.pop(0)) - total))
+            queue += list(next_nodes := self.neighbors(queue.pop(0)) - total)
             total.update(next_nodes)
         return total == self.nodes
 
