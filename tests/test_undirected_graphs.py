@@ -492,8 +492,11 @@ class TestUndirectedGraph(TestCase):
         self.assertDictEqual(g2.link_weights(), link_weights)
 
     def test_interval_sort(self):
+        self.assertTrue(consecutive_1s(self.g4, self.g4.interval_sort()))
+        self.assertTrue(consecutive_1s(self.g5, self.g5.interval_sort()))
         self.assertTrue(consecutive_1s(self.g6, self.g6.interval_sort()))
         self.assertTrue(consecutive_1s(self.g7, self.g7.interval_sort()))
+        self.assertTrue(consecutive_1s(self.g8, self.g8.interval_sort()))
 
     def test_interval_sort_given_start(self):
         self.assertTrue(consecutive_1s(self.g4, self.g4.interval_sort(0)))
