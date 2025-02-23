@@ -505,7 +505,7 @@ class UndirectedGraph(Graph):
             start, d = None, -1
             g = graph.subgraph(nodes)
             for n in nodes:
-                if g.clique(n, *graph.neighbors(n)) and (e := graph.excentricity(n)) > d:
+                if g.clique(n, *g.neighbors(n)) and (e := graph.excentricity(n)) > d:
                     start, d = n, e
             return start
 
