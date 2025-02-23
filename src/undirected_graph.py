@@ -116,7 +116,7 @@ class UndirectedGraph(Graph):
 
     def degrees(self, u: Node = None) -> dict[Node, int] | int:
         if u is None:
-            return {n: len(self.neighbors(n)) for n in self.nodes}
+            return {n: self.degrees(n) for n in self.nodes}
         if not isinstance(u, Node):
             u = Node(u)
         return len(self.__neighbors[u])
