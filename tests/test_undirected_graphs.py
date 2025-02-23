@@ -17,8 +17,7 @@ def consecutive_1s(g, sort):
     return True
 
 
-n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15 = Node(0), Node(1), Node(2), Node(3), Node(
-    4), Node(5), Node(6), Node(7), Node(8), Node(9), Node(10), Node(11), Node(12), Node(13), Node(14), Node(15)
+n0, n1, n2, n3, n4, n5, n6, n7, n8, n9, n10, n11, n12, n13, n14, n15 = map(Node, range(16))
 
 
 class TestUndirectedGraph(TestCase):
