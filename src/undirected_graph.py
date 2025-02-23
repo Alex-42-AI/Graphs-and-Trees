@@ -584,10 +584,9 @@ class UndirectedGraph(Graph):
             else:
                 raise KeyError("Unrecognized node!")
             components.remove(begin)
-            components = [begin, *components]
-            if not (result := components[0].interval_sort(start)):
+            if not (result := begin.interval_sort(start)):
                 return []
-            for component in components[1:]:
+            for component in components:
                 if not (curr := component.interval_sort()):
                     return []
                 result += curr
@@ -697,8 +696,7 @@ class UndirectedGraph(Graph):
         """
         if not isinstance(u, Node):
             u = Node(u)
-        g = self.subgraph(self.neighbors(u)).complementary()
-        return list(map({u}.union, g.maximal_independent_sets()))
+        return list(map({u}.union, self.subgraph(self.neighbors(u)).complementary().maximal_independent_sets()))
 
     def maximal_independent_sets(self) -> list[set[Node]]:
         """
