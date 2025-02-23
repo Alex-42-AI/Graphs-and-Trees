@@ -495,17 +495,28 @@ class UndirectedGraph(Graph):
             fails, it returns an empty list. If start is given, t only tries to find a way to start from it
         """
 
-        def extend_0s(ll, max_l):
-            return ll + (0,) * (max_l - len(ll))
+        def extend_last(ll, max_l):
+            last = ll[-1]
+            return ll + (last,) * (max_l - len(ll))
 
         def find_start_node(graph, nodes=None):
             if nodes is None:
-                nodes = list(graph.nodes)
-            start, d = nodes[0], graph.excentricity(nodes[0])
-            for n in nodes[1:]:
-                if (e := graph.excentricity(n)) > d:
+                nodes = graph.nodes
+            start, d = None, -1
+            g = graph.subgraph(nodes)
+            for n in nodes:
+                if g.clique(n, *graph.neighbors(n)) and (e := graph.excentricity(n)) > d:
                     start, d = n, e
             return start
+
+        def component_interval_sort(graph, comp, priority):
+            max_priority = priority[comp[0]]
+            curr_graph = graph.subgraph(comp)
+            start = find_start_node(curr_graph, {n for n in comp if priority[n] == max_priority})
+            if start is None:
+                return []
+            new_neighbors = graph.neighbors(start)
+            return helper(start, curr_graph, {k: 2 * priority[k] + (k in new_neighbors) for k in set(comp) - {start}})
 
         def helper(u, graph, priority):
             if graph.full():
@@ -531,7 +542,7 @@ class UndirectedGraph(Graph):
                     else:
                         comps.append(sorted(comp, key=priority.get, reverse=True))
             max_length = max(map(len, comps)) if comps else 0
-            comparison_function = lambda c: extend_0s(tuple(map(priority.get, c)), max_length)
+            comparison_function = lambda c: extend_last(tuple(map(priority.get, c)), max_length)
             comps = sorted(comps, key=comparison_function, reverse=True)
             for i in range(len(comps) - 1):
                 if priority[comps[i][-1]] < priority[comps[i + 1][0]]:
@@ -542,22 +553,14 @@ class UndirectedGraph(Graph):
             if final and set(final[:len(final_neighbors)]) != final_neighbors:
                 return []
             for comp in comps:
-                max_priority = priority[comp[0]]
-                curr_graph = graph.subgraph(comp)
-                start = find_start_node(curr_graph, [n for n in comp if priority[n] == max_priority])
-                new_neighbors = graph.neighbors(start)
-                if not (curr_sort := helper(start, curr_graph,
-                                            {k: 2 * priority[k] + (k in new_neighbors) for k in comp})):
+                curr_sort = component_interval_sort(graph, comp, priority)
+                if not curr_sort:
                     return []
                 order += curr_sort
             if set(order) == graph.nodes:
                 return order
-            max_priority = priority[final[0]]
-            curr_graph = graph.subgraph(final)
-            start = find_start_node(curr_graph, [n for n in final if priority[n] == max_priority])
-            new_neighbors = graph.neighbors(start)
-            if not (curr_sort := helper(start, curr_graph,
-                                        {k: 2 * priority[k] + (k in new_neighbors) for k in final})):
+            curr_sort = component_interval_sort(graph, final, priority)
+            if not curr_sort:
                 return []
             return order + curr_sort
 
@@ -589,11 +592,13 @@ class UndirectedGraph(Graph):
             return result
         if start is None:
             start = find_start_node(self)
+            if start is None:
+                return []
         if not isinstance(start, Node):
             start = Node(start)
         if start not in self:
             raise KeyError("Unrecognized node!")
-        return helper(start, self, {u: u in self.neighbors(start) for u in self.nodes})
+        return helper(start, self, {u: u in self.neighbors(start) for u in self.nodes - {start}})
 
     def is_full_k_partite(self, k: int = None) -> bool:
         """
