@@ -324,7 +324,7 @@ class UndirectedGraph(Graph):
             raise KeyError("Unrecognized node!")
         stack, total = [u], {u}
         while stack:
-            stack += list((next_nodes := self.neighbors(stack.pop()) - total))
+            stack += list(next_nodes := self.neighbors(stack.pop()) - total)
             total.update(next_nodes)
         return self.subgraph(total)
 
@@ -800,7 +800,7 @@ class UndirectedGraph(Graph):
                 return curr.copy()
             result = self.nodes
             for j, u in enumerate(list(nodes)[i:]):
-                if len((res := helper({u, *curr}, {u, *self.neighbors(u), *total}, i + j + 1))) < len(result):
+                if len(res := helper({u, *curr}, {u, *self.neighbors(u), *total}, i + j + 1)) < len(result):
                     result = res
             return result
 
@@ -900,9 +900,8 @@ class UndirectedGraph(Graph):
             tmp.add(x, *neighbors)
             return False
 
-        if (n := len(self.nodes)) == 1 or (
-                2 * (m := len(self.links)) > (n - 1) * (n - 2) + 2 or n > 2 and all(
-            2 * self.degrees(node) >= n for node in self.nodes)):
+        if (n := len(self.nodes)) == 1 or (2 * (m := len(self.links)) > (n - 1) * (n - 2) + 2 or n > 2 and all(
+                2 * self.degrees(node) >= n for node in self.nodes)):
             return True
         if n > m or self.leaves or not self.connected():
             return False
