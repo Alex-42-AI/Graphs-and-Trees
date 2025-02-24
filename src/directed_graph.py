@@ -257,9 +257,13 @@ class DirectedGraph(Graph):
             v = Node(v)
         if u not in self or v not in self:
             raise KeyError("Unrecognized node(s).")
-        if v in {u, *self.next(u)}:
-            return True
-        return v in self.subgraph(u)
+        queue, total = [u], {u}
+        while queue:
+            if (n := queue.pop(0)) == v:
+                return True
+            queue += (new := self.next(n) - total)
+            total.update(new)
+        return False
 
     def component(self, u: Node) -> "DirectedGraph":
         """
