@@ -119,7 +119,7 @@ class UndirectedGraph(Graph):
             return {n: self.degrees(n) for n in self.nodes}
         if not isinstance(u, Node):
             u = Node(u)
-        return len(self.__neighbors[u])
+        return len(self.neighbors(u))
 
     def leaf(self, n: Node) -> bool:
         """
