@@ -105,6 +105,54 @@ def string(tree: "Tree") -> str:
     return helper(tree.root, lambda x: f"{x}->{tree.weights(x)}" if isinstance(tree, WeightedTree) else str(x))
 
 
+def print_zig_zag(b_t: "BinTree"):
+    """
+    Args:
+        b_t: BinTree
+    Print the nodes of b_t zigzag
+    """
+
+    def bfs(from_left, *trees):
+        new = []
+        if from_left:
+            for t in trees:
+                if t.left and (t.left.left is not None or t.left.right is not None):
+                    new.insert(0, t.left), print(t.left.root, end=" ")
+                if t.right and (t.right.left is not None or t.right.right is not None):
+                    new.insert(0, t.right), print(t.right.root, end=" ")
+        else:
+            for t in trees:
+                if t.right and (t.right.left is not None or t.right.right is not None):
+                    new.insert(0, t.right), print(t.right.root, end=" ")
+                if t.left and (t.left.left is not None or t.left.right is not None):
+                    new.insert(0, t.left), print(t.left.root, end=" ")
+        if not new:
+            return
+        print(), bfs(not from_left, *new)
+
+    print(b_t.root), bfs(True, b_t)
+
+
+def binary_heap(l: list[float], f: Callable = max) -> "BinTree":
+    """
+    Args:
+        l: A list of real values
+        f: Optimizing function, max by default
+    Returns:
+        A binary heap of list l
+    """
+
+    def helper(curr_root, i=0):
+        left = helper(l[2 * i + 1], 2 * i + 1) if 2 * i + 1 < n else None
+        right = helper(l[2 * i + 2], 2 * i + 2) if 2 * i + 2 < n else None
+        res = BinTree(curr_root, left, right)
+        return res
+
+    build_heap(l, f)
+    n = len(l)
+    return helper(l[0])
+
+
 class BinTree:
     """
     Class for implementing a binary tree
@@ -458,54 +506,6 @@ class BinTree:
         return f"BinTree({self.root}, {repr(self.left)}, {repr(self.right)})"
 
 
-def print_zig_zag(b_t: BinTree):
-    """
-    Args:
-        b_t: BinTree
-    Print the nodes of b_t zigzag
-    """
-
-    def bfs(from_left: bool, *trees: BinTree):
-        new = []
-        if from_left:
-            for t in trees:
-                if t.left and (t.left.left is not None or t.left.right is not None):
-                    new.insert(0, t.left), print(t.left.root, end=" ")
-                if t.right and (t.right.left is not None or t.right.right is not None):
-                    new.insert(0, t.right), print(t.right.root, end=" ")
-        else:
-            for t in trees:
-                if t.right and (t.right.left is not None or t.right.right is not None):
-                    new.insert(0, t.right), print(t.right.root, end=" ")
-                if t.left and (t.left.left is not None or t.left.right is not None):
-                    new.insert(0, t.left), print(t.left.root, end=" ")
-        if not new:
-            return
-        print(), bfs(not from_left, *new)
-
-    print(b_t.root), bfs(True, b_t)
-
-
-def binary_heap(l: list[float], f: Callable = max) -> BinTree:
-    """
-    Args:
-        l: A list of real values
-        f: Optimizing function, max by default
-    Returns:
-        A binary heap of list l
-    """
-
-    def helper(curr_root, i=0):
-        left = helper(l[2 * i + 1], 2 * i + 1) if 2 * i + 1 < n else None
-        right = helper(l[2 * i + 2], 2 * i + 2) if 2 * i + 2 < n else None
-        res = BinTree(curr_root, left, right)
-        return res
-
-    build_heap(l, f)
-    n = len(l)
-    return helper(l[0])
-
-
 class Tree:
     """
     Class for implementing a tree with multiple descendants
@@ -524,15 +524,19 @@ class Tree:
         self.__nodes, self.__leaves = {root}, {root}
         if root in inheritance:
             inheritance.pop(root)
+
         remaining = reduce(lambda x, y: x.union(y), inheritance.values(), set())
         remaining = set(map(lambda x: x if isinstance(x, Node) else Node(x), remaining))
-        if not (root_desc := set(inheritance) - remaining) and inheritance:
+
+        if not (root_descendants := set(inheritance) - remaining) and inheritance:
             raise ValueError("This dictionary doesn't represent a tree!")
-        root_desc = set(map(lambda x: x if isinstance(x, Node) else Node(x), root_desc))
+
+        root_descendants = set(map(lambda x: x if isinstance(x, Node) else Node(x), root_descendants))
+
         for u, desc in inheritance.items():
             if not isinstance(u, Node):
                 u = Node(u)
-            if u in root_desc:
+            if u in root_descendants:
                 self.add(root, u)
             if desc:
                 self.add(u, *desc)
@@ -894,9 +898,15 @@ class WeightedTree(Tree):
         if not isinstance(root, Node):
             root = Node(root)
         self.__weights = {root: float(root_and_weight[1])}
+
         remaining = reduce(lambda x, y: x.union(y[1]), inheritance.values(), set())
+        remaining = set(map(lambda x: x if isinstance(x, Node) else Node(x), remaining))
+
         if not (root_descendants := set(inheritance) - remaining) and inheritance:
             raise ValueError("This dictionary doesn't represent a tree!")
+
+        root_descendants = set(map(lambda x: x if isinstance(x, Node) else Node(x), root_descendants))
+
         for u in root_descendants:
             self.add(root, {u: inheritance[u][0]})
         for u, (_, desc) in inheritance.items():
