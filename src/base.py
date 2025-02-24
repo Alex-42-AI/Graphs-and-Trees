@@ -2,7 +2,7 @@
 Module for implementing helper classes Node and Link, abstract base class Graph and helper functions
 """
 
-from typing import Iterable, Any
+from typing import Iterable, Hashable
 
 from abc import ABC, abstractmethod
 
@@ -16,13 +16,13 @@ class Node:
     Helper class Node with a hashable value
     """
 
-    def __init__(self, value: Any) -> None:
+    def __init__(self, value: Hashable) -> None:
         if not hasattr(value, "__hash__"):
             raise ValueError(f"Unhashable type: {type(value).__name__}!")
         self.__value = value
 
     @property
-    def value(self) -> Any:
+    def value(self) -> Hashable:
         """
         Returns:
             Node value
