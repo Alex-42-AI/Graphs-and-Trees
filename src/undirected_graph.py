@@ -294,9 +294,13 @@ class UndirectedGraph(Graph):
             v = Node(v)
         if u not in self or v not in self:
             raise KeyError("Unrecognized node(s)!")
-        if v in {u, *self.neighbors(u)}:
-            return True
-        return v in self.component(u)
+        queue, total = [u], {u}
+        while queue:
+            if (n := queue.pop(0)) == v:
+                return True
+            queue += (new := self.neighbors(n) - total)
+            total.update(new)
+        return False
 
     def subgraph(self, nodes: Iterable[Node]) -> "UndirectedGraph":
         """
@@ -504,12 +508,11 @@ class UndirectedGraph(Graph):
         def find_start_node(graph, nodes=None):
             if nodes is None:
                 nodes = graph.nodes
-            start, d = None, -1
             g = graph.subgraph(nodes)
-            for n in nodes:
-                if g.clique(n, *g.neighbors(n)) and (e := graph.excentricity(n)) > d:
-                    start, d = n, e
-            return start
+            nodes = {n for n in nodes if g.clique(n, *g.neighbors(n))}
+            if not nodes:
+                return
+            return max(nodes, key=graph.excentricity)
 
         def component_interval_sort(graph, comp, priority):
             max_priority = priority[comp[0]]
