@@ -59,6 +59,16 @@ def cliques_graph(graph: "UndirectedGraph") -> "UndirectedGraph":
     return result
 
 
+def complementary(graph: "UndirectedGraph") -> "UndirectedGraph":
+    node_weights = isinstance(graph, WeightedNodesUndirectedGraph)
+    res = UndirectedGraph({u: graph.nodes for u in graph.nodes})
+    if node_weights:
+        res = WeightedNodesUndirectedGraph({u: (graph.node_weights(u), graph.nodes) for u in graph.nodes})
+    for l in graph.links:
+        res.disconnect(l.u, l.v)
+    return res
+
+
 class UndirectedGraph(Graph):
     """
     Class for implementing an unweighted undirected graph
@@ -240,10 +250,7 @@ class UndirectedGraph(Graph):
         return max(self.excentricity(u) for u in self.nodes)
 
     def complementary(self) -> "UndirectedGraph":
-        res = UndirectedGraph({u: self.nodes for u in self.nodes})
-        for l in self.links:
-            res.disconnect(l.u, l.v)
-        return res
+        return complementary(self)
 
     def connected(self) -> bool:
         if len(self.links) + 1 < (n := len(self.nodes)):
@@ -1101,12 +1108,6 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
 
     def copy(self) -> "WeightedNodesUndirectedGraph":
         return WeightedNodesUndirectedGraph({n: (self.node_weights(n), self.neighbors(n)) for n in self.nodes})
-
-    def complementary(self) -> "WeightedNodesUndirectedGraph":
-        res = WeightedNodesUndirectedGraph({u: (self.node_weights(u), self.nodes) for u in self.nodes})
-        for l in self.links:
-            res.disconnect(l.u, l.v)
-        return res
 
     def weighted_tree(self, n: Node = None, dfs: bool = False) -> "WeightedTree":
         """
