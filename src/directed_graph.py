@@ -9,6 +9,48 @@ from base import combine_directed, isomorphic_bijection_directed, compare, strin
 from undirected_graph import *
 
 
+def scc_dag(graph: "DirectedGraph") -> "DirectedGraph":
+    node_weights = isinstance(graph, WeightedNodesDirectedGraph)
+    link_weights = isinstance(graph, WeightedLinksDirectedGraph)
+    result = type(graph)()
+    scc = graph.strongly_connected_components()
+    for s in scc:
+        result.add((Node(frozenset(s)), sum(map(graph.node_weights, s))) if node_weights else Node(frozenset(s)))
+    for u in result.nodes:
+        for v in result.nodes:
+            if u != v:
+                for x in u.value:
+                    if any(y in v.value for y in graph.next(x)):
+                        if link_weights:
+                            result.connect(v, {u: 0})
+                            for y in graph.next(x):
+                                if y in v.value:
+                                    result.increase_weight((u, v), graph.link_weights(x, y))
+                        else:
+                            result.connect(v, [u])
+    return result
+
+
+def transposed(graph: "DirectedGraph") -> "DirectedGraph":
+    if isinstance(graph, WeightedDirectedGraph):
+        return WeightedDirectedGraph({u: (graph.node_weights(u), (graph.link_weights(u), {})) for u in graph.nodes})
+    if isinstance(graph, WeightedLinksDirectedGraph):
+        return WeightedLinksDirectedGraph({u: (graph.link_weights(u), {}) for u in graph.nodes})
+    if isinstance(graph, WeightedNodesDirectedGraph):
+        return WeightedNodesDirectedGraph({u: (graph.node_weights(u), (graph.next(u), [])) for u in graph.nodes})
+    return DirectedGraph({u: (graph.next(u), []) for u in graph.nodes})
+
+
+def complementary(graph: "DirectedGraph") -> "DirectedGraph":
+    node_weights = isinstance(graph, WeightedNodesDirectedGraph)
+    res = DirectedGraph({u: ([], graph.nodes) for u in graph.nodes})
+    if node_weights:
+        res = WeightedNodesDirectedGraph({u: (graph.node_weights(u), ([], graph.nodes)) for u in graph.nodes})
+    for l in graph.links:
+        res.disconnect(l[1], {l[0]})
+    return res
+
+
 class DirectedGraph(Graph):
     """
     Class for implementing an unweighted directed graph
@@ -203,17 +245,14 @@ class DirectedGraph(Graph):
         return DirectedGraph({n: ([], self.next(n)) for n in self.nodes})
 
     def complementary(self) -> "DirectedGraph":
-        res = DirectedGraph({n: ([], self.nodes) for n in self.nodes})
-        for l in self.links:
-            res.disconnect(l[1], {l[0]})
-        return res
+        return complementary(self)
 
     def transposed(self) -> "DirectedGraph":
         """
         Returns:
             A graph, where each link points to the opposite direction
         """
-        return DirectedGraph({u: (self.next(u), []) for u in self.nodes})
+        return transposed(self)
 
     def weighted_nodes_graph(self, weights: dict[Node, float] = None) -> "WeightedNodesDirectedGraph":
         if weights is None:
@@ -480,17 +519,7 @@ class DirectedGraph(Graph):
         Returns:
             The DAG, the nodes of which are the individual strongly-connected components, and the links of which are according to whether any node of one SCC points to any node of another SCC
         """
-        result = DirectedGraph()
-        scc = self.strongly_connected_components()
-        for s in scc:
-            result.add(Node(frozenset(s)))
-        for u in result.nodes:
-            for v in result.nodes:
-                if u != v:
-                    for x in u.value:
-                        if any(y in v.value for y in self.next(x)):
-                            result.connect(v, [u])
-        return result
+        return scc_dag(self)
 
     def cycle_with_length(self, length: int) -> list[Node]:
         try:
@@ -747,15 +776,6 @@ class WeightedNodesDirectedGraph(DirectedGraph):
     def copy(self) -> "WeightedNodesDirectedGraph":
         return WeightedNodesDirectedGraph({n: (self.node_weights(n), ([], self.next(n))) for n in self.nodes})
 
-    def complementary(self) -> "WeightedNodesDirectedGraph":
-        res = WeightedNodesDirectedGraph({n: (self.node_weights(n), ([], self.nodes)) for n in self.nodes})
-        for l in self.links:
-            res.disconnect(l[1], [l[0]])
-        return res
-
-    def transposed(self) -> "WeightedNodesDirectedGraph":
-        return WeightedNodesDirectedGraph({u: (self.node_weights(u), (self.next(u), [])) for u in self.nodes})
-
     def weighted_graph(self, weights: dict[tuple[Node, Node], float] = None) -> "WeightedDirectedGraph":
         if weights is None:
             weights = {l: 0 for l in self.links}
@@ -786,23 +806,6 @@ class WeightedNodesDirectedGraph(DirectedGraph):
                     else:
                         res.add((n, self.node_weights(n)), [v]), queue.append(n)
             return res
-
-    def scc_dag(self) -> "WeightedNodesDirectedGraph":
-        """
-        Returns:
-            The DAG, the nodes of which are the individual strongly-connected components, and the links of which are according to whether any node of one SCC points to any node of another SCC
-        """
-        result = WeightedNodesDirectedGraph()
-        scc = self.strongly_connected_components()
-        for s in scc:
-            result.add((Node(frozenset(s)), sum(map(self.node_weights, s))))
-        for u in result.nodes:
-            for v in result.nodes:
-                if u != v:
-                    for x in u.value:
-                        if any(y in v.value for y in self.next(x)):
-                            result.connect(v, [u])
-        return result
 
     def minimal_path_nodes(self, u: Node, v: Node) -> list[Node]:
         """
@@ -978,9 +981,6 @@ class WeightedLinksDirectedGraph(DirectedGraph):
     def copy(self) -> "WeightedLinksDirectedGraph":
         return WeightedLinksDirectedGraph({u: ({}, self.link_weights(u)) for u in self.nodes})
 
-    def transposed(self) -> "WeightedLinksDirectedGraph":
-        return WeightedLinksDirectedGraph({u: (self.link_weights(u), {}) for u in self.nodes})
-
     def weighted_graph(self, weights: dict[Node, float] = None) -> "WeightedDirectedGraph":
         if weights is None:
             weights = {n: 0 for n in self.nodes}
@@ -1017,26 +1017,6 @@ class WeightedLinksDirectedGraph(DirectedGraph):
                     else:
                         res.add(n, {v: self.link_weights(v, n)}), queue.append(n)
             return res
-
-    def scc_dag(self) -> "WeightedLinksDirectedGraph":
-        """
-        Returns:
-            The DAG, the nodes of which are the individual strongly-connected components, and the links of which are according to whether any node of one SCC points to any node of another SCC
-        """
-        result = WeightedLinksDirectedGraph()
-        scc = self.strongly_connected_components()
-        for s in scc:
-            result.add(Node(frozenset(s)))
-        for u in result.nodes:
-            for v in result.nodes:
-                if u != v:
-                    for x in u.value:
-                        if any(y in v.value for y in self.next(x)):
-                            result.connect(v, {u: 0})
-                            for y in self.next(x):
-                                if y in v.value:
-                                    result.increase_weight((u, v), self.link_weights(x, y))
-        return result
 
     def minimal_path_links(self, u: Node, v: Node) -> list[Node]:
         """
@@ -1135,10 +1115,6 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
         neighborhood = {u: (self.node_weights(u), ({}, self.link_weights(u))) for u in self.nodes}
         return WeightedDirectedGraph(neighborhood)
 
-    def transposed(self) -> "WeightedDirectedGraph":
-        neighborhood = {u: (self.node_weights(u), (self.link_weights(u), {})) for u in self.nodes}
-        return WeightedDirectedGraph(neighborhood)
-
     def undirected(self) -> "WeightedUndirectedGraph":
         res = WeightedUndirectedGraph({n: (self.node_weights(n), {}) for n in self.nodes})
         for u, v in self.links:
@@ -1168,26 +1144,6 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                     else:
                         res.add((n, self.node_weights(n)), {v: self.link_weights(v, n)}), queue.append(n)
             return res
-
-    def scc_dag(self) -> "WeightedDirectedGraph":
-        """
-        Returns:
-            The DAG, the nodes of which are the individual strongly-connected components, and the links of which are according to whether any node of one SCC points to any node of another SCC
-        """
-        result = WeightedDirectedGraph()
-        scc = self.strongly_connected_components()
-        for s in scc:
-            result.add((Node(frozenset(s)), sum(map(self.node_weights, s))))
-        for u in result.nodes:
-            for v in result.nodes:
-                if u != v:
-                    for x in u.value:
-                        if any(y in v.value for y in self.next(x)):
-                            result.connect(v, {u: 0})
-                            for y in self.next(x):
-                                if y in v.value:
-                                    result.increase_weight((u, v), self.link_weights(x, y))
-        return result
 
     def minimal_path(self, u: Node, v: Node) -> list[Node]:
         """
