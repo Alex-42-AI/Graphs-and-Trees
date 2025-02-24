@@ -2,11 +2,11 @@
 Module for implementing helper classes Node and Link, abstract base class Graph and helper functions
 """
 
-from typing import Iterable, Hashable
+from collections import defaultdict
 
 from abc import ABC, abstractmethod
 
-from collections import defaultdict
+from typing import Iterable, Hashable
 
 from itertools import permutations, product
 
