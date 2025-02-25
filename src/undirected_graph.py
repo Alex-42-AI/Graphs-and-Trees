@@ -122,6 +122,8 @@ class UndirectedGraph(Graph):
             return {n: self.neighbors(n) for n in self.nodes}
         if not isinstance(u, Node):
             u = Node(u)
+        if u not in self:
+            raise KeyError("Unrecognized node!")
         return self.__neighbors[u].copy()
 
     def degrees(self, u: Node = None) -> dict[Node, int] | int:
@@ -232,12 +234,12 @@ class UndirectedGraph(Graph):
         """
         if not isinstance(u, Node):
             u = Node(u)
-        res, total, layer = -1, {u}, [u]
+        res, total, layer = -1, {u}, {u}
         while layer:
             new = []
             while layer:
-                for v in self.neighbors(_ := layer.pop(0)) - total:
-                    new.append(v), total.add(v)
+                new += (nodes := self.neighbors(layer.pop()) - total)
+                total.update(nodes)
             layer = new.copy()
             res += 1
         return res
@@ -301,11 +303,11 @@ class UndirectedGraph(Graph):
             v = Node(v)
         if u not in self or v not in self:
             raise KeyError("Unrecognized node(s)!")
-        queue, total = [u], {u}
-        while queue:
-            if (n := queue.pop(0)) == v:
+        rest, total = {u}, {u}
+        while rest:
+            if (n := rest.pop()) == v:
                 return True
-            queue += (new := self.neighbors(n) - total)
+            rest.update(new := self.neighbors(n) - total)
             total.update(new)
         return False
 
@@ -333,9 +335,9 @@ class UndirectedGraph(Graph):
             u = Node(u)
         if u not in self:
             raise KeyError("Unrecognized node!")
-        stack, total = [u], {u}
-        while stack:
-            stack += list(next_nodes := self.neighbors(stack.pop()) - total)
+        rest, total = {u}, {u}
+        while rest:
+            rest.update(next_nodes := self.neighbors(rest.pop()) - total)
             total.update(next_nodes)
         return self.subgraph(total)
 
@@ -508,15 +510,17 @@ class UndirectedGraph(Graph):
             fails, it returns an empty list. If start is given, t only tries to find a way to start from it
         """
 
-        def extend_last(ll, max_l):
+        def extend_last(ll, max_length):
             last = ll[-1]
-            return ll + (last,) * (max_l - len(ll))
+            return ll + (last,) * (max_length - len(ll))
 
         def find_start_node(graph, nodes=None):
             if nodes is None:
                 nodes = graph.nodes
-            g = graph.subgraph(nodes)
-            nodes = {n for n in nodes if g.clique(*g.neighbors(n))}
+            if len(nodes) == 1:
+                return nodes.pop()
+            subgraph = graph.subgraph(nodes)
+            nodes = {n for n in nodes if subgraph.clique(*subgraph.neighbors(n))}
             if not nodes:
                 return
             return max(nodes, key=graph.excentricity)
@@ -540,10 +544,10 @@ class UndirectedGraph(Graph):
                     total.add(v)
                     rest, comp, this_final = {v}, {v}, False
                     while rest:
-                        for _u in graph.neighbors(_ := rest.pop()):
-                            if _u not in total:
-                                if _u in neighbors:
-                                    rest.add(_u), comp.add(_u), total.add(_u)
+                        for n in graph.neighbors(_ := rest.pop()):
+                            if n not in total:
+                                if n in neighbors:
+                                    rest.add(n), comp.add(n), total.add(n)
                                 else:
                                     if final:
                                         return []
@@ -638,7 +642,7 @@ class UndirectedGraph(Graph):
             if not nodes:
                 return True
             u = nodes.pop()
-            if any(v not in self.neighbors(u) for v in nodes):
+            if not nodes.issubset(self.neighbors(u)):
                 return False
             return helper(nodes)
 
@@ -679,11 +683,10 @@ class UndirectedGraph(Graph):
         while low <= high:
             if curr := self.cliques(mid := (low + high) // 2):
                 low = mid + 1
-                if not result or mid > k:
+                if mid > k:
                     result, k = curr, mid
             else:
                 high = mid - 1
-                k = 0
         return result
 
     def max_cliques_node(self, u: Node) -> list[set[Node]]:
