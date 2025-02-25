@@ -516,7 +516,7 @@ class UndirectedGraph(Graph):
             if nodes is None:
                 nodes = graph.nodes
             g = graph.subgraph(nodes)
-            nodes = {n for n in nodes if g.clique(n, *g.neighbors(n))}
+            nodes = {n for n in nodes if g.clique(*g.neighbors(n))}
             if not nodes:
                 return
             return max(nodes, key=graph.excentricity)
