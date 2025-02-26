@@ -526,6 +526,7 @@ class TestUndirectedGraph(TestCase):
         self.assertTrue(self.g0.clique(n6, n7, n8))
 
     def test_cliques(self):
+        self.assertListEqual(self.g0.cliques(0), [set()])
         res = self.g0.cliques(3)
         self.assertIn({n0, n1, n2}, res)
         self.assertIn({n2, n4, n5}, res)
@@ -537,7 +538,6 @@ class TestUndirectedGraph(TestCase):
 
     def test_cliques_bad_k_value(self):
         self.assertListEqual(self.g0.cliques(-3), [])
-        self.assertListEqual(self.g0.cliques(0), [set()])
 
     def test_cliques_bad_k_type(self):
         with self.assertRaises(TypeError):
@@ -1018,6 +1018,10 @@ class TestWeightedNodesUndirectedGraph(TestCase):
 
     def test_weighted_dominating_set(self):
         self.assertSetEqual(self.g1.weighted_dominating_set(), {n1, n5})
+
+    def test_weighted_dominating_set_on_full_k_partite_graph(self):
+        g = WeightedNodesUndirectedGraph({0: (5, {1, 2, 3, 4, 5}), 1: (4, {3, 4, 5}), 2: (2, {3, 4, 5}), 3: (2, {1, 2}), 4: (3, {1, 2}), 5: (4, {1, 2})})
+        self.assertSetEqual(g.weighted_dominating_set(), {n2, n3})
 
     def test_weighted_dominating_set_on_tree_graph(self):
         self.assertEqual(sum(map(self.g3.node_weights, self.g3.weighted_dominating_set())), 14)
