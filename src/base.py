@@ -6,7 +6,7 @@ from collections import defaultdict
 
 from abc import ABC, abstractmethod
 
-from typing import Iterable, Hashable
+from typing import Iterable, Hashable, Any
 
 from itertools import permutations, product
 
@@ -35,7 +35,7 @@ class Node:
     def __hash__(self) -> int:
         return hash(self.value)
 
-    def __eq__(self, other: "Node") -> bool:
+    def __eq__(self, other: Any) -> bool:
         if type(other) == Node:
             return self.value == other.value
         return False
@@ -423,7 +423,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def __eq__(self, other: "Graph"):
+    def __eq__(self, other: Any):
         """
         Args:
             other: Another Graph object
