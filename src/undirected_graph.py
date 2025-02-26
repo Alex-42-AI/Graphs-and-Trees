@@ -144,6 +144,18 @@ class UndirectedGraph(Graph):
             n = Node(n)
         return self.degrees(n) == 1
 
+    def simplicial(self, u: Node) -> bool:
+        """
+        A simplicial node in a graph is one, the neighbors of which are in a clique
+        Args:
+            u: Node object
+        Returns:
+            Whether u is simplicial
+        """
+        if not isinstance(u, Node):
+            u = Node(u)
+        return self.clique(*self.neighbors(u))
+
     def add(self, u: Node, *current_nodes: Node) -> "UndirectedGraph":
         """
         Args:
@@ -517,10 +529,8 @@ class UndirectedGraph(Graph):
         def find_start_node(graph, nodes=None):
             if nodes is None:
                 nodes = graph.nodes
-            if len(nodes) == 1:
-                return nodes.pop()
             subgraph = graph.subgraph(nodes)
-            nodes = {n for n in nodes if subgraph.clique(*subgraph.neighbors(n))}
+            nodes = {n for n in nodes if subgraph.simplicial(n)}
             if not nodes:
                 return
             return max(nodes, key=graph.excentricity)
@@ -629,27 +639,25 @@ class UndirectedGraph(Graph):
                 raise TypeError("Integer expected!")
         return k in {None, len(comps := self.complementary().connection_components())} and all(c.full() for c in comps)
 
-    def clique(self, n: Node, *rest: Node) -> bool:
+    def clique(self, *nodes: Node) -> bool:
         """
         Args:
             n: A present node
-            rest: A set of present nodes
+            nodes: A set of present nodes
         Returns:
             Whether these given nodes form a clique
         """
 
-        def helper(nodes):
-            if not nodes:
+        def helper(rest):
+            if not rest:
                 return True
-            u = nodes.pop()
-            if not nodes.issubset(self.neighbors(u)):
+            u = rest.pop()
+            if not rest.issubset(self.neighbors(u)):
                 return False
-            return helper(nodes)
+            return helper(rest)
 
-        if not isinstance(n, Node):
-            n = Node(n)
-        rest = list(map(lambda x: x if isinstance(x, Node) else Node(x), rest))
-        result = {n, *rest}.intersection(self.nodes)
+        nodes = {x if isinstance(x, Node) else Node(x) for x in nodes}
+        result = nodes.intersection(self.nodes)
         if result == self.nodes:
             return self.full()
         return helper(result)
@@ -667,8 +675,6 @@ class UndirectedGraph(Graph):
             raise TypeError("Integer expected!")
         if k < 0:
             return []
-        if not k:
-            return [set()]
         if not self.connected():
             return reduce(lambda x, y: x + y, map(lambda g: g.cliques(k), self.connection_components()))
         return [set(p) for p in combinations(self.nodes, abs(k)) if self.clique(*p)]
