@@ -9,7 +9,7 @@ from functools import reduce
 
 from itertools import combinations
 
-from base import Node, Link, Graph, Iterable, combine_undirected, isomorphic_bijection_undirected, compare, string
+from base import Node, Link, Graph, Iterable, combine_undirected, isomorphic_bijection_undirected, compare, string, Any
 
 
 def links_graph(graph: "UndirectedGraph") -> "UndirectedGraph":
@@ -657,10 +657,10 @@ class UndirectedGraph(Graph):
             return helper(rest)
 
         nodes = {x if isinstance(x, Node) else Node(x) for x in nodes}
-        result = nodes.intersection(self.nodes)
-        if result == self.nodes:
+        nodes.intersection_update(self.nodes)
+        if nodes == self.nodes:
             return self.full()
-        return helper(result)
+        return helper(nodes)
 
     def cliques(self, k: int) -> list[set[Node]]:
         """
@@ -676,6 +676,8 @@ class UndirectedGraph(Graph):
         if k < 0:
             return []
         if not self.connected():
+            if not k:
+                return [set()]
             return reduce(lambda x, y: x + y, map(lambda g: g.cliques(k), self.connection_components()))
         return [set(p) for p in combinations(self.nodes, abs(k)) if self.clique(*p)]
 
@@ -814,11 +816,11 @@ class UndirectedGraph(Graph):
             A minimal by cardinality set of nodes, that cover all nodes in the graph
         """
 
-        def helper(curr, total, i=0):
+        def helper(curr=set(), total=set(), i=0):
             if total == self.nodes:
                 return curr.copy()
             result = self.nodes
-            for j, u in enumerate(list(nodes)[i:]):
+            for j, u in enumerate(nodes[i:]):
                 if len(res := helper({u, *curr}, {u, *self.neighbors(u), *total}, i + j + 1)) < len(result):
                     result = res
             return result
@@ -834,11 +836,8 @@ class UndirectedGraph(Graph):
             if (neighbors := self.neighbors(u)) and {u, *neighbors} != self.nodes:
                 res.add(neighbors.pop())
             return res
-        nodes, isolated = self.nodes, set()
-        for n in nodes:
-            if not self.degrees(n):
-                isolated.add(n), nodes.remove(n)
-        return helper(isolated, isolated)
+        nodes = list(self.nodes)
+        return helper()
 
     def independent_set(self) -> set[Node]:
         """
@@ -850,9 +849,7 @@ class UndirectedGraph(Graph):
         if self.is_tree(True):
             return self.tree().independent_set()
         if self.is_full_k_partite():
-            if not self:
-                return set()
-            return max([comp.nodes for comp in self.complementary().connection_components()], key=len)
+            return max([set(), *(comp.nodes for comp in self.complementary().connection_components())], key=len)
         if sort := self.interval_sort():
             result = set()
             for u in reversed(sort):
@@ -884,8 +881,8 @@ class UndirectedGraph(Graph):
     def path_with_length(self, u: Node, v: Node, length: int) -> list[Node]:
         def dfs(x: Node, l: int, stack: list[Link]):
             if not l:
-                return list(map(lambda link: link.u, stack)) + [v] if x == v else []
-            for y in filter(lambda _x: Link(x, _x) not in stack, self.neighbors(x)):
+                return [link.u for link in stack] + [v] if x == v else []
+            for y in {y for y in self.neighbors(x) if Link(x, y) not in stack}:
                 if res := dfs(y, l - 1, stack + [Link(x, y)]):
                     return res
             return []
@@ -936,7 +933,7 @@ class UndirectedGraph(Graph):
         if u not in self or v not in self:
             raise KeyError("Unrecognized node(s)!")
         if v in self.neighbors(u):
-            return True if all(n in {u, v} for n in self.nodes) else self.hamilton_tour_exists()
+            return True if self.nodes == {u, v} else self.hamilton_tour_exists()
         return UndirectedGraph.copy(self).connect(u, v).hamilton_tour_exists()
 
     def hamilton_tour(self) -> list[Node]:
@@ -955,8 +952,8 @@ class UndirectedGraph(Graph):
             if not tmp.degrees(x) or v is not None and not tmp.degrees(v) or not tmp.connected():
                 return []
             too_many = v is not None
-            for n in tmp.nodes:
-                if n not in {x, v} and tmp.leaf(n):
+            for n in tmp.nodes - {x, v}:
+                if tmp.leaf(n):
                     if too_many:
                         return []
                     too_many = True
@@ -964,15 +961,10 @@ class UndirectedGraph(Graph):
                 return stack
             neighbors = tmp.neighbors(x)
             tmp.remove(x)
-            if v is None and len(tmp.nodes) == 1 and tmp.nodes == neighbors:
-                tmp.add(x, (y := neighbors.copy().pop()))
+            if len(tmp.nodes) == 1 and tmp.nodes == neighbors:
+                tmp.add(x, y := neighbors.pop())
                 return stack + [y]
-            for y in neighbors:
-                if y == v:
-                    if tmp.nodes == {v}:
-                        tmp.add(x, *neighbors)
-                        return stack + [v]
-                    continue
+            for y in neighbors - {v}:
                 if res := dfs(y, stack + [y]):
                     tmp.add(x, *neighbors)
                     return res
@@ -989,10 +981,10 @@ class UndirectedGraph(Graph):
         if u is None:
             if v is not None and v not in self:
                 raise KeyError("Unrecognized node.")
-            for _u in self.nodes:
-                if result := dfs(_u, [_u]):
+            for n in self.nodes:
+                if result := dfs(n, [n]):
                     return result
-                if self.leaf(_u):
+                if self.leaf(n):
                     return []
             return []
         if u not in self or v is not None and v not in self:
@@ -1019,7 +1011,7 @@ class UndirectedGraph(Graph):
         """
         return combine_undirected(self, other)
 
-    def __eq__(self, other: "UndirectedGraph") -> bool:
+    def __eq__(self, other: Any) -> bool:
         return compare(self, other)
 
     def __str__(self) -> str:
@@ -1178,30 +1170,34 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
             A minimal by sum of the weights set of nodes, that cover all nodes in the graph
         """
 
-        def helper(curr, total, total_weight, i=0):
+        def helper(curr=set(), total=set(), res_weight=0.0, i=0):
             if total == self.nodes:
-                return curr.copy(), total_weight
-            result, result_sum = self.nodes, self.total_nodes_weight
-            for j, u in enumerate(list(nodes)[i:]):
+                return curr.copy(), res_weight
+            result, result_weight = self.nodes, self.total_nodes_weight
+            for j, u in enumerate(nodes[i:]):
                 cover, weight = helper({u, *curr}, {u, *self.neighbors(u), *total},
-                                       total_weight + self.node_weights(u), i + j + 1)
-                if weight < result_sum:
-                    result, result_sum = cover, weight
-            return result, result_sum
+                                       res_weight + self.node_weights(u), i + j + 1)
+                if weight < result_weight:
+                    result, result_weight = cover, weight
+            return result, result_weight
 
         if not self:
             return set()
         if not self.connected():
             return reduce(lambda x, y: x.union(y), [comp.weighted_dominating_set() for comp in
                                                     self.connection_components()])
+        nodes = list(self.nodes)
         if self.is_tree(True):
             return self.weighted_tree().weighted_dominating_set()
-        nodes, isolated, weights = self.nodes, set(), 0
-        for n in nodes:
-            if not self.degrees(n):
-                isolated.add(n), nodes.remove(n)
-                weights += self.node_weights(n)
-        return helper(isolated, isolated, weights)[0]
+        if self.is_full_k_partite():
+            if not self:
+                return set()
+            res = {min({u for u in nodes if self.degrees(u) + 1 == len(nodes)}, key=self.node_weights)}
+            potential = [{n, m} for l in self.links if
+                         self.degrees(n := l.u) + 1 < len(nodes) and self.degrees(m := l.v) + 1 < len(nodes)]
+            potential = min(potential, key=lambda s: sum(map(self.node_weights, s)))
+            return min([res, potential], key=lambda s: sum(map(self.node_weights, s)))
+        return helper()[0]
 
     def weighted_independent_set(self) -> set[Node]:
         """
@@ -1209,17 +1205,17 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
             A set of non-neighboring nodes with a maximal possible sum of the weights
         """
 
-        def helper(curr, total=set(), res_sum=0.0, i=0):
+        def helper(curr=set(), total=set(), res_weight=0.0, i=0):
             if total == self.nodes:
-                return curr, res_sum
-            result, result_sum = set(), 0
-            for j, u in enumerate(list(self.nodes)[i:]):
+                return curr, res_weight
+            result, result_weight = set(), 0
+            for j, u in enumerate(nodes[i:]):
                 if u not in total and self.node_weights(u) > 0:
                     cover, weight = helper({u, *curr}, {u, *total, *self.neighbors(u)},
-                                           res_sum + self.node_weights(u), i + j + 1)
-                    if weight > result_sum:
-                        result, result_sum = cover, weight
-            return result, result_sum
+                                           res_weight + self.node_weights(u), i + j + 1)
+                    if weight > result_weight:
+                        result, result_weight = cover, weight
+            return result, result_weight
 
         if not self:
             return set()
@@ -1228,7 +1224,8 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
                           [comp.weighted_independent_set() for comp in self.connection_components()])
         if self.is_tree(True):
             return self.weighted_tree().weighted_independent_set()
-        return helper(set())[0]
+        nodes = list(self.nodes)
+        return helper()[0]
 
 
 class WeightedLinksUndirectedGraph(UndirectedGraph):
@@ -1280,7 +1277,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         if not isinstance(u, Node):
             u = Node(u)
         if u not in self:
-            UndirectedGraph.add(self, u, *nodes_weights.keys())
+            UndirectedGraph.add(self, u, *nodes_weights)
             for v, w in nodes_weights.items():
                 self.set_weight(Link(u, v), w)
         return self
@@ -1298,7 +1295,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         nodes_weights = {(k if isinstance(k, Node) else Node(k)): v for k, v in nodes_weights.items()}
         nodes_weights = {v: w for v, w in nodes_weights.items() if v not in self.neighbors(u)}
         if nodes_weights:
-            super().connect(u, *nodes_weights.keys())
+            super().connect(u, *nodes_weights)
             if u in self:
                 for v, w in nodes_weights.items():
                     self.set_weight(Link(u, v), w)
@@ -1483,7 +1480,7 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
     def add(self, n_w: tuple[Node, float], nodes_weights: dict[Node, float] = {}) -> "WeightedUndirectedGraph":
         n = n_w[0] if isinstance(n_w[0], Node) else Node(n_w[0])
         if n not in self:
-            super().add(n_w[0], nodes_weights)
+            super().add(n, nodes_weights)
             self.set_weight(*n_w)
         return self
 
@@ -1492,8 +1489,8 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
             if not isinstance(n, Node):
                 n = Node(n)
             if n in self:
-                if tmp := self.neighbors(n):
-                    super().disconnect(n, *tmp)
+                if neighbors := self.neighbors(n):
+                    super().disconnect(n, *neighbors)
         WeightedNodesUndirectedGraph.remove(self, u, *rest)
         return self
 
@@ -1556,7 +1553,7 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
             A path between u and v with the least possible sum of node and link weights
         """
 
-        def dfs(x, current_path, current_weight, total_negative, res_path=None, res_weight=0):
+        def dfs(x, current_path, current_weight, total_negative, res_path, res_weight):
             def dijkstra(s, curr_path, curr_weight):
                 curr_tmp = tmp.copy()
                 for l in curr_path:
@@ -1577,27 +1574,25 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
                                 paths[x1][x3] = paths[x1][x2] + paths[x2][x3]
                 return curr_path + paths[s][v], curr_weight + weights_from_to[s][v]
 
-            if res_path is None:
-                res_path = []
             if total_negative:
-                for y in filter(lambda _y: Link(x, _y) not in current_path, tmp.neighbors(x)):
+                for y in {y for y in tmp.neighbors(x) if Link(x, y) not in current_path}:
                     new_curr_w = current_weight + (l_w := tmp.link_weights(x, y)) + (n_w := tmp.node_weights(y))
                     new_total_negative = total_negative
                     if n_w < 0:
                         new_total_negative -= n_w
                     if l_w < 0:
                         new_total_negative -= l_w
-                    if new_curr_w + new_total_negative >= res_weight and res_path:
+                    if new_curr_w + new_total_negative >= res_weight:
                         continue
-                    if y == v and (new_curr_w < res_weight or not res_path):
+                    if y == v and new_curr_w < res_weight:
                         res_path = current_path + [Link(x, y)]
                         res_weight = current_weight + l_w + n_w
                     curr = dfs(y, current_path + [Link(x, y)], new_curr_w, new_total_negative, res_path, res_weight)
-                    if curr[1] < res_weight or not res_path:
+                    if curr[1] < res_weight:
                         res_path, res_weight = curr
             else:
                 curr = dijkstra(x, current_path, current_weight)
-                if curr[1] < res_weight or not res_path:
+                if curr[1] < res_weight:
                     res_path, res_weight = curr
             return res_path, res_weight
 
@@ -1609,7 +1604,8 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
             if v in (tmp := self.component(u)):
                 nodes_negative_weights = sum(tmp.node_weights(n) for n in tmp.nodes if tmp.node_weights(n) < 0)
                 links_negative_weights = sum(tmp.link_weights(l) for l in tmp.links if tmp.link_weights(l) < 0)
-                res = dfs(u, [], tmp.node_weights(u), nodes_negative_weights + links_negative_weights)
+                upper_limit = self.total_weight - nodes_negative_weights - links_negative_weights
+                res = dfs(u, [], tmp.node_weights(u), nodes_negative_weights + links_negative_weights, [], upper_limit)
                 return [l.u for l in res[0]] + [res[0][-1].v]
             return []
         raise KeyError("Unrecognized node(s)!")
