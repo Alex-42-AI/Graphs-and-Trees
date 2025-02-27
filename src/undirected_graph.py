@@ -949,7 +949,7 @@ class UndirectedGraph(Graph):
 
     def hamilton_walk(self, u: Node = None, v: Node = None) -> list[Node]:
         def dfs(x, stack):
-            if not tmp.degrees(x) or v is not None and not tmp.degrees(v) or not tmp.connected():
+            if not tmp.connected():
                 return []
             too_many = v is not None
             for n in tmp.nodes - {x, v}:
@@ -957,14 +957,15 @@ class UndirectedGraph(Graph):
                     if too_many:
                         return []
                     too_many = True
-            if not tmp.nodes:
-                return stack
             neighbors = tmp.neighbors(x)
             tmp.remove(x)
-            if len(tmp.nodes) == 1 and tmp.nodes == neighbors:
-                tmp.add(x, y := neighbors.pop())
-                return stack + [y]
-            for y in neighbors - {v}:
+            if not tmp:
+                return stack
+            for y in neighbors:
+                if y == v:
+                    if tmp.nodes == {v}:
+                        tmp.add(x, *neighbors)
+                        return stack + [v]
                 if res := dfs(y, stack + [y]):
                     tmp.add(x, *neighbors)
                     return res
