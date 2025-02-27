@@ -966,6 +966,7 @@ class UndirectedGraph(Graph):
                     if tmp.nodes == {v}:
                         tmp.add(x, *neighbors)
                         return stack + [v]
+                    continue
                 if res := dfs(y, stack + [y]):
                     tmp.add(x, *neighbors)
                     return res
