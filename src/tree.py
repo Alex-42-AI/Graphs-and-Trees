@@ -52,8 +52,8 @@ def isomorphic_bijection(tree0: "Tree", tree1: "Tree") -> dict[Node, Node]:
             return {}
     elif len(tree0.nodes) != len(tree1.nodes):
         return {}
-    if len(tree0.nodes) != len(tree1.nodes) or len(tree0.leaves) != len(tree1.leaves) or len(
-            tree0.descendants(tree0.root)) != len(tree1.descendants(tree1.root)):
+    if len(tree0.leaves) != len(tree1.leaves) or len(tree0.descendants(tree0.root)) != len(
+            tree1.descendants(tree1.root)):
         return {}
     this_nodes_descendants, other_nodes_descendants = defaultdict(set), defaultdict(set)
     for n in tree0.nodes:
@@ -377,7 +377,7 @@ class BinTree:
             if isinstance(c, Node):
                 c = c.value
             if c != " ":
-                if Node(c) in self:
+                if c in self:
                     res += self.code_in_morse(c)
                 else:
                     res += c
@@ -525,13 +525,12 @@ class Tree:
         if root in inheritance:
             inheritance.pop(root)
 
+        inheritance = {k if isinstance(k, Node) else Node(k): v for k, v in inheritance.items()}
         remaining = reduce(lambda x, y: x.union(y), inheritance.values(), set())
-        remaining = set(map(lambda x: x if isinstance(x, Node) else Node(x), remaining))
+        remaining = {x if isinstance(x, Node) else Node(x) for x in remaining}
 
         if not (root_descendants := set(inheritance) - remaining) and inheritance:
             raise ValueError("This dictionary doesn't represent a tree!")
-
-        root_descendants = set(map(lambda x: x if isinstance(x, Node) else Node(x), root_descendants))
 
         for u, desc in inheritance.items():
             if not isinstance(u, Node):
@@ -616,11 +615,10 @@ class Tree:
             raise TypeError("Tree expected!")
         if tree.root not in self:
             raise KeyError("Unrecognized node!")
-        queue = [tree.root]
-        while queue:
-            if res := tree.descendants(u := queue.pop(0)) - self.nodes:
-                Tree.add(self, u, *res)
-                queue += list(res)
+        rest = {tree.root}
+        while rest:
+            if res := tree.descendants(u := rest.pop()) - self.nodes:
+                Tree.add(self, u, *res), rest.update(res)
         return self
 
     def remove(self, u: Node, subtree: bool = True) -> "Tree":
@@ -719,10 +717,10 @@ class Tree:
             raise KeyError("Unrecognized node!")
         if u == self.root:
             return self
-        queue, res = [u], Tree(u)
-        while queue:
-            for n in self.descendants(v := queue.pop(0)):
-                res.add(v, n), queue.append(n)
+        rest, res = {u}, Tree(u)
+        while rest:
+            for n in self.descendants(v := rest.pop()):
+                res.add(v, n), rest.add(n)
         return res
 
     def undirected_graph(self) -> "UndirectedGraph":
@@ -899,18 +897,18 @@ class WeightedTree(Tree):
             root = Node(root)
         self.__weights = {root: float(root_and_weight[1])}
 
+        inheritance = {k if isinstance(k, Node) else Node(k): v for k, v in inheritance.items()}
         remaining = reduce(lambda x, y: x.union(y[1]), inheritance.values(), set())
-        remaining = set(map(lambda x: x if isinstance(x, Node) else Node(x), remaining))
+        remaining = {x if isinstance(x, Node) else Node(x) for x in remaining}
 
         if not (root_descendants := set(inheritance) - remaining) and inheritance:
             raise ValueError("This dictionary doesn't represent a tree!")
-
-        root_descendants = set(map(lambda x: x if isinstance(x, Node) else Node(x), root_descendants))
 
         for u in root_descendants:
             self.add(root, {u: inheritance[u][0]})
         for u, (_, desc) in inheritance.items():
             if desc:
+                desc = {d if isinstance(d, Node) else Node(d) for d in desc}
                 self.add(u, {d: inheritance[d][0] if d in inheritance else 0 for d in desc})
 
     def weights(self, u: Node = None) -> dict[Node, float] | float:
@@ -934,18 +932,18 @@ class WeightedTree(Tree):
                 if u not in self:
                     self.set_weight(u, w)
             if rest:
-                super().add(curr, *rest.keys())
+                super().add(curr, *rest)
         return self
 
     def add_tree(self, tree: Tree) -> "WeightedTree":
         super().add_tree(tree)
         if not isinstance(tree, WeightedTree):
             tree = tree.weighted_tree()
-        queue = [*tree.descendants(root := tree.root)]
+        rest = {*tree.descendants(root := tree.root)}
         self.increase_weight(root, tree.weights(root))
-        while queue:
-            self.set_weight(u := queue.pop(0), tree.weights(u))
-            queue += self.descendants(u)
+        while rest:
+            self.set_weight(u := rest.pop(), tree.weights(u))
+            rest.update(tree.descendants(u))
         return self
 
     def remove(self, u: Node, subtree: bool = True) -> "WeightedTree":
@@ -1003,10 +1001,10 @@ class WeightedTree(Tree):
             raise KeyError("Unrecognized node!")
         if u == self.root:
             return self
-        queue, res = [u], WeightedTree((u, self.weights(u)))
-        while queue:
-            for n in self.descendants(v := queue.pop(0)):
-                res.add(v, {n: self.weights(n)}), queue.append(n)
+        rest, res = {u}, WeightedTree((u, self.weights(u)))
+        while rest:
+            for n in self.descendants(v := rest.pop()):
+                res.add(v, {n: self.weights(n)}), rest.add(n)
         return res
 
     def undirected_graph(self) -> "WeightedNodesUndirectedGraph":
