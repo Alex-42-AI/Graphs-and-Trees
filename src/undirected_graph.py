@@ -1048,10 +1048,10 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         Returns:
             The weight of node n or the dictionary with all node weights
         """
-        if n is not None and not isinstance(n, Node):
-            n = Node(n)
         if n is None:
             return {u: self.node_weights(u) for u in self.nodes}
+        if not isinstance(n, Node):
+            n = Node(n)
         return self.__node_weights[n]
 
     @property
