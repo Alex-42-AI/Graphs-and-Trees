@@ -520,8 +520,8 @@ class Tree:
         if not isinstance(root, Node):
             root = Node(root)
         self.__root = root
-        self.__hierarchy, self.__parent = {root: set()}, {}
-        self.__nodes, self.__leaves = {root}, {root}
+        self.__parent = {}
+        self.__nodes = {root}
         if root in inheritance:
             inheritance.pop(root)
 
@@ -562,7 +562,7 @@ class Tree:
         Returns:
             Leaves
         """
-        return self.__leaves.copy()
+        return self.nodes - set(self.parent().values())
 
     def leaf(self, n: Node) -> bool:
         """
@@ -588,19 +588,12 @@ class Tree:
         if not isinstance(curr, Node):
             curr = Node(curr)
         if curr in self:
-            new_nodes = False
             for v in {u, *rest}:
                 if not isinstance(v, Node):
                     v = Node(v)
                 if v not in self:
-                    new_nodes = True
                     self.__nodes.add(v)
-                    self.__hierarchy[curr].add(v)
                     self.__parent[v] = curr
-                    self.__leaves.add(v)
-                    self.__hierarchy[v] = set()
-            if self.leaf(curr) and new_nodes:
-                self.__leaves.remove(curr)
         return self
 
     def add_tree(self, tree: "Tree") -> "Tree":
@@ -637,16 +630,9 @@ class Tree:
                 for d in self.descendants(u):
                     self.remove(d)
             v = self.parent(u)
-            leaf = self.leaf(u)
-            self.__nodes.remove(u), self.__parent.pop(u)
             for n in self.descendants(u):
                 self.__parent[n] = v
-            self.__hierarchy[v].update(self.hierarchy(u)), self.__hierarchy[v].remove(u)
-            if leaf:
-                self.__leaves.remove(u)
-                if not self.hierarchy(v):
-                    self.__leaves.add(v)
-            self.__hierarchy.pop(u)
+            self.__nodes.remove(u), self.__parent.pop(u)
         return self
 
     def height(self) -> int:
@@ -684,9 +670,7 @@ class Tree:
         """
         if u is None:
             return {n: self.hierarchy(n) for n in self.nodes}
-        if not isinstance(u, Node):
-            u = Node(u)
-        return self.__hierarchy[u].copy()
+        return self.descendants(u)
 
     def descendants(self, u: Node) -> set[Node]:
         """
@@ -695,7 +679,11 @@ class Tree:
         Returns:
             The descendants of node u
         """
-        return self.hierarchy(u)
+        if not isinstance(u, Node):
+            u = Node(u)
+        if u not in self:
+            raise KeyError("Unrecognized node!")
+        return {k for k, v in self.parent().items() if v == u}
 
     def copy(self) -> "Tree":
         """
