@@ -561,9 +561,7 @@ class Tree:
         Returns:
             Leaves
         """
-        if not self.parent():
-            return {self.root}
-        return set(self.parent()) - set(self.parent().values())
+        return self.nodes - set(self.parent().values())
 
     def leaf(self, n: Node) -> bool:
         """
