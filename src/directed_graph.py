@@ -62,7 +62,6 @@ class DirectedGraph(Graph):
             neighborhood: A dictionary with nodes for keys. The value of each node is a tuple of 2 sets of nodes. The first one is the nodes, which point to it, and the second one is the nodes it points to
         """
         self.__nodes, self.__links = set(), set()
-        self.__prev, self.__next = {}, {}
         for u, (prev_nodes, next_nodes) in neighborhood.items():
             self.add(u)
             for v in prev_nodes:
@@ -88,19 +87,6 @@ class DirectedGraph(Graph):
             u = Node(u)
         return len(self.prev(u)), len(self.next(u))
 
-    def next(self, u: Node = None) -> dict[Node, set[Node]] | set[Node]:
-        """
-        Args:
-            u: A present node or None
-        Returns:
-            A set of all nodes, that node u points to, if it's given, otherwise the same for all nodes
-        """
-        if u is None:
-            return {n: self.next(n) for n in self.nodes}
-        if not isinstance(u, Node):
-            u = Node(u)
-        return self.__next[u].copy()
-
     def prev(self, u: Node = None) -> dict[Node, set[Node]] | set[Node]:
         """
         Args:
@@ -110,9 +96,26 @@ class DirectedGraph(Graph):
         """
         if u is None:
             return {n: self.prev(n) for n in self.nodes}
+        if u not in self:
+            raise KeyError("Unrecognized node!")
         if not isinstance(u, Node):
             u = Node(u)
-        return self.__prev[u].copy()
+        return {v for v in self.nodes if (v, u) in self.links}
+
+    def next(self, u: Node = None) -> dict[Node, set[Node]] | set[Node]:
+        """
+        Args:
+            u: A present node or None
+        Returns:
+            A set of all nodes, that node u points to, if it's given, otherwise the same for all nodes
+        """
+        if u is None:
+            return {n: self.next(n) for n in self.nodes}
+        if u not in self:
+            raise KeyError("Unrecognized node!")
+        if not isinstance(u, Node):
+            u = Node(u)
+        return {v for v in self.nodes if (u, v) in self.links}
 
     @property
     def sources(self) -> set[Node]:
@@ -160,7 +163,6 @@ class DirectedGraph(Graph):
             u = Node(u)
         if u not in self:
             self.__nodes.add(u)
-            self.__next[u], self.__prev[u] = set(), set()
             DirectedGraph.connect(self, u, pointed_by, points_to)
         return self
 
@@ -170,7 +172,7 @@ class DirectedGraph(Graph):
                 n = Node(n)
             if n in self:
                 DirectedGraph.disconnect(self, n, self.prev(n), self.next(n))
-                self.__nodes.remove(n), self.__prev.pop(n), self.__next.pop(n)
+                self.__nodes.remove(n)
         return self
 
     def connect(self, u: Node, pointed_by: Iterable[Node] = (), points_to: Iterable[Node] = ()) -> "DirectedGraph":
@@ -189,15 +191,11 @@ class DirectedGraph(Graph):
                     v = Node(v)
                 if u != v and v not in self.prev(u) and v in self:
                     self.__links.add((v, u))
-                    self.__prev[u].add(v)
-                    self.__next[v].add(u)
             for v in points_to:
                 if not isinstance(v, Node):
                     v = Node(v)
                 if u != v and v not in self.next(u) and v in self:
                     self.__links.add((u, v))
-                    self.__prev[v].add(u)
-                    self.__next[u].add(v)
         return self
 
     def connect_all(self, u: Node, *rest: Node) -> "DirectedGraph":
@@ -223,15 +221,11 @@ class DirectedGraph(Graph):
                     v = Node(v)
                 if v in self.prev(u):
                     self.__links.remove((v, u))
-                    self.__next[v].remove(u)
-                    self.__prev[u].remove(v)
             for v in points_to:
                 if not isinstance(v, Node):
                     v = Node(v)
                 if v in self.next(u):
                     self.__links.remove((u, v))
-                    self.__next[u].remove(v)
-                    self.__prev[v].remove(u)
         return self
 
     def disconnect_all(self, u: Node, *rest: Node) -> "DirectedGraph":
