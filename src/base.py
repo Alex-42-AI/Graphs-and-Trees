@@ -99,6 +99,13 @@ class Link:
         """
         return self.__v
 
+    def other(self, n: Node) -> Node:
+        if not isinstance(n, Node):
+            n = Node(n)
+        if n not in self:
+            raise KeyError("Unrecognized node!")
+        return [(u := self.u), self.v][n == u]
+
     def __contains__(self, node: Node) -> bool:
         """
         Args:
