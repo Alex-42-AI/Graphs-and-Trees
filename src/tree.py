@@ -521,7 +521,6 @@ class Tree:
             root = Node(root)
         self.__root = root
         self.__parent = {}
-        self.__nodes = {root}
         if root in inheritance:
             inheritance.pop(root)
 
@@ -554,7 +553,7 @@ class Tree:
         Returns:
             Nodes
         """
-        return self.__nodes.copy()
+        return {self.root}.union(self.parent())
 
     @property
     def leaves(self) -> set[Node]:
@@ -562,7 +561,9 @@ class Tree:
         Returns:
             Leaves
         """
-        return self.nodes - set(self.parent().values())
+        if not self.parent():
+            return {self.root}
+        return set(self.parent()) - set(self.parent().values())
 
     def leaf(self, n: Node) -> bool:
         """
@@ -592,7 +593,6 @@ class Tree:
                 if not isinstance(v, Node):
                     v = Node(v)
                 if v not in self:
-                    self.__nodes.add(v)
                     self.__parent[v] = curr
         return self
 
@@ -632,7 +632,7 @@ class Tree:
             v = self.parent(u)
             for n in self.descendants(u):
                 self.__parent[n] = v
-            self.__nodes.remove(u), self.__parent.pop(u)
+            self.__parent.pop(u)
         return self
 
     def height(self) -> int:
