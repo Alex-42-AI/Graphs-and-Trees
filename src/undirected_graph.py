@@ -80,7 +80,6 @@ class UndirectedGraph(Graph):
             neighborhood: A dictionary, that associates a node to its neighbors in the graph
         """
         self.__nodes, self.__links = set(), set()
-        self.__neighbors = {}
         for u, neighbors in neighborhood.items():
             if u not in self:
                 self.add(u)
@@ -124,7 +123,7 @@ class UndirectedGraph(Graph):
             u = Node(u)
         if u not in self:
             raise KeyError("Unrecognized node!")
-        return self.__neighbors[u].copy()
+        return {l.other(u) for l in self.links if u in l}
 
     def degrees(self, u: Node = None) -> dict[Node, int] | int:
         if u is None:
@@ -167,7 +166,6 @@ class UndirectedGraph(Graph):
             u = Node(u)
         if u not in self:
             self.__nodes.add(u)
-            self.__neighbors[u] = set()
             if current_nodes:
                 UndirectedGraph.connect(self, u, *current_nodes)
         return self
@@ -179,7 +177,7 @@ class UndirectedGraph(Graph):
             if u in self:
                 if tmp := self.neighbors(u):
                     UndirectedGraph.disconnect(self, u, *tmp)
-                self.__nodes.remove(u), self.__neighbors.pop(u)
+                self.__nodes.remove(u)
         return self
 
     def connect(self, u: Node, v: Node, *rest: Node) -> "UndirectedGraph":
@@ -196,8 +194,6 @@ class UndirectedGraph(Graph):
             if not isinstance(n, Node):
                 n = Node(n)
             if u != n and n not in self.neighbors(u) and n in self:
-                self.__neighbors[u].add(n)
-                self.__neighbors[n].add(u)
                 self.__links.add(Link(u, n))
         return self
 
@@ -222,8 +218,6 @@ class UndirectedGraph(Graph):
             if not isinstance(n, Node):
                 n = Node(n)
             if n in self.neighbors(u):
-                self.__neighbors[u].remove(n)
-                self.__neighbors[n].remove(u)
                 self.__links.remove(Link(u, n))
         return self
 
