@@ -193,7 +193,7 @@ class UndirectedGraph(Graph):
         for n in {v, *rest}:
             if not isinstance(n, Node):
                 n = Node(n)
-            if u != n and n not in self.neighbors(u) and n in self:
+            if u != n and Link(n, u) not in self.links and n in self:
                 self.__links.add(Link(u, n))
         return self
 
@@ -217,7 +217,7 @@ class UndirectedGraph(Graph):
         for n in {v, *rest}:
             if not isinstance(n, Node):
                 n = Node(n)
-            if n in self.neighbors(u):
+            if Link(n, u) in self.links:
                 self.__links.remove(Link(u, n))
         return self
 
@@ -471,8 +471,9 @@ class UndirectedGraph(Graph):
             for i in range(len(path) - 1):
                 tmp.disconnect(path[i], path[i + 1])
             for i, u in enumerate(path):
-                while tmp.neighbors(u):
-                    curr = tmp.disconnect(u, v := tmp.neighbors(u).pop()).get_shortest_path(v, u)
+                neighbors = tmp.neighbors(u)
+                while neighbors:
+                    curr = tmp.disconnect(u, v := neighbors.pop()).get_shortest_path(v, u)
                     for j in range(len(curr) - 1):
                         tmp.disconnect(curr[j], curr[j + 1])
                     while curr:
@@ -617,7 +618,7 @@ class UndirectedGraph(Graph):
             start = Node(start)
         if start not in self:
             raise KeyError("Unrecognized node!")
-        return helper(start, self, {u: u in self.neighbors(start) for u in self.nodes - {start}})
+        return helper(start, self, {u: Link(start, u) in self.links for u in self.nodes - {start}})
 
     def is_full_k_partite(self, k: int = None) -> bool:
         """
@@ -926,7 +927,7 @@ class UndirectedGraph(Graph):
             v = Node(v)
         if u not in self or v not in self:
             raise KeyError("Unrecognized node(s)!")
-        if v in self.neighbors(u):
+        if Link(u, v) in self.links:
             return True if self.nodes == {u, v} else self.hamilton_tour_exists()
         return UndirectedGraph.copy(self).connect(u, v).hamilton_tour_exists()
 
@@ -1289,7 +1290,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         if not isinstance(u, Node):
             u = Node(u)
         nodes_weights = {(k if isinstance(k, Node) else Node(k)): v for k, v in nodes_weights.items()}
-        nodes_weights = {v: w for v, w in nodes_weights.items() if v not in self.neighbors(u)}
+        nodes_weights = {v: w for v, w in nodes_weights.items() if Link(u, v) not in self.links}
         if nodes_weights:
             super().connect(u, *nodes_weights)
             if u in self:
