@@ -6,10 +6,6 @@ __all__ = ["BinTree", "print_zig_zag", "build_heap", "binary_heap", "Tree", "Wei
 
 from typing import Callable
 
-from collections import defaultdict
-
-from itertools import permutations, product
-
 from directed_graph import DirectedGraph, WeightedNodesDirectedGraph
 
 from undirected_graph import Node, UndirectedGraph, WeightedNodesUndirectedGraph, Iterable, reduce
@@ -41,48 +37,27 @@ def build_heap(ll: list[float], f: Callable = max):
 def isomorphic_bijection(tree0: "Tree", tree1: "Tree") -> dict[Node, Node]:
     if not isinstance(tree1, Tree):
         return {}
-    weights = isinstance(tree0, WeightedTree) and isinstance(tree1, WeightedTree)
-    if weights:
-        this_weights, other_weights = defaultdict(int), defaultdict(int)
-        for w in tree0.weights().values():
-            this_weights[w] += 1
-        for w in tree1.weights().values():
-            other_weights[w] += 1
-        if this_weights != other_weights:
-            return {}
-    elif len(tree0.nodes) != len(tree1.nodes):
+    if isinstance(tree0, WeightedTree) and isinstance(tree1, WeightedTree):
+        hash0, hash1 = tree0.unique_structure_hash(), tree1.unique_structure_hash()
+    else:
+        hash0, hash1 = Tree.unique_structure_hash(tree0), Tree.unique_structure_hash(tree1)
+    if sorted(hash0.values()) != sorted(hash1.values()):
         return {}
-    if len(tree0.leaves) != len(tree1.leaves) or len(tree0.descendants(tree0.root)) != len(
-            tree1.descendants(tree1.root)):
-        return {}
-    this_nodes_descendants, other_nodes_descendants = defaultdict(set), defaultdict(set)
-    for n in tree0.nodes:
-        this_nodes_descendants[len(tree0.descendants(n))].add(n)
-    for n in tree1.nodes:
-        other_nodes_descendants[len(tree1.descendants(n))].add(n)
-    if any(len(this_nodes_descendants[d]) != len(other_nodes_descendants[d]) for d in this_nodes_descendants):
-        return {}
-    this_nodes_descendants = list(sorted(map(list, this_nodes_descendants.values()), key=len))
-    other_nodes_descendants = list(sorted(map(list, other_nodes_descendants.values()), key=len))
-    for possibility in product(*map(permutations, this_nodes_descendants)):
-        flatten_self = sum(map(list, possibility), [])
-        flatten_other = sum(other_nodes_descendants, [])
-        map_dict = dict(zip(flatten_self, flatten_other))
-        possible = True
-        for n, u in map_dict.items():
-            for m, v in map_dict.items():
-                if weights and tree0.weights(n) != tree1.weights(u):
-                    possible = False
+    res = {tree0.root: tree1.root}
+    rest, total = {tree0.root}, set()
+    while rest:
+        u = rest.pop()
+        v = res[u]
+        for x in tree0.descendants(u):
+            rest.add(x)
+            for y in tree1.descendants(v) - total:
+                if hash0[x] == hash1[y]:
+                    total.add(y)
+                    res[x] = y
                     break
-                if (m in tree0.descendants(n)) ^ (v in tree1.descendants(u)) or (n in tree0.descendants(m)) ^ (
-                        u in tree1.descendants(v)) or weights and tree0.weights(m) != tree1.weights(v):
-                    possible = False
-                    break
-            if not possible:
-                break
-        if possible:
-            return map_dict
-    return {}
+            else:
+                return {}
+    return res
 
 
 def compare(tree0: "Tree", tree1: "Tree") -> bool:
@@ -448,6 +423,13 @@ class BinTree:
         if traversal_type.lower() == "post-order":
             return self.post_order()
         raise ValueError(f"Traversal type {traversal_type} is not supported!")
+
+    def unique_structure_hash(self) -> int:
+        """
+        Returns:
+            The hash value of the unique structure of the tree (disregarding node values)
+        """
+        return hash((self.left.unique_structure_hash(), self.right.unique_structure_hash()))
 
     def __invert__(self) -> "BinTree":
         """
@@ -828,6 +810,22 @@ class Tree:
         dfs(self.root)
         return dp[self.root][0] if len(dp[self.root][0]) > len(dp[self.root][1]) else dp[self.root][1]
 
+    def unique_structure_hash(self) -> dict[Node, int]:
+        """
+        Returns:
+            The hash value of the unique structure of the tree (disregarding node values)
+        """
+
+        def dfs(root):
+            descendants = self.descendants(root)
+            for d in descendants:
+                dfs(d)
+            res[root] = hash(frozenset({res[x] for x in descendants}))
+
+        res = {}
+        dfs(self.root)
+        return res
+
     def isomorphic_bijection(self, other: "Tree") -> dict[Node, Node]:
         """
         Args:
@@ -1061,6 +1059,17 @@ class WeightedTree(Tree):
         return root_val[0] if (
                 sum(map(self.weights, (root_val := dp[self.root])[0])) > sum(map(self.weights, root_val[1]))) else \
             root_val[1]
+
+    def unique_structure_hash(self) -> dict[Node, int]:
+        def dfs(root):
+            descendants = self.descendants(root)
+            for d in descendants:
+                dfs(d)
+            res[root] = hash(frozenset({self.weights(root), *map(lambda x: res[x], descendants)}))
+
+        res = {}
+        dfs(self.root)
+        return res
 
     def __repr__(self) -> str:
         inheritance = {k: (self.weights(k), v) for k, v in self.hierarchy().items()}
