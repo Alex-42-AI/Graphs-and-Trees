@@ -2,6 +2,8 @@
 Module for implementing helper classes Node and Link, abstract base class Graph and helper functions
 """
 
+from __future__ import annotations
+
 from collections import defaultdict
 
 from abc import ABC, abstractmethod
@@ -40,22 +42,22 @@ class Node:
             return self.value == other.value
         return False
 
-    def __lt__(self, other: "Node") -> bool:
+    def __lt__(self, other: Node) -> bool:
         if isinstance(other, Node):
             return self.value < other.value
         return self.value < other
 
-    def __le__(self, other: "Node") -> bool:
+    def __le__(self, other: Node) -> bool:
         if isinstance(other, Node):
             return self.value <= other.value
         return self.value <= other
 
-    def __ge__(self, other: "Node") -> bool:
+    def __ge__(self, other: Node) -> bool:
         if isinstance(other, Node):
             return self.value >= other.value
         return self.value >= other
 
-    def __gt__(self, other: "Node") -> bool:
+    def __gt__(self, other: Node) -> bool:
         if isinstance(other, Node):
             return self.value > other.value
         return self.value > other
@@ -120,7 +122,7 @@ class Link:
     def __hash__(self) -> int:
         return hash(frozenset({self.u, self.v}))
 
-    def __eq__(self, other: "Link") -> bool:
+    def __eq__(self, other: Link) -> bool:
         if type(other) == Link:
             return {self.u, self.v} == {other.u, other.v}
         return False
@@ -163,7 +165,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def remove(self, n: Node, *rest: Node) -> "Graph":
+    def remove(self, n: Node, *rest: Node) -> Graph:
         """
         Remove a non-empty set of nodes
         Args:
@@ -173,7 +175,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def connect_all(self, u: Node, *rest: Node) -> "Graph":
+    def connect_all(self, u: Node, *rest: Node) -> Graph:
         """
         Args:
             u: Node object
@@ -183,7 +185,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def disconnect_all(self, u: Node, *rest: Node) -> "Graph":
+    def disconnect_all(self, u: Node, *rest: Node) -> Graph:
         """
         Args:
             u: First given node
@@ -193,7 +195,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def copy(self) -> "Graph":
+    def copy(self) -> Graph:
         """
         Returns:
             Identical copy of the graph
@@ -201,7 +203,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def complementary(self) -> "Graph":
+    def complementary(self) -> Graph:
         """
         Returns:
             A graph, where there are links between nodes exactly where there aren't in the original graph
@@ -209,11 +211,11 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def component(self, u: Node) -> "Graph":
+    def component(self, u: Node) -> Graph:
         pass
 
     @abstractmethod
-    def subgraph(self, u_or_s: Node | Iterable[Node]) -> "Graph":
+    def subgraph(self, u_or_s: Node | Iterable[Node]) -> Graph:
         """
         Args:
             u_or_s: Given node or set of nodes
@@ -223,7 +225,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def connection_components(self) -> "list[Graph]":
+    def connection_components(self) -> list[Graph]:
         """
         Returns:
             A list of all connection components of the graph
@@ -307,7 +309,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def weighted_nodes_graph(self, weights: dict[Node, float] = None) -> "Graph":
+    def weighted_nodes_graph(self, weights: dict[Node, float] = None) -> Graph:
         """
         Args:
             weights: A dictionary, mapping nodes to their weights
@@ -317,7 +319,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def weighted_links_graph(self, weights: dict) -> "Graph":
+    def weighted_links_graph(self, weights: dict) -> Graph:
         """
         Args:
             weights: A dictionary, mapping links to their weights
@@ -327,7 +329,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def weighted_graph(self, node_weights: dict[Node, float] = None, link_weights: dict = None) -> "Graph":
+    def weighted_graph(self, node_weights: dict[Node, float] = None, link_weights: dict = None) -> Graph:
         """
         Args:
             node_weights: A dictionary, mapping nodes to their weights
@@ -398,7 +400,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def isomorphic_bijection(self, other: "Graph") -> dict[Node, Node]:
+    def isomorphic_bijection(self, other: Graph) -> dict[Node, Node]:
         """
         Args:
             other: another Graph object
@@ -426,7 +428,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def __add__(self, other: "Graph") -> "Graph":
+    def __add__(self, other: Graph) -> Graph:
         pass
 
     @abstractmethod
@@ -514,8 +516,8 @@ def isomorphic_bijection_undirected(graph0: "UndirectedGraph", graph1: "Undirect
             tree0 = graph0.weighted_tree()
             for u in graph1.nodes:
                 tree1 = graph1.weighted_tree(u)
-                if res := tree0.isomorphic_bijection(tree1):
-                    return res
+                if map_dict := tree0.isomorphic_bijection(tree1):
+                    return map_dict
             return {}
         this_weights, other_weights = defaultdict(int), defaultdict(int)
         for w in graph0.node_weights().values():
@@ -545,21 +547,21 @@ def isomorphic_bijection_undirected(graph0: "UndirectedGraph", graph1: "Undirect
                 hash0, hash1 = tree0.unique_structure_hash(), Tree.unique_structure_hash(tree1)
             if sorted(hash0.values()) != sorted(hash1.values()):
                 return {}
-            res = {tree0.root: tree1.root}
+            map_dict = {tree0.root: tree1.root}
             rest, total = {tree0.root}, set()
             while rest:
                 u = rest.pop()
-                v = res[u]
+                v = map_dict[u]
                 for x in tree0.descendants(u):
                     rest.add(x)
                     for y in tree1.descendants(v) - total:
-                        if hash0[x] == hash1[y] and graph0[u, x] == graph1[v, y]:
+                        if hash0[x] == hash1[y] and graph0.link_weights(u, x) == graph1.link_weights(u, x):
                             total.add(y)
-                            res[x] = y
+                            map_dict[x] = y
                             break
                     else:
                         return {}
-            return res
+            return map_dict
         return {}
     this_nodes_degrees, other_nodes_degrees = defaultdict(set), defaultdict(set)
     for n in graph0.nodes:
@@ -706,7 +708,7 @@ def isomorphic_bijection_directed(graph0: "DirectedGraph", graph1: "DirectedGrap
     return {}
 
 
-def compare(graph0: "Graph", graph1: "Graph") -> bool:
+def compare(graph0: Graph, graph1: Graph) -> bool:
     if type(graph0).__name__ != type(graph1).__name__:
         return False
     if hasattr(graph0, "node_weights"):
@@ -720,7 +722,7 @@ def compare(graph0: "Graph", graph1: "Graph") -> bool:
     return graph0.links == graph1.links
 
 
-def string(graph: "Graph") -> str:
+def string(graph: Graph) -> str:
     nodes = graph.nodes
     if hasattr(graph, "node_weights"):
         nodes = "{" + ", ".join(f"{n} -> {graph.node_weights(n)}" for n in nodes) + "}"
