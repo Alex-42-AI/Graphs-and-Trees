@@ -535,11 +535,31 @@ def isomorphic_bijection_undirected(graph0: "UndirectedGraph", graph1: "Undirect
         if this_weights != other_weights:
             return {}
     elif graph0.is_tree() and graph1.is_tree():
+        from tree import Tree
         tree0 = graph0.tree()
         for u in graph1.nodes:
             tree1 = graph1.tree(u)
-            if res := tree0.isomorphic_bijection(tree1):
-                return res
+            if hasattr(tree0, "weights") and hasattr(tree1, "weights"):
+                hash0, hash1 = tree0.unique_structure_hash(), tree1.unique_structure_hash()
+            else:
+                hash0, hash1 = tree0.unique_structure_hash(), Tree.unique_structure_hash(tree1)
+            if sorted(hash0.values()) != sorted(hash1.values()):
+                return {}
+            res = {tree0.root: tree1.root}
+            rest, total = {tree0.root}, set()
+            while rest:
+                u = rest.pop()
+                v = res[u]
+                for x in tree0.descendants(u):
+                    rest.add(x)
+                    for y in tree1.descendants(v) - total:
+                        if hash0[x] == hash1[y] and graph0[u, x] == graph1[v, y]:
+                            total.add(y)
+                            res[x] = y
+                            break
+                    else:
+                        return {}
+            return res
         return {}
     this_nodes_degrees, other_nodes_degrees = defaultdict(set), defaultdict(set)
     for n in graph0.nodes:
