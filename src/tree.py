@@ -2,6 +2,8 @@
 Module for implementing trees and functions for working with them
 """
 
+from __future__ import annotations
+
 __all__ = ["BinTree", "print_zig_zag", "build_heap", "binary_heap", "Tree", "WeightedTree"]
 
 from typing import Callable
@@ -34,7 +36,7 @@ def build_heap(ll: list[float], f: Callable = max):
         heapify(0, h, i, f)
 
 
-def isomorphic_bijection(tree0: "Tree", tree1: "Tree") -> dict[Node, Node]:
+def isomorphic_bijection(tree0: Tree, tree1: Tree) -> dict[Node, Node]:
     if not isinstance(tree1, Tree):
         return {}
     if isinstance(tree0, WeightedTree) and isinstance(tree1, WeightedTree):
@@ -60,7 +62,7 @@ def isomorphic_bijection(tree0: "Tree", tree1: "Tree") -> dict[Node, Node]:
     return res
 
 
-def compare(tree0: "Tree", tree1: "Tree") -> bool:
+def compare(tree0: Tree, tree1: Tree) -> bool:
     if type(tree0) != type(tree1):
         return False
     if isinstance(tree0, WeightedTree) and tree0.weights() != tree1.weights():
@@ -68,7 +70,7 @@ def compare(tree0: "Tree", tree1: "Tree") -> bool:
     return tree0.hierarchy() == tree1.hierarchy()
 
 
-def string(tree: "Tree") -> str:
+def string(tree: Tree) -> str:
     def helper(r, f, i=0, flags=()):
         res, total_descendants = f(r), len(tree.descendants(r))
         line = "".join([" │"[not j % 4 and (flags + (True,))[j // 4]] for j in range(i)])
@@ -80,7 +82,7 @@ def string(tree: "Tree") -> str:
     return helper(tree.root, lambda x: f"{x}->{tree.weights(x)}" if isinstance(tree, WeightedTree) else str(x))
 
 
-def print_zig_zag(b_t: "BinTree"):
+def print_zig_zag(b_t: BinTree):
     """
     Args:
         b_t: BinTree
@@ -108,7 +110,7 @@ def print_zig_zag(b_t: "BinTree"):
     print(b_t.root), bfs(True, b_t)
 
 
-def binary_heap(l: list[float], f: Callable = max) -> "BinTree":
+def binary_heap(l: list[float], f: Callable = max) -> BinTree:
     """
     Args:
         l: A list of real values
@@ -160,7 +162,7 @@ class BinTree:
         return self.__root
 
     @property
-    def left(self) -> "BinTree":
+    def left(self) -> BinTree:
         """
         Returns:
             Left subtree
@@ -168,7 +170,7 @@ class BinTree:
         return self.__left
 
     @property
-    def right(self) -> "BinTree":
+    def right(self) -> BinTree:
         """
         Returns:
             Right subtree
@@ -191,7 +193,7 @@ class BinTree:
 
         return dfs(self)
 
-    def copy(self) -> "BinTree":
+    def copy(self) -> BinTree:
         """
         Returns:
             An identical copy of the tree
@@ -199,7 +201,7 @@ class BinTree:
         return BinTree(self.root, self.left if self.left is None else self.left.copy(),
                        self.right if self.right is None else self.right.copy())
 
-    def rotate_left(self) -> "BinTree":
+    def rotate_left(self) -> BinTree:
         """
         Left rotation of the tree makes it so, that the root is replaced by the current right subtree root
         """
@@ -207,7 +209,7 @@ class BinTree:
                                                                           self.right.left), self.right.right
         return self
 
-    def rotate_right(self) -> "BinTree":
+    def rotate_right(self) -> BinTree:
         """
         Right rotation of the tree makes it so, that the root is replaced by the current left subtree root
         """
@@ -215,7 +217,7 @@ class BinTree:
                                                                                          self.right)
         return self
 
-    def subtree(self, u: Node) -> "BinTree":
+    def subtree(self, u: Node) -> BinTree:
         """
         Args:
             u: A present node
@@ -240,7 +242,7 @@ class BinTree:
             raise KeyError("Unrecognized node!")
         return res
 
-    def tree(self) -> "Tree":
+    def tree(self) -> Tree:
         """
         Returns:
             The Tree class version of the tree
@@ -444,7 +446,7 @@ class BinTree:
         dfs(self)
         return res
 
-    def __invert__(self) -> "BinTree":
+    def __invert__(self) -> BinTree:
         """
         Invert the tree left to right
         """
@@ -473,7 +475,7 @@ class BinTree:
             return True
         return self.right and u in self.right
 
-    def __eq__(self, other: "BinTree") -> bool:
+    def __eq__(self, other: BinTree) -> bool:
         """
         Args:
             other: Another binary tree
@@ -571,7 +573,7 @@ class Tree:
             raise KeyError("Unrecognized node!")
         return n in self.leaves
 
-    def add(self, curr: Node, u: Node, *rest: Node) -> "Tree":
+    def add(self, curr: Node, u: Node, *rest: Node) -> Tree:
         """
         Args:
             curr: A present node
@@ -589,7 +591,7 @@ class Tree:
                     self.__parent[v] = curr
         return self
 
-    def add_tree(self, tree: "Tree") -> "Tree":
+    def add_tree(self, tree: Tree) -> Tree:
         """
         Args:
             tree: A Tree object, the root of which is a present node
@@ -607,7 +609,7 @@ class Tree:
                 Tree.add(self, u, *res), rest.update(res)
         return self
 
-    def remove(self, u: Node, subtree: bool = True) -> "Tree":
+    def remove(self, u: Node, subtree: bool = True) -> Tree:
         """
         Args:
             u: A present node
@@ -678,14 +680,14 @@ class Tree:
             raise KeyError("Unrecognized node!")
         return {k for k, v in self.parent().items() if v == u}
 
-    def copy(self) -> "Tree":
+    def copy(self) -> Tree:
         """
         Returns:
             An identical copy of the tree
         """
         return Tree(self.root, {u: self.descendants(u) for u in self.nodes - {self.root}})
 
-    def subtree(self, u: Node) -> "Tree":
+    def subtree(self, u: Node) -> Tree:
         """
         Args:
             u: A present node
@@ -704,7 +706,7 @@ class Tree:
                 res.add(v, n), rest.add(n)
         return res
 
-    def undirected_graph(self) -> "UndirectedGraph":
+    def undirected_graph(self) -> UndirectedGraph:
         """
         Returns:
             The undirected graph version of the tree
@@ -720,7 +722,7 @@ class Tree:
         """
         return DirectedGraph({k: ([], v) if from_root else (v, []) for k, v in self.hierarchy().items()})
 
-    def weighted_tree(self, weights: dict[Node, float] = None) -> "WeightedTree":
+    def weighted_tree(self, weights: dict[Node, float] = None) -> WeightedTree:
         """
         Args:
             weights: A dictionary, mapping nodes to weights
@@ -839,7 +841,7 @@ class Tree:
         dfs(self.root)
         return res
 
-    def isomorphic_bijection(self, other: "Tree") -> dict[Node, Node]:
+    def isomorphic_bijection(self, other: Tree) -> dict[Node, Node]:
         """
         Args:
             other: another Tree object
@@ -859,7 +861,7 @@ class Tree:
             u = Node(u)
         return u in self.nodes
 
-    def __eq__(self, other: "Tree") -> bool:
+    def __eq__(self, other: Tree) -> bool:
         """
         Args:
             other: a Tree object
@@ -921,7 +923,7 @@ class WeightedTree(Tree):
             u = Node(u)
         return self.__weights[u]
 
-    def add(self, curr: Node, rest: dict[Node, float] = {}) -> "WeightedTree":
+    def add(self, curr: Node, rest: dict[Node, float] = {}) -> WeightedTree:
         if not isinstance(curr, Node):
             curr = Node(curr)
         if curr in self:
@@ -932,7 +934,7 @@ class WeightedTree(Tree):
                 super().add(curr, *rest)
         return self
 
-    def add_tree(self, tree: Tree) -> "WeightedTree":
+    def add_tree(self, tree: Tree) -> WeightedTree:
         super().add_tree(tree)
         if not isinstance(tree, WeightedTree):
             tree = tree.weighted_tree()
@@ -943,7 +945,7 @@ class WeightedTree(Tree):
             rest.update(tree.descendants(u))
         return self
 
-    def remove(self, u: Node, subtree: bool = True) -> "WeightedTree":
+    def remove(self, u: Node, subtree: bool = True) -> WeightedTree:
         if not isinstance(u, Node):
             u = Node(u)
         if u in self:
@@ -954,7 +956,7 @@ class WeightedTree(Tree):
             super().remove(u, subtree)
         return self
 
-    def set_weight(self, u: Node, w: float) -> "WeightedTree":
+    def set_weight(self, u: Node, w: float) -> WeightedTree:
         """
         Args:
             u: A present node
@@ -969,7 +971,7 @@ class WeightedTree(Tree):
             raise TypeError("Real value expected!")
         return self
 
-    def increase_weight(self, u: Node, w: float) -> "WeightedTree":
+    def increase_weight(self, u: Node, w: float) -> WeightedTree:
         """
         Args:
             u: A present node
@@ -987,11 +989,11 @@ class WeightedTree(Tree):
             ...
         return self
 
-    def copy(self) -> "WeightedTree":
+    def copy(self) -> WeightedTree:
         inheritance = {u: (self.weights(u), {v: self.weights(v) for v in self.descendants(u)}) for u in self.nodes}
         return WeightedTree((self.root, self.weights(self.root)), inheritance)
 
-    def subtree(self, u: Node) -> "WeightedTree":
+    def subtree(self, u: Node) -> WeightedTree:
         if not isinstance(u, Node):
             u = Node(u)
         if u not in self:
@@ -1004,7 +1006,7 @@ class WeightedTree(Tree):
                 res.add(v, {n: self.weights(n)}), rest.add(n)
         return res
 
-    def undirected_graph(self) -> "WeightedNodesUndirectedGraph":
+    def undirected_graph(self) -> WeightedNodesUndirectedGraph:
         return WeightedNodesUndirectedGraph({n: (self.weights(n), self.descendants(n)) for n in self.nodes})
 
     def directed_graph(self, from_root: bool = True) -> WeightedNodesDirectedGraph:
