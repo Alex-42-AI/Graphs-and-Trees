@@ -189,12 +189,12 @@ class DirectedGraph(Graph):
             for v in pointed_by:
                 if not isinstance(v, Node):
                     v = Node(v)
-                if u != v and v not in self.prev(u) and v in self:
+                if u != v and (v, u) not in self.links and v in self:
                     self.__links.add((v, u))
             for v in points_to:
                 if not isinstance(v, Node):
                     v = Node(v)
-                if u != v and v not in self.next(u) and v in self:
+                if u != v and (u, v) not in self.links and v in self:
                     self.__links.add((u, v))
         return self
 
@@ -219,12 +219,12 @@ class DirectedGraph(Graph):
             for v in pointed_by:
                 if not isinstance(v, Node):
                     v = Node(v)
-                if v in self.prev(u):
+                if (v, u) in self.links:
                     self.__links.remove((v, u))
             for v in points_to:
                 if not isinstance(v, Node):
                     v = Node(v)
-                if v in self.next(u):
+                if (u, v) in self.links:
                     self.__links.remove((u, v))
         return self
 
@@ -440,8 +440,9 @@ class DirectedGraph(Graph):
             for i in range(len(path) - 1):
                 tmp.disconnect(path[i + 1], {path[i]})
             for i, u in enumerate(path):
-                while tmp.next(u):
-                    curr = tmp.disconnect(v := tmp.next(u).pop(), {u}).get_shortest_path(v, u)
+                neighbors = tmp.next(u)
+                while neighbors:
+                    curr = tmp.disconnect(v := neighbors.pop(), {u}).get_shortest_path(v, u)
                     for j in range(len(curr) - 1):
                         tmp.disconnect(curr[j + 1], {curr[j]})
                     while curr:
@@ -588,7 +589,7 @@ class DirectedGraph(Graph):
             v = Node(v)
         if u not in self or v not in self:
             raise KeyError("Unrecognized node(s).")
-        if u in self.next(v):
+        if (v, u) in self.links:
             return True if self.nodes == {u, v} else self.hamilton_tour_exists()
         return DirectedGraph.copy(self).connect(u, {v}).hamilton_tour_exists()
 
@@ -918,12 +919,12 @@ class WeightedLinksDirectedGraph(DirectedGraph):
             for v in pointed_by:
                 if not isinstance(v, Node):
                     v = Node(v)
-                if v in self.prev(u):
+                if (v, u) in self.links:
                     self.__link_weights.pop((v, u))
             for v in points_to:
                 if not isinstance(v, Node):
                     v = Node(v)
-                if v in self.next(u):
+                if (u, v) in self.links:
                     self.__link_weights.pop((u, v))
             super().disconnect(u, pointed_by, points_to)
         return self
