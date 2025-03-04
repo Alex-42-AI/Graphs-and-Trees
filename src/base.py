@@ -510,6 +510,13 @@ def isomorphic_bijection_undirected(graph0: "UndirectedGraph", graph1: "Undirect
     node_weights = hasattr(graph0, "node_weights") and hasattr(graph1, "node_weights")
     link_weights = hasattr(graph0, "link_weights") and hasattr(graph1, "link_weights")
     if node_weights:
+        if graph0.is_tree() and graph1.is_tree():
+            tree0 = graph0.weighted_tree()
+            for u in graph1.nodes:
+                tree1 = graph1.weighted_tree(u)
+                if res := tree0.isomorphic_bijection(tree1):
+                    return res
+            return {}
         this_weights, other_weights = defaultdict(int), defaultdict(int)
         for w in graph0.node_weights().values():
             this_weights[w] += 1
@@ -527,7 +534,12 @@ def isomorphic_bijection_undirected(graph0: "UndirectedGraph", graph1: "Undirect
             other_weights[w] += 1
         if this_weights != other_weights:
             return {}
-    elif len(graph0.links) != len(graph1.links):
+    elif graph0.is_tree() and graph1.is_tree():
+        tree0 = graph0.tree()
+        for u in graph1.nodes:
+            tree1 = graph1.tree(u)
+            if res := tree0.isomorphic_bijection(tree1):
+                return res
         return {}
     this_nodes_degrees, other_nodes_degrees = defaultdict(set), defaultdict(set)
     for n in graph0.nodes:
