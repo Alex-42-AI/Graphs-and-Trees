@@ -709,7 +709,7 @@ def isomorphic_bijection_directed(graph0: "DirectedGraph", graph1: "DirectedGrap
 
 
 def compare(graph0: Graph, graph1: Graph) -> bool:
-    if type(graph0).__name__ != type(graph1).__name__:
+    if type(graph0) != type(graph1):
         return False
     if hasattr(graph0, "node_weights"):
         if graph0.node_weights() != graph1.node_weights():
