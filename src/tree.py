@@ -424,12 +424,25 @@ class BinTree:
             return self.post_order()
         raise ValueError(f"Traversal type {traversal_type} is not supported!")
 
-    def unique_structure_hash(self) -> int:
+    def unique_structure_hash(self) -> dict[Node, int]:
         """
         Returns:
             The hash value of the unique structure of the tree (disregarding node values)
         """
-        return hash((self.left.unique_structure_hash(), self.right.unique_structure_hash()))
+
+        def dfs(tree):
+            final = [None, None]
+            if l := tree.left:
+                dfs(l)
+                final[0] = res[l]
+            if r := tree.right:
+                dfs(r)
+                final[1] = res[r]
+            res[tree.root] = hash(tuple(final))
+
+        res = {}
+        dfs(self)
+        return res
 
     def __invert__(self) -> "BinTree":
         """
@@ -1065,7 +1078,7 @@ class WeightedTree(Tree):
             descendants = self.descendants(root)
             for d in descendants:
                 dfs(d)
-            res[root] = hash(frozenset({self.weights(root), *map(lambda x: res[x], descendants)}))
+            res[root] = hash((self.weights(root), frozenset({res[x] for x in descendants})))
 
         res = {}
         dfs(self.root)
