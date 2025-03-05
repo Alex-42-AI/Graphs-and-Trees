@@ -4,36 +4,41 @@ Module for implementing trees and functions for working with them
 
 from __future__ import annotations
 
-__all__ = ["BinTree", "print_zig_zag", "build_heap", "binary_heap", "Tree", "WeightedTree"]
-
 from typing import Callable
 
 from directed_graph import DirectedGraph, WeightedNodesDirectedGraph
 
 from undirected_graph import Node, UndirectedGraph, WeightedNodesUndirectedGraph, Iterable, reduce
 
+__all__ = ["print_zig_zag", "build_heap", "binary_heap", "BinTree", "Tree", "WeightedTree"]
 
-def build_heap(ll: list[float], f: Callable = max):
+
+def print_zig_zag(b_t: BinTree):
     """
     Args:
-        ll: A list of real values
-        f: Optimizing function, max by default
-    Sort list ll such, that it could represent a binary heap
+        b_t: BinTree
+    Print the nodes of b_t zigzag
     """
 
-    def heapify(low: int, high: int, ind: int, f=max):
-        left, right = 2 * ind - low, 2 * ind - low + 1
-        res = ind
-        if left <= high and (el := ll[ind - 1]) != f(ll[left - 1], el):
-            res = left
-        if right <= high and (el := ll[res - 1]) != f(ll[right - 1], el):
-            res = right
-        if res != ind:
-            ll[ind - 1], ll[res - 1] = ll[res - 1], ll[ind - 1]
-            heapify(res - low - 1, high, res, f)
+    def bfs(from_left, *trees):
+        new = []
+        if from_left:
+            for t in trees:
+                if t.left and (t.left.left is not None or t.left.right is not None):
+                    new.insert(0, t.left), print(t.left.root, end=" ")
+                if t.right and (t.right.left is not None or t.right.right is not None):
+                    new.insert(0, t.right), print(t.right.root, end=" ")
+        else:
+            for t in trees:
+                if t.right and (t.right.left is not None or t.right.right is not None):
+                    new.insert(0, t.right), print(t.right.root, end=" ")
+                if t.left and (t.left.left is not None or t.left.right is not None):
+                    new.insert(0, t.left), print(t.left.root, end=" ")
+        if not new:
+            return
+        print(), bfs(not from_left, *new)
 
-    for i in range((h := len(ll)) // 2, 0, -1):
-        heapify(0, h, i, f)
+    print(b_t.root), bfs(True, b_t)
 
 
 def isomorphic_bijection(tree0: Tree, tree1: Tree) -> dict[Node, Node]:
@@ -82,32 +87,27 @@ def string(tree: Tree) -> str:
     return helper(tree.root, lambda x: f"{x}->{tree.weights(x)}" if isinstance(tree, WeightedTree) else str(x))
 
 
-def print_zig_zag(b_t: BinTree):
+def build_heap(ll: list[float], f: Callable = max):
     """
     Args:
-        b_t: BinTree
-    Print the nodes of b_t zigzag
+        ll: A list of real values
+        f: Optimizing function, max by default
+    Sort list ll such, that it could represent a binary heap
     """
 
-    def bfs(from_left, *trees):
-        new = []
-        if from_left:
-            for t in trees:
-                if t.left and (t.left.left is not None or t.left.right is not None):
-                    new.insert(0, t.left), print(t.left.root, end=" ")
-                if t.right and (t.right.left is not None or t.right.right is not None):
-                    new.insert(0, t.right), print(t.right.root, end=" ")
-        else:
-            for t in trees:
-                if t.right and (t.right.left is not None or t.right.right is not None):
-                    new.insert(0, t.right), print(t.right.root, end=" ")
-                if t.left and (t.left.left is not None or t.left.right is not None):
-                    new.insert(0, t.left), print(t.left.root, end=" ")
-        if not new:
-            return
-        print(), bfs(not from_left, *new)
+    def heapify(low: int, high: int, ind: int, f=max):
+        left, right = 2 * ind - low, 2 * ind - low + 1
+        res = ind
+        if left <= high and (el := ll[ind - 1]) != f(ll[left - 1], el):
+            res = left
+        if right <= high and (el := ll[res - 1]) != f(ll[right - 1], el):
+            res = right
+        if res != ind:
+            ll[ind - 1], ll[res - 1] = ll[res - 1], ll[ind - 1]
+            heapify(res - low - 1, high, res, f)
 
-    print(b_t.root), bfs(True, b_t)
+    for i in range((h := len(ll)) // 2, 0, -1):
+        heapify(0, h, i, f)
 
 
 def binary_heap(l: list[float], f: Callable = max) -> BinTree:
