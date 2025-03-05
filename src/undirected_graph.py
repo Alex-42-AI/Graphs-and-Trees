@@ -4,14 +4,14 @@ Module for implementing undirected graphs
 
 from __future__ import annotations
 
-__all__ = ["Node", "Link", "Graph", "UndirectedGraph", "WeightedNodesUndirectedGraph", "WeightedLinksUndirectedGraph",
-           "WeightedUndirectedGraph", "reduce", "Iterable"]
-
 from functools import reduce
 
 from itertools import combinations
 
 from base import Node, Link, Graph, Iterable, combine_undirected, isomorphic_bijection_undirected, compare, string, Any
+
+__all__ = ["Node", "Link", "Graph", "UndirectedGraph", "WeightedNodesUndirectedGraph", "WeightedLinksUndirectedGraph",
+           "WeightedUndirectedGraph", "reduce", "Iterable"]
 
 
 def links_graph(graph: UndirectedGraph) -> UndirectedGraph:
