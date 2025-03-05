@@ -315,15 +315,15 @@ class TestTree(TestCase):
     def test_unique_structure_hash(self):
         res0 = self.t0.unique_structure_hash()
         res1 = self.t1.unique_structure_hash()
-        leaf_hash = hash(frozenset([]))
+        leaf_hash = hash(frozenset())
         self.assertSetEqual({leaf_hash}, {res0[var] for var in {n4, n6, n7, n8, n9, n10, n11}}.union(
             {res1[var] for var in {n1, n2, n3, n4, n5}}))
-        self.assertEqual(hash(frozenset([leaf_hash, leaf_hash, leaf_hash, leaf_hash, leaf_hash])), res1[n0])
-        two_descendants = hash(frozenset([leaf_hash, leaf_hash]))
+        self.assertEqual(hash(frozenset({leaf_hash: 5}.items())), res1[n0])
+        two_descendants = hash(frozenset({leaf_hash: 2}.items()))
         self.assertSetEqual({two_descendants}, {res0[n2], res0[n3], res0[n5]})
-        three_descendants = hash(frozenset([res0[n3], leaf_hash, res0[n5]]))
+        three_descendants = hash(frozenset({res0[n3]: 2, leaf_hash: 1}.items()))
         self.assertEqual(three_descendants, res0[n1])
-        self.assertEqual(hash(frozenset([res0[n1], res0[n2]])), res0[n0])
+        self.assertEqual(hash(frozenset({res0[n1]: 1, res0[n2]: 1}.items())), res0[n0])
 
     def test_isomorphic_bijection(self):
         t1 = Tree(10, {11: [], 12: [], 13: [], 14: [], 15: []})
@@ -474,11 +474,16 @@ class TestWeightedTree(TestCase):
         self.assertEqual(hash((6.0, frozenset())), res[n4])
         self.assertEqual(hash((6.0, frozenset())), res[n8])
         self.assertEqual(hash((8.0, frozenset())), res[n11])
-        self.assertEqual(res[n3], hash((5.0, frozenset({res[n8], res[n9]}))))
-        self.assertEqual(res[n5], hash((2.0, frozenset({res[n10], res[n11]}))))
-        self.assertEqual(res[n2], hash((3.0, frozenset({res[n6], res[n7]}))))
-        self.assertEqual(res[n1], hash((4.0, frozenset({res[n3], res[n4], res[n5]}))))
-        self.assertEqual(res[n0], hash((7.0, frozenset({res[n1], res[n2]}))))
+        self.assertEqual(res[n3], hash((5.0, frozenset({res[n8]: 1, res[n9]: 1}.items()))))
+        self.assertEqual(res[n5], hash((2.0, frozenset({res[n10]: 1, res[n11]: 1}.items()))))
+        self.assertEqual(res[n2], hash((3.0, frozenset({res[n6]: 1, res[n7]: 1}.items()))))
+        self.assertEqual(res[n1], hash((4.0, frozenset({res[n3]: 1, res[n4]: 1, res[n5]: 1}.items()))))
+        self.assertEqual(res[n0], hash((7.0, frozenset({res[n1]: 1, res[n2]: 1}.items()))))
+        res = self.t1.unique_structure_hash()
+        self.assertEqual(hash((0, frozenset())), res[n3])
+        self.assertSetEqual({hash((1, frozenset()))}, {res[n1], res[n2], res[n5]})
+        self.assertEqual(hash((2, frozenset())), res[n4])
+        self.assertEqual(hash((6.0, frozenset({res[n1]: 3, res[n3]: 1, res[n4]: 1}.items()))), res[n0])
 
     def test_isomorphic_bijection(self):
         t1 = WeightedTree((10, 6), {11: (1, []), 12: (1, []), 13: (0, []), 14: (2, []), 15: (1, [])})
