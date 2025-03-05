@@ -4,11 +4,11 @@ Module for implementing directed graphs
 
 from __future__ import annotations
 
-__all__ = ["DirectedGraph", "WeightedNodesDirectedGraph", "WeightedLinksDirectedGraph", "WeightedDirectedGraph"]
-
 from base import combine_directed, isomorphic_bijection_directed, compare, string, Any
 
 from undirected_graph import *
+
+__all__ = ["DirectedGraph", "WeightedNodesDirectedGraph", "WeightedLinksDirectedGraph", "WeightedDirectedGraph"]
 
 
 def scc_dag(graph: DirectedGraph) -> DirectedGraph:
