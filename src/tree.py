@@ -436,15 +436,44 @@ class BinTree:
             final = [None, None]
             if l := tree.left:
                 dfs(l)
-                final[0] = res[l]
+                final[0] = res[l.root]
             if r := tree.right:
                 dfs(r)
-                final[1] = res[r]
+                final[1] = res[r.root]
             res[tree.root] = hash(tuple(final))
 
         res = {}
         dfs(self)
         return res
+
+    def isomorphic_bijection(self, other: BinTree) -> dict[Node, Node]:
+        """
+        Args:
+            other: another BinTree object
+        Returns:
+            An isomorphic function between the nodes of the tree and those of the given tree, if such exists, otherwise empty dictionary. Let f be such a bijection and u and v be tree nodes. f(u) and f(v) are nodes in the other tree and f(v) is a left/right descendant of f(u) exactly when the same applies for u and v
+        """
+
+        def dfs(tree0, tree1):
+            if l0 := tree0.left:
+                if not (l1 := tree1.left):
+                    return {}
+                dfs(l0, l1)
+            elif tree1.left:
+                return {}
+            if r0 := tree0.right:
+                if not (r1 := tree1.right):
+                    return {}
+                dfs(r0, r1)
+            elif tree1.right:
+                return {}
+            res[tree0.root] = tree1.root
+
+        if isinstance(other, BinTree):
+            res = {}
+            dfs(self, other)
+            return res
+        return {}
 
     def __invert__(self) -> BinTree:
         """
@@ -846,7 +875,7 @@ class Tree:
         Args:
             other: another Tree object
         Returns:
-            An isomorphic function between the nodes of the tree and those of the given tree, if such exists, otherwise empty dictionary. Let f be such a bijection and u and v be tree nodes. f(u) and f(v) are nodes in the other tree and f(u) is parent of f(v) exactly when the same applies for u and v. For weighted trees, the weights are considered.
+            An isomorphic function between the nodes of the tree and those of the given tree, if such exists, otherwise empty dictionary. Let f be such a bijection and u and v be tree nodes. f(u) and f(v) are nodes in the other tree and f(u) is parent of f(v) exactly when the same applies for u and v. For weighted trees, the weights are considered
         """
         return isomorphic_bijection(self, other)
 
