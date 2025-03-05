@@ -509,7 +509,7 @@ class UndirectedGraph(Graph):
                        link_weights: dict[Link, float] = None) -> WeightedUndirectedGraph:
         return self.weighted_links_graph(link_weights).weighted_graph(node_weights)
 
-    def interval_sort(self, start: Node = None) -> list[Node]:
+        def interval_sort(self, start: Node = None) -> list[Node]:
         """
         Assume a set of intervals over the real number line, some of which could intersect. Such a set of intervals can be sorted based on multiple criteria. An undirected graph could be defined to represent the intervals the following way: Nodes represent the intervals and two nodes are connected exactly when the intervals they represent intersect
         Args:
@@ -518,10 +518,6 @@ class UndirectedGraph(Graph):
             A sort of the graph nodes, based on how early the interval a particular node could represent begins. If it
             fails, it returns an empty list. If start is given, t only tries to find a way to start from it
         """
-
-        def extend_last(ll, max_length):
-            last = ll[-1]
-            return ll + (last,) * (max_length - len(ll))
 
         def find_start_node(graph, nodes=None):
             if nodes is None:
@@ -542,6 +538,10 @@ class UndirectedGraph(Graph):
             return helper(start, curr_graph, {k: 2 * priority[k] + (k in new_neighbors) for k in set(comp) - {start}})
 
         def helper(u, graph, priority):
+            def extend_last(ll, max_length):
+                last = ll[-1]
+                return ll + (last,) * (max_length - len(ll))
+
             if graph.full():
                 return [u, *sorted(graph.nodes - {u}, key=priority.get, reverse=True)]
             order, neighbors = [u], graph.neighbors(u)
