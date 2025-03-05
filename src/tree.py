@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from typing import Callable
 
+from mypy.checkexpr import defaultdict
+
 from directed_graph import DirectedGraph, WeightedNodesDirectedGraph
 
 from undirected_graph import Node, UndirectedGraph, WeightedNodesUndirectedGraph, Iterable, reduce
@@ -864,7 +866,10 @@ class Tree:
             descendants = self.descendants(root)
             for d in descendants:
                 dfs(d)
-            res[root] = hash(frozenset({res[x] for x in descendants}))
+            curr = defaultdict(int)
+            for x in descendants:
+                curr[res[x]] += 1
+            res[root] = hash(frozenset(curr.items()))
 
         res = {}
         dfs(self.root)
@@ -1109,7 +1114,10 @@ class WeightedTree(Tree):
             descendants = self.descendants(root)
             for d in descendants:
                 dfs(d)
-            res[root] = hash((self.weights(root), frozenset({res[x] for x in descendants})))
+            curr = defaultdict(int)
+            for x in descendants:
+                curr[res[x]] += 1
+            res[root] = hash((self.weights(root), frozenset(curr.items())))
 
         res = {}
         dfs(self.root)
