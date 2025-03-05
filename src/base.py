@@ -717,8 +717,7 @@ def compare(graph0: Graph, graph1: Graph) -> bool:
     elif graph0.nodes != graph1.nodes:
         return False
     if hasattr(graph0, "link_weights"):
-        if graph0.link_weights() != graph1.link_weights():
-            return False
+        return graph0.link_weights() == graph1.link_weights()
     return graph0.links == graph1.links
 
 
