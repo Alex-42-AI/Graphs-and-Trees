@@ -511,23 +511,6 @@ def isomorphic_bijection_undirected(graph0: "UndirectedGraph", graph1: "Undirect
         return {}
     node_weights = hasattr(graph0, "node_weights") and hasattr(graph1, "node_weights")
     link_weights = hasattr(graph0, "link_weights") and hasattr(graph1, "link_weights")
-    if node_weights:
-        if graph0.is_tree() and graph1.is_tree():
-            tree0 = graph0.weighted_tree()
-            for u in graph1.nodes:
-                tree1 = graph1.weighted_tree(u)
-                if map_dict := tree0.isomorphic_bijection(tree1):
-                    return map_dict
-            return {}
-        this_weights, other_weights = defaultdict(int), defaultdict(int)
-        for w in graph0.node_weights().values():
-            this_weights[w] += 1
-        for w in graph1.node_weights().values():
-            other_weights[w] += 1
-        if this_weights != other_weights:
-            return {}
-    elif len(graph0.nodes) != len(graph1.nodes):
-        return {}
     if link_weights:
         this_weights, other_weights = defaultdict(int), defaultdict(int)
         for w in graph0.link_weights().values():
@@ -536,32 +519,49 @@ def isomorphic_bijection_undirected(graph0: "UndirectedGraph", graph1: "Undirect
             other_weights[w] += 1
         if this_weights != other_weights:
             return {}
-    elif graph0.is_tree() and graph1.is_tree():
-        from tree import Tree
-        tree0 = graph0.tree()
+        if graph0.is_tree() and graph1.is_tree():
+            from tree import Tree
+            tree0 = graph0.weighted_tree() if node_weights else graph0.tree()
+            for u in graph1.nodes:
+                tree1 = graph1.weighted_tree(u) if node_weights else graph1.tree()
+                if node_weights:
+                    hash0, hash1 = tree0.unique_structure_hash(), tree1.unique_structure_hash()
+                else:
+                    hash0, hash1 = Tree.unique_structure_hash(tree0), Tree.unique_structure_hash(tree1)
+                if sorted(hash0.values()) != sorted(hash1.values()):
+                    return {}
+                map_dict = {tree0.root: tree1.root}
+                rest, total = {tree0.root}, set()
+                while rest:
+                    u = rest.pop()
+                    v = map_dict[u]
+                    for x in tree0.descendants(u):
+                        rest.add(x)
+                        for y in tree1.descendants(v) - total:
+                            if hash0[x] == hash1[y] and graph0.link_weights(u, x) == graph1.link_weights(v, y):
+                                total.add(y)
+                                map_dict[x] = y
+                                break
+                        else:
+                            return {}
+                return map_dict
+            return {}
+    if graph0.is_tree() and graph1.is_tree():
+        tree0 = graph0.weighted_tree() if node_weights else graph0.tree()
         for u in graph1.nodes:
-            tree1 = graph1.tree(u)
-            if hasattr(tree0, "weights") and hasattr(tree1, "weights"):
-                hash0, hash1 = tree0.unique_structure_hash(), tree1.unique_structure_hash()
-            else:
-                hash0, hash1 = tree0.unique_structure_hash(), Tree.unique_structure_hash(tree1)
-            if sorted(hash0.values()) != sorted(hash1.values()):
-                return {}
-            map_dict = {tree0.root: tree1.root}
-            rest, total = {tree0.root}, set()
-            while rest:
-                u = rest.pop()
-                v = map_dict[u]
-                for x in tree0.descendants(u):
-                    rest.add(x)
-                    for y in tree1.descendants(v) - total:
-                        if hash0[x] == hash1[y] and graph0.link_weights(u, x) == graph1.link_weights(u, x):
-                            total.add(y)
-                            map_dict[x] = y
-                            break
-                    else:
-                        return {}
-            return map_dict
+            tree1 = graph1.weighted_tree(u) if node_weights else graph1.tree()
+            if map_dict := tree0.isomorphic_bijection(tree1):
+                return map_dict
+        return {}
+    if node_weights:
+        this_weights, other_weights = defaultdict(int), defaultdict(int)
+        for w in graph0.node_weights().values():
+            this_weights[w] += 1
+        for w in graph1.node_weights().values():
+            other_weights[w] += 1
+        if this_weights != other_weights:
+            return {}
+    elif len(graph0.nodes) != len(graph1.nodes):
         return {}
     this_nodes_degrees, other_nodes_degrees = defaultdict(set), defaultdict(set)
     for n in graph0.nodes:
