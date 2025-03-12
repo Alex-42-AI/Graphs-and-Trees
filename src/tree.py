@@ -15,7 +15,7 @@ from undirected_graph import Node, UndirectedGraph, WeightedNodesUndirectedGraph
 __all__ = ["print_zig_zag", "build_heap", "binary_heap", "BinTree", "Tree", "WeightedTree"]
 
 
-def print_zig_zag(b_t: BinTree):
+def print_zig_zag(b_t: BinTree) -> None:
     """
     Args:
         b_t: BinTree
@@ -89,7 +89,7 @@ def string(tree: Tree) -> str:
     return helper(tree.root, lambda x: f"{x}->{tree.weights(x)}" if isinstance(tree, WeightedTree) else str(x))
 
 
-def build_heap(ll: list[float], f: Callable = max):
+def build_heap(ll: list[float], f: Callable = max) -> None:
     """
     Args:
         ll: A list of real values
