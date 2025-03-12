@@ -532,15 +532,15 @@ class UndirectedGraph(Graph):
             max_priority = priority[nodes[0]]
             curr_graph = graph.subgraph(nodes)
             max_priority_nodes = {nodes[0]}
-            for v in nodes[1:]:
-                if priority[v] < max_priority:
+            for u in nodes[1:]:
+                if priority[u] < max_priority:
                     break
-                max_priority_nodes.add(v)
+                max_priority_nodes.add(u)
             start = find_start_node(curr_graph, max_priority_nodes)
             if start is None:
                 return []
             new_neighbors = graph.neighbors(start)
-            return helper(start, curr_graph, {k: 2 * priority[k] + (k in new_neighbors) for k in set(nodes) - {start}})
+            return helper(start, curr_graph, {v: 2 * priority[v] + (v in new_neighbors) for v in set(nodes) - {start}})
 
         def helper(u, graph, priority):
             def extend_last(ll):
