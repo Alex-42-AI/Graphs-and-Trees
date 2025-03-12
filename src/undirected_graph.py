@@ -528,24 +528,29 @@ class UndirectedGraph(Graph):
                 return
             return max(nodes, key=graph.excentricity)
 
-        def component_interval_sort(graph, comp, priority):
-            max_priority = priority[comp[0]]
-            curr_graph = graph.subgraph(comp)
-            start = find_start_node(curr_graph, {n for n in comp if priority[n] == max_priority})
+        def component_interval_sort(graph, nodes, priority):
+            max_priority = priority[nodes[0]]
+            curr_graph = graph.subgraph(nodes)
+            max_priority_nodes = {nodes[0]}
+            for v in nodes[1:]:
+                if priority[v] < max_priority:
+                    break
+                max_priority_nodes.add(v)
+            start = find_start_node(curr_graph, max_priority_nodes)
             if start is None:
                 return []
             new_neighbors = graph.neighbors(start)
-            return helper(start, curr_graph, {k: 2 * priority[k] + (k in new_neighbors) for k in set(comp) - {start}})
+            return helper(start, curr_graph, {k: 2 * priority[k] + (k in new_neighbors) for k in set(nodes) - {start}})
 
         def helper(u, graph, priority):
-            def extend_last(ll, max_length):
+            def extend_last(ll):
                 last = ll[-1]
                 return ll + (last,) * (max_length - len(ll))
 
             if graph.full():
                 return [u, *sorted(graph.nodes - {u}, key=priority.get, reverse=True)]
             order, neighbors = [u], graph.neighbors(u)
-            comps, total, final = [], {u}, set()
+            comps, total, final = [], {u}, []
             for v in neighbors:
                 if v not in total:
                     total.add(v)
@@ -565,7 +570,7 @@ class UndirectedGraph(Graph):
                     else:
                         comps.append(sorted(comp, key=priority.get, reverse=True))
             max_length = max(map(len, comps)) if comps else 0
-            comparison_function = lambda c: extend_last(tuple(map(priority.get, c)), max_length)
+            comparison_function = lambda c: extend_last(tuple(map(priority.get, c)))
             comps = sorted(comps, key=comparison_function, reverse=True)
             for i in range(len(comps) - 1):
                 if priority[comps[i][-1]] < priority[comps[i + 1][0]]:
