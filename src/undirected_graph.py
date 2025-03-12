@@ -509,7 +509,7 @@ class UndirectedGraph(Graph):
                        link_weights: dict[Link, float] = None) -> WeightedUndirectedGraph:
         return self.weighted_links_graph(link_weights).weighted_graph(node_weights)
 
-        def interval_sort(self, start: Node = None) -> list[Node]:
+    def interval_sort(self, start: Node = None) -> list[Node]:
         """
         Assume a set of intervals over the real number line, some of which could intersect. Such a set of intervals can be sorted based on multiple criteria. An undirected graph could be defined to represent the intervals the following way: Nodes represent the intervals and two nodes are connected exactly when the intervals they represent intersect
         Args:
