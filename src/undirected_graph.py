@@ -627,6 +627,37 @@ class UndirectedGraph(Graph):
             raise KeyError("Unrecognized node!")
         return helper(start, self, {u: Link(start, u) in self.links for u in self.nodes - {start}})
 
+    def halls_marriage_problem(self, nodes: Iterable[Node]) -> set[Link]:
+        """
+        Args:
+            nodes: A set of present nodes
+        Returns:
+            A set of bridge links between the given set of nodes and the rest, where each link is connected to exactly one node from the partition, which has no more nodes than the other. Each link connects a node from the "lesser" set to a unique node from the other one.
+        """
+        nodes = {n if isinstance(n, Node) else Node(n) for n in nodes}
+        nodes = self.nodes.intersection(nodes)
+        if len(nodes) > len(rest := self.nodes - nodes):
+            nodes, rest = rest, nodes
+        result = set()
+        neighborhood = {u: self.neighbors(u).intersection(rest) for u in nodes}
+        if any(not neighborhood[u] for u in nodes):
+            return set()
+        neighbors = reduce(lambda x, y: x.union(y), neighborhood.values())
+        while True:
+            removed = set()
+            for k, v in neighborhood.items():
+                if len(v) == 1:
+                    result.add(Link(k, (n := v.pop())))
+                    removed.add((k, n))
+            if not removed:
+                break
+            for k, n in removed:
+                nodes.remove(k), neighbors.remove(n)
+                neighborhood.pop(k)
+        if nodes:
+            pass
+        return result
+
     def is_full_k_partite(self, k: int = None) -> bool:
         """
         Args:
