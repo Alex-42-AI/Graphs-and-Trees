@@ -522,23 +522,29 @@ class UndirectedGraph(Graph):
         def find_start_node(graph, nodes=None):
             if nodes is None:
                 nodes = graph.nodes
+
             subgraph = graph.subgraph(nodes)
+
             nodes = {n for n in nodes if subgraph.simplicial(n)}
             if not nodes:
                 return
+
             return max(nodes, key=graph.excentricity)
 
         def component_interval_sort(graph, nodes, priority):
             max_priority = priority[nodes[0]]
             curr_graph = graph.subgraph(nodes)
+
             max_priority_nodes = {nodes[0]}
             for u in nodes[1:]:
                 if priority[u] < max_priority:
                     break
                 max_priority_nodes.add(u)
+
             start = find_start_node(curr_graph, max_priority_nodes)
             if start is None:
                 return []
+
             new_neighbors = graph.neighbors(start)
             return helper(start, curr_graph, {v: 2 * priority[v] + (v in new_neighbors) for v in set(nodes) - {start}})
 
@@ -549,6 +555,7 @@ class UndirectedGraph(Graph):
 
             if graph.full():
                 return [u, *sorted(graph.nodes - {u}, key=priority.get, reverse=True)]
+
             order, neighbors = [u], graph.neighbors(u)
             comps, total, final = [], {u}, []
             for v in neighbors:
@@ -564,29 +571,36 @@ class UndirectedGraph(Graph):
                                     if final:
                                         return []
                                     this_final = True
+
                     if this_final:
                         final = sorted((graph.nodes - neighbors - {u}).union(comp),
                                        key=lambda x: (priority[x], x in neighbors), reverse=True)
                     else:
                         comps.append(sorted(comp, key=priority.get, reverse=True))
+
             max_length = max(map(len, comps)) if comps else 0
             comparison_function = lambda c: extend_last(tuple(map(priority.get, c)))
             comps = sorted(comps, key=comparison_function, reverse=True)
+
             for i in range(len(comps) - 1):
                 if priority[comps[i][-1]] < priority[comps[i + 1][0]]:
                     return []
             if final and comps and priority[final[0]] > priority[comps[-1][-1]]:
                 return []
+
             final_neighbors = neighbors.intersection(final)
             if final and set(final[:len(final_neighbors)]) != final_neighbors:
                 return []
+
             for comp in comps:
                 curr_sort = component_interval_sort(graph, comp, priority)
                 if not curr_sort:
                     return []
                 order += curr_sort
+
             if set(order) == graph.nodes:
                 return order
+
             curr_sort = component_interval_sort(graph, final, priority)
             if not curr_sort:
                 return []
@@ -600,8 +614,10 @@ class UndirectedGraph(Graph):
                         return []
                     result += curr
                 return result
+
             if not isinstance(start, Node):
                 start = Node(start)
+
             components = self.connection_components()
             for c in components:
                 if start in c:
@@ -609,6 +625,7 @@ class UndirectedGraph(Graph):
                     break
             else:
                 raise KeyError("Unrecognized node!")
+
             components.remove(begin)
             if not (result := begin.interval_sort(start)):
                 return []
@@ -617,14 +634,18 @@ class UndirectedGraph(Graph):
                     return []
                 result += curr
             return result
+
         if start is None:
             start = find_start_node(self)
             if start is None:
                 return []
+
         if not isinstance(start, Node):
             start = Node(start)
+
         if start not in self:
             raise KeyError("Unrecognized node!")
+
         return helper(start, self, {u: Link(start, u) in self.links for u in self.nodes - {start}})
 
     def is_full_k_partite(self, k: int = None) -> bool:
@@ -752,43 +773,51 @@ class UndirectedGraph(Graph):
             A set of bridge links between the given set of nodes and the rest, where each link is connected to exactly one node from the partition, which has no more nodes than the other. Each link connects a node from the "lesser" set to a unique node from the other one.
         """
 
-        def helper(neighborhood, res=set()):
+        def helper(nodes, neighborhood, res=set()):
             while True:
                 removed = set()
+
                 for k, v in neighborhood.items():
                     if len(v) == 1:
                         res.add(Link(k, (n := v.pop())))
                         removed.add((k, n))
+
                 if not removed:
                     break
+
                 for k, n in removed:
                     nodes.remove(k)
                     neighborhood.pop(k)
+
                 removed = {p[1] for p in removed}
                 for k, v in neighborhood.items():
                     neighborhood[k] = v - removed
+
             if not nodes:
                 return res
-            u = nodes.pop()
-            rest = neighborhood[u]
+
+            rest = neighborhood[u := nodes.pop()]
+            neighborhood.pop(u)
+
             for v in rest:
                 res.add(l := Link(u, v))
-                neighborhood.pop(u)
-                curr = helper(neighborhood, res)
-                if curr:
+                if curr := helper(nodes, neighborhood, res):
                     return curr
                 res.remove(l)
-                neighborhood[u] = rest
+
             return set()
 
         nodes = {n if isinstance(n, Node) else Node(n) for n in nodes}
         nodes = self.nodes.intersection(nodes)
+
         if len(nodes) > len(rest := self.nodes - nodes):
             nodes, rest = rest, nodes
+
         neighborhood = {u: self.neighbors(u).intersection(rest) for u in nodes}
         if any(not neighborhood[u] for u in nodes):
             return set()
-        return helper(neighborhood)
+
+        return helper(nodes, neighborhood)
 
     def chromatic_nodes_partition(self) -> list[set[Node]]:
         """
@@ -799,15 +828,19 @@ class UndirectedGraph(Graph):
         def helper(partition, union=set(), i=0):
             if union == self.nodes:
                 return partition
+
             res, entered = list(map(lambda x: {x}, self.nodes)), False
             for j, s in enumerate(independent_sets[i:]):
                 if {*s, *union} == self.nodes or s.isdisjoint(union):
                     entered = True
                     if len(curr := helper(partition + [s - union], {*s, *union}, i + j + 1)) == 2:
                         return curr
+
                     res = min(res, curr, key=len)
+
             if not entered:
                 res = partition + self.subgraph(self.nodes - union).chromatic_nodes_partition()
+
             return res
 
         if not self.connected():
@@ -816,11 +849,15 @@ class UndirectedGraph(Graph):
             for c in r[1:]:
                 for i in range(min(len(c), len(final))):
                     final[i].update(c[i])
+
                 for i in range(len(final), len(c)):
                     final.append(c[i])
+
             return final
+
         if self.is_full_k_partite():
             return [comp.nodes for comp in self.complementary().connection_components()]
+
         if self.is_tree(True):
             queue, c0, c1, total = [self.nodes.pop()], self.nodes, set(), set()
             while queue:
@@ -829,7 +866,9 @@ class UndirectedGraph(Graph):
                     if flag:
                         c1.add(v), c0.remove(v)
                     queue.append(v), total.add(v)
+
             return [c0, c1]
+
         if sort := self.interval_sort():
             result = []
             for u in sort:
@@ -839,7 +878,9 @@ class UndirectedGraph(Graph):
                         break
                 else:
                     result.append({u})
+
             return result
+
         independent_sets = self.maximal_independent_sets()
         return helper([])
 
@@ -866,23 +907,30 @@ class UndirectedGraph(Graph):
         def helper(curr=set(), total=set(), i=0):
             if total == self.nodes:
                 return curr.copy()
+
             result = self.nodes
             for j, u in enumerate(nodes[i:]):
                 if len(res := helper({u, *curr}, {u, *self.neighbors(u), *total}, i + j + 1)) < len(result):
                     result = res
+
             return result
 
         if not self.connected():
             return reduce(lambda x, y: x.union(y), [comp.dominating_set() for comp in self.connection_components()])
+
         if self.is_tree(True):
             return self.tree().dominating_set()
+
         if self.is_full_k_partite():
             if not self:
                 return set()
+
             res = {u := max(self.nodes, key=self.degrees)}
             if (neighbors := self.neighbors(u)) and {u, *neighbors} != self.nodes:
                 res.add(neighbors.pop())
+
             return res
+
         nodes = list(self.nodes)
         return helper()
 
@@ -893,16 +941,21 @@ class UndirectedGraph(Graph):
         """
         if not self.connected():
             return reduce(lambda x, y: x.union(y), [comp.independent_set() for comp in self.connection_components()])
+
         if self.is_tree(True):
             return self.tree().independent_set()
+
         if self.is_full_k_partite():
             return max([set(), *(comp.nodes for comp in self.complementary().connection_components())], key=len)
+
         if sort := self.interval_sort():
             result = set()
             for u in reversed(sort):
                 if self.neighbors(u).isdisjoint(result):
                     result.add(u)
+
             return result
+
         return max(self.maximal_independent_sets(), key=len)
 
     def cycle_with_length(self, length: int) -> list[Node]:
@@ -910,13 +963,16 @@ class UndirectedGraph(Graph):
             length = int(length)
         except ValueError:
             raise TypeError("Integer expected!")
+
         if length < 3:
             return []
+
         if length == 3:
             for l in self.links:
                 if intersection := self.neighbors(u := l.u).intersection(self.neighbors(v := l.v)):
                     return [u, v, intersection.pop(), u]
             return []
+
         tmp = UndirectedGraph.copy(self)
         for l in tmp.links:
             res = tmp.disconnect(u := l.u, v := l.v).path_with_length(v, u, length - 1)
@@ -932,42 +988,53 @@ class UndirectedGraph(Graph):
             for y in {y for y in self.neighbors(x) if Link(x, y) not in stack}:
                 if res := dfs(y, l - 1, stack + [Link(x, y)]):
                     return res
+
             return []
 
         if not isinstance(u, Node):
             u = Node(u)
         if not isinstance(v, Node):
             v = Node(v)
+
         try:
             length = int(length)
         except ValueError:
             raise TypeError("Integer expected!")
+
         if not (tmp := self.get_shortest_path(u, v)) or (k := len(tmp)) > length + 1:
             return []
+
         if length + 1 == k:
             return tmp
+
         return dfs(u, length, [])
 
     def hamilton_tour_exists(self) -> bool:
         def dfs(x):
             if tmp.nodes == {x}:
                 return x in can_end_in
+
             if all(y not in tmp for y in can_end_in):
                 return False
+
             neighbors = tmp.neighbors(x)
             tmp.remove(x)
             for y in neighbors:
                 if dfs(y):
                     tmp.add(x, *neighbors)
                     return True
+
             tmp.add(x, *neighbors)
+
             return False
 
         if (n := len(self.nodes)) == 1 or (2 * (m := len(self.links)) > (n - 1) * (n - 2) + 2 or n > 2 and all(
                 2 * self.degrees(node) >= n for node in self.nodes)):
             return True
+
         if n > m or self.leaves or not self.connected():
             return False
+
         tmp = UndirectedGraph.copy(self)
         can_end_in = tmp.neighbors(u := self.nodes.pop())
         return dfs(u)
@@ -977,46 +1044,57 @@ class UndirectedGraph(Graph):
             u = Node(u)
         if not isinstance(v, Node):
             v = Node(v)
+
         if u not in self or v not in self:
             raise KeyError("Unrecognized node(s)!")
+
         if Link(u, v) in self.links:
             return True if self.nodes == {u, v} else self.hamilton_tour_exists()
+
         return UndirectedGraph.copy(self).connect(u, v).hamilton_tour_exists()
 
     def hamilton_tour(self) -> list[Node]:
         if len(self.nodes) == 1:
             return [self.nodes.pop()]
+
         if not self or self.leaves or not self.connected():
             return []
+
         u = self.nodes.pop()
         for v in self.neighbors(u):
             if res := self.hamilton_walk(u, v):
                 return res + [u]
+
         return []
 
     def hamilton_walk(self, u: Node = None, v: Node = None) -> list[Node]:
         def dfs(x, stack):
             if not tmp.connected():
                 return []
+
             too_many = v is not None
             for n in tmp.nodes - {x, v}:
                 if tmp.leaf(n):
                     if too_many:
                         return []
                     too_many = True
+
             neighbors = tmp.neighbors(x)
             tmp.remove(x)
             if not tmp:
                 return stack
+
             for y in neighbors:
                 if y == v:
                     if tmp.nodes == {v}:
                         tmp.add(x, *neighbors)
                         return stack + [v]
                     continue
+
                 if res := dfs(y, stack + [y]):
                     tmp.add(x, *neighbors)
                     return res
+
             tmp.add(x, *neighbors)
             return []
 
@@ -1024,20 +1102,27 @@ class UndirectedGraph(Graph):
             u = Node(u)
         if v is not None and not isinstance(v, Node):
             v = Node(v)
+
         tmp = UndirectedGraph.copy(self)
         if u is None:
             u, v = v, u
+
         if u is None:
             if v is not None and v not in self:
                 raise KeyError("Unrecognized node.")
+
             for n in self.nodes:
                 if result := dfs(n, [n]):
                     return result
+
                 if self.leaf(n):
                     return []
+
             return []
+
         if u not in self or v is not None and v not in self:
             raise KeyError("Unrecognized node(s).")
+
         return dfs(u, [u])
 
     def isomorphic_bijection(self, other: UndirectedGraph) -> dict[Node, Node]:
@@ -1049,6 +1134,7 @@ class UndirectedGraph(Graph):
     def __contains__(self, u: Node) -> bool:
         if not isinstance(u, Node):
             u = Node(u)
+
         return u in self.nodes
 
     def __add__(self, other: UndirectedGraph) -> UndirectedGraph:
