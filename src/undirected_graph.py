@@ -627,37 +627,6 @@ class UndirectedGraph(Graph):
             raise KeyError("Unrecognized node!")
         return helper(start, self, {u: Link(start, u) in self.links for u in self.nodes - {start}})
 
-    def halls_marriage_problem(self, nodes: Iterable[Node]) -> set[Link]:
-        """
-        Args:
-            nodes: A set of present nodes
-        Returns:
-            A set of bridge links between the given set of nodes and the rest, where each link is connected to exactly one node from the partition, which has no more nodes than the other. Each link connects a node from the "lesser" set to a unique node from the other one.
-        """
-        nodes = {n if isinstance(n, Node) else Node(n) for n in nodes}
-        nodes = self.nodes.intersection(nodes)
-        if len(nodes) > len(rest := self.nodes - nodes):
-            nodes, rest = rest, nodes
-        result = set()
-        neighborhood = {u: self.neighbors(u).intersection(rest) for u in nodes}
-        if any(not neighborhood[u] for u in nodes):
-            return set()
-        neighbors = reduce(lambda x, y: x.union(y), neighborhood.values())
-        while True:
-            removed = set()
-            for k, v in neighborhood.items():
-                if len(v) == 1:
-                    result.add(Link(k, (n := v.pop())))
-                    removed.add((k, n))
-            if not removed:
-                break
-            for k, n in removed:
-                nodes.remove(k), neighbors.remove(n)
-                neighborhood.pop(k)
-        if nodes:
-            pass
-        return result
-
     def is_full_k_partite(self, k: int = None) -> bool:
         """
         Args:
@@ -675,7 +644,6 @@ class UndirectedGraph(Graph):
     def clique(self, *nodes: Node) -> bool:
         """
         Args:
-            n: A present node
             nodes: A set of present nodes
         Returns:
             Whether these given nodes form a clique
@@ -775,6 +743,52 @@ class UndirectedGraph(Graph):
             The clique graph of the original one
         """
         return cliques_graph(self)
+
+    def halls_marriage_problem(self, nodes: Iterable[Node]) -> set[Link]:
+        """
+        Args:
+            nodes: A set of present nodes
+        Returns:
+            A set of bridge links between the given set of nodes and the rest, where each link is connected to exactly one node from the partition, which has no more nodes than the other. Each link connects a node from the "lesser" set to a unique node from the other one.
+        """
+
+        def helper(neighborhood, res=set()):
+            while True:
+                removed = set()
+                for k, v in neighborhood.items():
+                    if len(v) == 1:
+                        res.add(Link(k, (n := v.pop())))
+                        removed.add((k, n))
+                if not removed:
+                    break
+                for k, n in removed:
+                    nodes.remove(k)
+                    neighborhood.pop(k)
+                removed = {p[1] for p in removed}
+                for k, v in neighborhood.items():
+                    neighborhood[k] = v - removed
+            if not nodes:
+                return res
+            u = nodes.pop()
+            rest = neighborhood[u]
+            for v in rest:
+                res.add(l := Link(u, v))
+                neighborhood.pop(u)
+                curr = helper(neighborhood, res)
+                if curr:
+                    return curr
+                res.remove(l)
+                neighborhood[u] = rest
+            return set()
+
+        nodes = {n if isinstance(n, Node) else Node(n) for n in nodes}
+        nodes = self.nodes.intersection(nodes)
+        if len(nodes) > len(rest := self.nodes - nodes):
+            nodes, rest = rest, nodes
+        neighborhood = {u: self.neighbors(u).intersection(rest) for u in nodes}
+        if any(not neighborhood[u] for u in nodes):
+            return set()
+        return helper(neighborhood)
 
     def chromatic_nodes_partition(self) -> list[set[Node]]:
         """
