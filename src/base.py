@@ -30,6 +30,7 @@ class Node:
         Returns:
             Node value
         """
+
         return self.__value
 
     def __bool__(self) -> bool:
@@ -85,6 +86,7 @@ class Link:
             u: A node object
             v: A node object
         """
+
         if not isinstance(u, Node):
             u = Node(u)
 
@@ -99,6 +101,7 @@ class Link:
         Returns:
             The first given node
         """
+
         return self.__u
 
     @property
@@ -107,9 +110,17 @@ class Link:
         Returns:
             The second given node
         """
+
         return self.__v
 
     def other(self, n: Node) -> Node:
+        """
+        Args:
+            n: A present node
+        Returns:
+            The other node
+        """
+
         if not isinstance(n, Node):
             n = Node(n)
 
@@ -125,6 +136,7 @@ class Link:
         Returns:
             Whether given node is in the link
         """
+
         if not isinstance(node, Node):
             node = Node(node)
 
@@ -804,7 +816,7 @@ def isomorphic_bijection_directed(graph0: "DirectedGraph", graph1: "DirectedGrap
                 if node_weights and graph0.node_weights(n) != graph1.node_weights(u):
                     possible = False
                     break
-    
+
                 link_matching = (m in graph0.next(n)) == (v in graph1.next(u))
 
                 if link_weights:
