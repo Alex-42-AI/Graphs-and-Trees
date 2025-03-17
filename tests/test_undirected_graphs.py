@@ -613,6 +613,27 @@ class TestUndirectedGraph(TestCase):
         self.assertSetEqual(res.nodes, {n012, n234, n45, n5678, n79})
         self.assertSetEqual(res.links, {Link(n012, n234), Link(n234, n45), Link(n45, n5678), Link(n5678, n79)})
 
+    def test_halls_marriage_problem(self):
+        res = self.g0.halls_marriage_problem({n1, n3, n5, n8, n9, n11, n13, n14})
+        self.assertEqual(len(res), 7)
+        self.assertTrue(res.issubset(self.g0.links))
+        total = reduce(lambda x, y: x.union({y.u, y.v}), res, set())
+        self.assertEqual(len(total), 14)
+        self.assertTrue({n0, n2, n4, n6, n7, n10, n12}.issubset(total))
+        res = self.g1.halls_marriage_problem({n2, n3, n4})
+        self.assertEqual(len(res), 3)
+        self.assertTrue(res.issubset(self.g1.links))
+        total = reduce(lambda x, y: x.union({y.u, y.v}), res, set())
+        self.assertEqual(len(total), 6)
+        self.assertTrue({n2, n3, n4}.issubset(total))
+        res = self.g2.halls_marriage_problem({n0, n4, n6})
+        self.assertEqual(len(res), 3)
+        self.assertTrue(res.issubset(self.g2.links))
+        total = reduce(lambda x, y: x.union({y.u, y.v}), res, set())
+        self.assertEqual(len(total), 6)
+        self.assertTrue({n0, n4, n6}.issubset(total))
+        self.assertFalse(self.g3.halls_marriage_problem({n0, n3, n4, n5, n6, n7}))
+
     def test_chromatic_nodes_partition(self):
         res = self.g0.chromatic_nodes_partition()
         self.assertEqual(len(res), 3)
