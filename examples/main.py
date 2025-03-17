@@ -81,10 +81,13 @@ if __name__ == "__main__":
         file.write("Weighted dominating set:\n")
         file.write(f"{wug.weighted_dominating_set()}\n")
         file.write(f"Minimal path from 2 to 4: {wug.minimal_path(n2, n4)}\n")
+
     with open("morse_code.txt", "w", encoding="utf-8") as file:
         file.write(f"{morse_code}\n")
+
         for traversal in ("preorder", "in-order", "post-order"):
             file.write(f"Traversal type {traversal}: {morse_code.traverse(traversal)}\n")
+
         file.write(f"Morse code of '4': {morse_code.code_in_morse(Node("4"))}\n")
         file.write(f"Total nodes: {morse_code.count_nodes()}\n")
         file.write(f"All leaves: {morse_code.leaves}\n")
@@ -92,6 +95,7 @@ if __name__ == "__main__":
         file.write(f"Nodes on level 6: {morse_code.nodes_on_level(6)}\n")
         file.write(f"Tree width: {morse_code.width()}\n")
         file.write(f"Encoding message 'Testing encode.':\n{morse_code.encode("Testing encode.".upper())}\n")
+
     with open("k_3_3.txt", "w") as file:
         file.write(f"{k_3_3}\n")
         file.write(f"Is full bipartite: {k_3_3.is_full_k_partite(2)}\n")
@@ -102,6 +106,7 @@ if __name__ == "__main__":
         file.write(f"Dominating set: {k_3_3.dominating_set()}\n")
         file.write(f"Vertex cover: {k_3_3.vertex_cover()} \n")
         file.write(f"Independent set: {k_3_3.independent_set()}\n")
+
     with open("k_5.txt", "w") as file:
         file.write(f"{k_5}\n")
         file.write(f"Is full: {k_5.full()}\n")
@@ -112,6 +117,7 @@ if __name__ == "__main__":
         file.write(f"Dominating set: {k_5.dominating_set()}\n")
         file.write(f"Vertex cover: {k_5.vertex_cover()}\n")
         file.write(f"Independent set: {k_5.independent_set()}\n")
+
     with open("petersen_graph.txt", "w") as file:
         file.write(f"{petersen_graph}\n")
         file.write(f"Is full k-partite: {petersen_graph.is_full_k_partite()}\n")
@@ -123,6 +129,7 @@ if __name__ == "__main__":
         file.write(f"Vertex cover: {petersen_graph.vertex_cover()}\n")
         file.write(f"Independent set: {petersen_graph.independent_set()}\n")
         file.write(f"Shortest path from 0 to 7: {petersen_graph.get_shortest_path(n0, n7)}\n")
+
     with open("undirected_graphs.txt", "w", encoding="utf-8") as file:
         file.write(f"Graph 1: {ug0}\nGraph 2: {ug1}\nGraph 3: {ug2}\nGraph 4: {ug3}\n")
         file.write(f"Graph 5: {ug4}\nGraph 6: {ug5}\nGraph 7: {ug6}\nGraph 8: {ug}\n")
@@ -192,6 +199,7 @@ if __name__ == "__main__":
         file.write(f"Graph 4 Hamilton walk: {ug3.hamilton_walk()}\n")
         file.write(f"Helper: {tmp}\n")
         file.write(f"Isomorphic function between graph 1 and helper: {ug0.isomorphic_bijection(tmp)}\n")
+
     with open("tree.txt", "w", encoding="utf-8") as file:
         file.write(f"{tree}\n")
         file.write(f"Height: {tree.height()}\n")
@@ -203,6 +211,7 @@ if __name__ == "__main__":
         file.write(f"Vertex cover: {tree.vertex_cover()}\n")
         file.write(f"Dominating set: {tree.dominating_set()}\n")
         file.write(f"Independent set: {tree.independent_set()}\n")
+
     with open("directed_graphs.txt", "w") as file:
         file.write(f"Graph 1: {dg0}\nGraph 2: {dg1}\n")
         file.write(f"Graph 1:\nsources: {dg0.sources}\nsinks: {dg0.sinks}\n")
