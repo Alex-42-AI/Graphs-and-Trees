@@ -20,7 +20,7 @@ class Node:
 
     def __init__(self, value: Hashable) -> None:
         if not hasattr(value, "__hash__"):
-            raise ValueError(f"Unhashable type: {type(value).__name__}!")
+            raise ValueError(f"Unhashable type: {type(value).__name__}")
 
         self.__value = value
 
@@ -125,7 +125,7 @@ class Link:
             n = Node(n)
 
         if n not in self:
-            raise KeyError("Unrecognized node!")
+            raise KeyError("Unrecognized node")
 
         return [(u := self.u), self.v][n == u]
 
@@ -476,7 +476,7 @@ class Graph(ABC):
 
 def combine_undirected(graph0: "UndirectedGraph", graph1: "UndirectedGraph") -> "UndirectedGraph":
     if not hasattr(graph1, "neighbors"):
-        raise TypeError(f"Addition not defined between type {type(graph0).__name__} and type {type(graph1).__name__}!")
+        raise TypeError(f"Addition not defined between type {type(graph0).__name__} and type {type(graph1).__name__}")
 
     if hasattr(graph0, "node_weights") and hasattr(graph0, "link_weights"):
         if hasattr(graph1, "node_weights") and hasattr(graph1, "link_weights"):
@@ -680,7 +680,7 @@ def isomorphic_bijection_undirected(graph0: "UndirectedGraph", graph1: "Undirect
 
 def combine_directed(graph0: "DirectedGraph", graph1: "DirectedGraph") -> "DirectedGraph":
     if not hasattr(graph1, "transposed"):
-        raise TypeError(f"Addition not defined between class DirectedGraph and type {type(graph1).__name__}!")
+        raise TypeError(f"Addition not defined between class DirectedGraph and type {type(graph1).__name__}")
 
     if hasattr(graph0, "node_weights") and hasattr(graph0, "link_weights"):
         if hasattr(graph1, "node_weights") and hasattr(graph1, "link_weights"):
