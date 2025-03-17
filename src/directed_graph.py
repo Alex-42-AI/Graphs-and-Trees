@@ -33,7 +33,7 @@ def scc_dag(graph: DirectedGraph) -> DirectedGraph:
                                 if y in v.value:
                                     result.increase_weight((u, v), graph.link_weights(x, y))
                         else:
-                            result.connect(v, [u])
+                            result.connect(v, {u})
 
     return result
 
@@ -81,10 +81,10 @@ class DirectedGraph(Graph):
             self.add(u)
 
             for v in prev_nodes:
-                self.add(v, points_to=[u]), self.connect(u, [v])
+                self.add(v, points_to={u}), self.connect(u, {v})
 
             for v in next_nodes:
-                self.add(v, [u]), self.connect(v, [u])
+                self.add(v, {u}), self.connect(v, {u})
 
     @property
     def nodes(self) -> set[Node]:
@@ -438,13 +438,18 @@ class DirectedGraph(Graph):
             return True
 
         sources, total, stack = self.sources, set(), set()
+
         if not sources or not self.sinks:
             return False
+
         for n in sources:
             stack.add(n)
+
             if not dfs(n):
                 return False
+
             stack.remove(n)
+
         return total == self.nodes
 
     def toposort(self) -> list[Node]:
@@ -1235,8 +1240,10 @@ class WeightedLinksDirectedGraph(DirectedGraph):
     def weighted_graph(self, weights: dict[Node, float] = None) -> WeightedDirectedGraph:
         if weights is None:
             weights = {n: 0 for n in self.nodes}
+
         for n in self.nodes - set(weights):
             weights[n] = 0
+
         return WeightedDirectedGraph(
             {u: (weights[u], ({}, {v: self.link_weights(u, v) for v in self.next(u)})) for u in self.nodes})
 
