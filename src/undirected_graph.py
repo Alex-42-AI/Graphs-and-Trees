@@ -96,7 +96,9 @@ class UndirectedGraph(Graph):
         Args:
             neighborhood: A dictionary, that associates a node to its neighbors in the graph
         """
+
         self.__nodes, self.__links = set(), set()
+
         for u, neighbors in neighborhood.items():
             if u not in self:
                 self.add(u)
@@ -118,6 +120,7 @@ class UndirectedGraph(Graph):
         Returns:
             The total sum of all node degrees
         """
+
         return 2 * len(self.links)
 
     @property
@@ -126,6 +129,7 @@ class UndirectedGraph(Graph):
         Returns:
             Graph leaves
         """
+
         return {n for n in self.nodes if self.leaf(n)}
 
     def neighbors(self, u: Node = None) -> dict[Node, set[Node]] | set[Node]:
@@ -135,11 +139,13 @@ class UndirectedGraph(Graph):
         Returns:
             Neighbors of u or dictionary of all nodes and their neighbors
         """
+
         if u is None:
             return {n: self.neighbors(n) for n in self.nodes}
 
         if not isinstance(u, Node):
             u = Node(u)
+
         if u not in self:
             raise KeyError("Unrecognized node!")
 
@@ -161,6 +167,7 @@ class UndirectedGraph(Graph):
         Returns:
             Whether n is a leaf (if it has a degree of 1)
         """
+
         if not isinstance(n, Node):
             n = Node(n)
 
@@ -174,6 +181,7 @@ class UndirectedGraph(Graph):
         Returns:
             Whether u is simplicial
         """
+
         if not isinstance(u, Node):
             u = Node(u)
 
@@ -186,6 +194,7 @@ class UndirectedGraph(Graph):
             current_nodes: nodes already present in the graph
         Add node u to already present nodes
         """
+
         if not isinstance(u, Node):
             u = Node(u)
 
@@ -216,6 +225,7 @@ class UndirectedGraph(Graph):
             rest: Node objects
         Connect u to v and nodes in rest, all present in the graph
         """
+
         if not isinstance(u, Node):
             u = Node(u)
 
@@ -234,6 +244,7 @@ class UndirectedGraph(Graph):
 
         rest = set(rest) - {u}
         self.connect(u, *rest)
+
         return self.connect_all(*rest)
 
     def disconnect(self, u: Node, v: Node, *rest: Node) -> UndirectedGraph:
@@ -244,6 +255,7 @@ class UndirectedGraph(Graph):
             rest: Node objects
         Disconnect a given node from a non-empty set of nodes, all present in the graph
         """
+
         for n in {v, *rest}:
             if Link(n, u) in self.links:
                 self.__links.remove(Link(u, n))
@@ -256,6 +268,7 @@ class UndirectedGraph(Graph):
 
         rest = set(rest) - {n}
         self.disconnect(n, *rest)
+
         return self.disconnect_all(*rest)
 
     def copy(self) -> UndirectedGraph:
@@ -268,6 +281,7 @@ class UndirectedGraph(Graph):
         Returns:
             Excentricity of u (the length of the longest of all shortest paths, starting from it)
         """
+
         if not isinstance(u, Node):
             u = Node(u)
 
@@ -289,6 +303,7 @@ class UndirectedGraph(Graph):
         Returns:
             The greatest of all excentricity values in the graph
         """
+
         return max(self.excentricity(u) for u in self.nodes)
 
     def complementary(self) -> UndirectedGraph:
@@ -302,6 +317,7 @@ class UndirectedGraph(Graph):
             return True
 
         queue, total = [u := self.nodes.pop()], {u}
+
         while queue:
             queue += list(next_nodes := self.neighbors(queue.pop(0)) - total)
             total.update(next_nodes)
@@ -315,6 +331,7 @@ class UndirectedGraph(Graph):
         Returns:
             Whether the graph could be a tree
         """
+
         return not self or len(self.nodes) == len(self.links) + 1 and (connected or self.connected())
 
     def tree(self, root: Node = None, dfs: bool = False) -> "Tree":
@@ -354,6 +371,7 @@ class UndirectedGraph(Graph):
             raise KeyError("Unrecognized node(s)!")
 
         rest, total = {u}, {u}
+
         while rest:
             if (n := rest.pop()) == v:
                 return True
@@ -370,8 +388,10 @@ class UndirectedGraph(Graph):
         Returns:
             The subgraph, that only contains these nodes and all links between them
         """
+
         try:
             nodes = self.nodes.intersection(nodes)
+
             return UndirectedGraph({u: self.neighbors(u).intersection(nodes) for u in nodes})
         except TypeError:
             raise TypeError("Iterable of nodes expected!")
@@ -383,6 +403,7 @@ class UndirectedGraph(Graph):
         Returns:
             The connection component, to which a given node belongs
         """
+
         if not isinstance(u, Node):
             u = Node(u)
 
@@ -390,6 +411,7 @@ class UndirectedGraph(Graph):
             raise KeyError("Unrecognized node!")
 
         rest, total = {u}, {u}
+
         while rest:
             rest.update(next_nodes := self.neighbors(rest.pop()) - total)
             total.update(next_nodes)
@@ -428,6 +450,7 @@ class UndirectedGraph(Graph):
                 res.add(u)
 
             colors[u] = 2
+
             return min_back
 
         levels = {n: 0 for n in self.nodes}
@@ -493,6 +516,7 @@ class UndirectedGraph(Graph):
                 while curr_node != u:
                     res.insert(0, previous[curr_node])
                     curr_node = previous[curr_node]
+
                 return res
 
             for m in self.neighbors(n) - total:
@@ -530,6 +554,7 @@ class UndirectedGraph(Graph):
     def euler_tour(self) -> list[Node]:
         if self.euler_tour_exists():
             tmp = UndirectedGraph.copy(self)
+
             return tmp.disconnect(u := (l := tmp.links.pop()).u, v := l.v).euler_walk(u, v) + [u]
 
         return []
@@ -572,6 +597,7 @@ class UndirectedGraph(Graph):
         Returns:
             A graph, the nodes of which represent the links of the original one. Say two of its nodes represent links, which share a node in the original graph. This is shown by the fact, that these nodes are connected in the links graph. If the graph has node weights, they become link weights and if it has link weights, they become node weights
         """
+
         return links_graph(self)
 
     def weighted_nodes_graph(self, weights: dict[Node, float] = None) -> WeightedNodesUndirectedGraph:
@@ -612,8 +638,8 @@ class UndirectedGraph(Graph):
                 nodes = graph.nodes
 
             subgraph = graph.subgraph(nodes)
-
             nodes = {n for n in nodes if subgraph.simplicial(n)}
+
             if not nodes:
                 return
 
@@ -622,23 +648,27 @@ class UndirectedGraph(Graph):
         def component_interval_sort(graph, nodes, priority):
             max_priority = priority[nodes[0]]
             curr_graph = graph.subgraph(nodes)
-
             max_priority_nodes = {nodes[0]}
+
             for u in nodes[1:]:
                 if priority[u] < max_priority:
                     break
+
                 max_priority_nodes.add(u)
 
             start = find_start_node(curr_graph, max_priority_nodes)
+
             if start is None:
                 return []
 
             new_neighbors = graph.neighbors(start)
+
             return helper(start, curr_graph, {v: 2 * priority[v] + (v in new_neighbors) for v in set(nodes) - {start}})
 
         def helper(u, graph, priority):
             def extend_last(ll):
                 last = ll[-1]
+
                 return ll + (last,) * (max_length - len(ll))
 
             if graph.full():
@@ -646,10 +676,12 @@ class UndirectedGraph(Graph):
 
             order, neighbors = [u], graph.neighbors(u)
             comps, total, final = [], {u}, []
+
             for v in neighbors:
                 if v not in total:
                     total.add(v)
                     rest, comp, this_final = {v}, {v}, False
+
                     while rest:
                         for n in graph.neighbors(_ := rest.pop()):
                             if n not in total:
@@ -658,6 +690,7 @@ class UndirectedGraph(Graph):
                                 else:
                                     if final:
                                         return []
+
                                     this_final = True
 
                     if this_final:
@@ -673,40 +706,50 @@ class UndirectedGraph(Graph):
             for i in range(len(comps) - 1):
                 if priority[comps[i][-1]] < priority[comps[i + 1][0]]:
                     return []
+
             if final and comps and priority[final[0]] > priority[comps[-1][-1]]:
                 return []
 
             final_neighbors = neighbors.intersection(final)
+
             if final and set(final[:len(final_neighbors)]) != final_neighbors:
                 return []
 
             for comp in comps:
                 curr_sort = component_interval_sort(graph, comp, priority)
+
                 if not curr_sort:
                     return []
+
                 order += curr_sort
 
             if set(order) == graph.nodes:
                 return order
 
             curr_sort = component_interval_sort(graph, final, priority)
+
             if not curr_sort:
                 return []
+
             return order + curr_sort
 
         if not self.connected():
             if start is None:
                 result = []
+
                 for component in self.connection_components():
                     if not (curr := component.interval_sort()):
                         return []
+
                     result += curr
+
                 return result
 
             if not isinstance(start, Node):
                 start = Node(start)
 
             components = self.connection_components()
+
             for c in components:
                 if start in c:
                     begin = c
@@ -715,16 +758,21 @@ class UndirectedGraph(Graph):
                 raise KeyError("Unrecognized node!")
 
             components.remove(begin)
+
             if not (result := begin.interval_sort(start)):
                 return []
+
             for component in components:
                 if not (curr := component.interval_sort()):
                     return []
+
                 result += curr
+
             return result
 
         if start is None:
             start = find_start_node(self)
+
             if start is None:
                 return []
 
@@ -743,6 +791,7 @@ class UndirectedGraph(Graph):
         Returns:
             Whether the graph has k independent sets and as many links as possible, given this condition. If k is not given, it can be anything
         """
+
         if k is not None and not isinstance(k, int):
             try:
                 k = int(k)
@@ -783,6 +832,7 @@ class UndirectedGraph(Graph):
         Returns:
             All cliques in the graph of size k
         """
+
         try:
             k = int(k)
         except ValueError:
@@ -804,8 +854,8 @@ class UndirectedGraph(Graph):
         Returns:
             All maximal by cardinality cliques in the graph
         """
-        result, low, high = [set()], 1, len(self.nodes)
-        k = 0
+
+        result, low, high, k = [set()], 1, len(self.nodes), 0
 
         while low <= high:
             if curr := self.cliques(mid := (low + high) // 2):
@@ -825,6 +875,7 @@ class UndirectedGraph(Graph):
         Returns:
             All, maximal by cardinality, cliques in the graph, to which node u belongs
         """
+
         if not isinstance(u, Node):
             u = Node(u)
 
@@ -837,6 +888,7 @@ class UndirectedGraph(Graph):
         Returns:
             All maximal by inclusion cliques in the graph, to which node u belongs
         """
+
         if not isinstance(u, Node):
             u = Node(u)
 
@@ -865,6 +917,7 @@ class UndirectedGraph(Graph):
         Returns:
             The clique graph of the original one
         """
+
         return cliques_graph(self)
 
     def halls_marriage_problem(self, nodes: Iterable[Node]) -> set[Link]:
@@ -892,6 +945,7 @@ class UndirectedGraph(Graph):
                     neighborhood.pop(k)
 
                 removed = {p[1] for p in removed}
+
                 for k, v in neighborhood.items():
                     neighborhood[k] = v - removed
 
@@ -903,8 +957,10 @@ class UndirectedGraph(Graph):
 
             for v in rest:
                 res.add(l := Link(u, v))
+
                 if curr := helper(nodes, neighborhood, res):
                     return curr
+
                 res.remove(l)
 
             return set()
@@ -916,6 +972,7 @@ class UndirectedGraph(Graph):
             nodes, rest = rest, nodes
 
         neighborhood = {u: self.neighbors(u).intersection(rest) for u in nodes}
+
         if any(not neighborhood[u] for u in nodes):
             return set()
 
@@ -932,6 +989,7 @@ class UndirectedGraph(Graph):
                 return partition
 
             res, entered = list(map(lambda x: {x}, self.nodes)), False
+
             for j, s in enumerate(independent_sets[i:]):
                 if {*s, *union} == self.nodes or s.isdisjoint(union):
                     entered = True
@@ -978,6 +1036,7 @@ class UndirectedGraph(Graph):
 
         if sort := self.interval_sort():
             result = []
+
             for u in sort:
                 for i, partition in enumerate(result):
                     if self.neighbors(u).isdisjoint(partition):
@@ -989,12 +1048,14 @@ class UndirectedGraph(Graph):
             return result
 
         independent_sets = self.maximal_independent_sets()
+
         return helper([])
 
     def chromatic_links_partition(self) -> list[set[Link]]:
         """
         Similar to chromatic nodes partition, except links, that share a node, are in different sets
         """
+
         return [set(map(lambda x: x.value, s)) for s in
                 UndirectedGraph.copy(self).links_graph().chromatic_nodes_partition()]
 
@@ -1003,6 +1064,7 @@ class UndirectedGraph(Graph):
         Returns:
             A minimal by cardinality set of nodes, that cover all links in the graph
         """
+
         return self.nodes - self.independent_set()
 
     def dominating_set(self) -> set[Node]:
@@ -1016,6 +1078,7 @@ class UndirectedGraph(Graph):
                 return curr.copy()
 
             result = self.nodes
+
             for j, u in enumerate(nodes[i:]):
                 if len(res := helper({u, *curr}, {u, *self.neighbors(u), *total}, i + j + 1)) < len(result):
                     result = res
@@ -1040,6 +1103,7 @@ class UndirectedGraph(Graph):
             return res
 
         nodes = list(self.nodes)
+
         return helper()
 
     def independent_set(self) -> set[Node]:
@@ -1047,6 +1111,7 @@ class UndirectedGraph(Graph):
         Returns:
             A maximal by cardinality set of nodes, no two of which are neighbors
         """
+
         if not self.connected():
             return reduce(lambda x, y: x.union(y), [comp.independent_set() for comp in self.connection_components()])
 
@@ -1135,6 +1200,7 @@ class UndirectedGraph(Graph):
 
             neighbors = tmp.neighbors(x)
             tmp.remove(x)
+
             for y in neighbors:
                 if dfs(y):
                     tmp.add(x, *neighbors)
@@ -1191,6 +1257,7 @@ class UndirectedGraph(Graph):
                 return []
 
             too_many = v is not None
+
             for n in tmp.nodes - {x, v}:
                 if tmp.leaf(n):
                     if too_many:
@@ -1208,12 +1275,14 @@ class UndirectedGraph(Graph):
                 if y == v:
                     if tmp.nodes == {v}:
                         tmp.add(x, *neighbors)
+
                         return stack + [v]
 
                     continue
 
                 if res := dfs(y, stack + [y]):
                     tmp.add(x, *neighbors)
+
                     return res
 
             tmp.add(x, *neighbors)
@@ -1268,6 +1337,7 @@ class UndirectedGraph(Graph):
         Returns:
             Combination of two undirected graphs
         """
+
         return combine_undirected(self, other)
 
     def __eq__(self, other: Any) -> bool:
@@ -1290,6 +1360,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         Args:
             neighborhood: A dictionary, that maps a node to a tuple of its weight and its neighbors
         """
+
         super().__init__()
         self.__node_weights = {}
 
@@ -1307,6 +1378,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         Returns:
             The weight of node n or the dictionary with all node weights
         """
+
         if n is None:
             return {u: self.node_weights(u) for u in self.nodes}
 
@@ -1321,6 +1393,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         Returns:
             The sum of all node weights
         """
+
         return sum(self.node_weights().values())
 
     def add(self, n_w: tuple[Node, float], *current_nodes: Node) -> WeightedNodesUndirectedGraph:
@@ -1337,6 +1410,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
             if u in self:
                 if not isinstance(u, Node):
                     u = Node(u)
+
                 self.__node_weights.pop(u)
 
         return super().remove(n, *rest)
@@ -1348,6 +1422,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
             w: The new weight of node u
         Set the weight of node u to w
         """
+
         if not isinstance(u, Node):
             u = Node(u)
 
@@ -1366,6 +1441,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
             w: A real value
         Increase the weight of node u by w
         """
+
         if not isinstance(u, Node):
             u = Node(u)
 
@@ -1432,6 +1508,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         Returns:
             A path between u and v with the least possible sum of node weights
         """
+
         return self.weighted_graph().minimal_path(u, v)
 
     def weighted_vertex_cover(self) -> set[Node]:
@@ -1439,6 +1516,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         Returns:
             A minimal by sum of the weights set of nodes, that cover all links in the graph
         """
+
         return self.nodes - self.weighted_independent_set()
 
     def weighted_dominating_set(self) -> set[Node]:
@@ -1464,6 +1542,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
 
         if not self:
             return set()
+
         if not self.connected():
             return reduce(lambda x, y: x.union(y), [comp.weighted_dominating_set() for comp in
                                                     self.connection_components()])
@@ -1532,6 +1611,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         Args:
             neighborhood: A dictionary of nodes and another dictionary, associated with each node. Each such dictionary has for keys the neighbors of said node and the value of each neighbor is the weight of the link between them
         """
+
         super().__init__()
         self.__link_weights = {}
 
@@ -1552,6 +1632,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
             if a link or two nodes are passed, return the weight of the given link between them;
             If one node is passed, return a dictionary with all of its neighbors and the weight of the link it shares with each of them
         """
+
         if u_l is None:
             return {l: self.link_weights(l) for l in self.links}
 
@@ -1569,6 +1650,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         Returns:
             The sum of all link weights
         """
+
         return sum(self.link_weights().values())
 
     def add(self, u: Node, nodes_weights: dict[Node, float] = {}) -> WeightedLinksUndirectedGraph:
@@ -1632,6 +1714,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
             w: The new weight of link l
         Set the weight of link l to w
         """
+
         try:
             if l in self.links:
                 self.__link_weights[l] = float(w)
@@ -1647,6 +1730,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
             w: A real value
         Increase the weight of link l with w
         """
+
         try:
             if l in self.link_weights():
                 self.set_weight(l, self.link_weights(l) + float(w))
@@ -1681,6 +1765,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
 
                 if w == (mid_weight := self.link_weights(bridge_links[mid])):
                     bridge_links.insert(mid, x)
+
                     return
 
                 if w < mid_weight:
@@ -1702,6 +1787,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
                 if w == (f_mid := self.link_weights(mid_l := bridge_links[mid])):
                     if x == mid_l:
                         bridge_links.pop(mid)
+
                         return
 
                     i, j, still = mid - 1, mid + 1, True
@@ -1712,6 +1798,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
                         if i >= 0 and self.link_weights(bridge_links[i]) == w:
                             if x == bridge_links[i]:
                                 bridge_links.pop(i)
+
                                 return
 
                             i -= 1
@@ -1720,6 +1807,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
                         if j < len(bridge_links) and self.link_weights(bridge_links[j]) == w:
                             if x == bridge_links[j]:
                                 bridge_links.pop(j)
+
                                 return
 
                             j += 1
@@ -1790,6 +1878,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         Returns:
             A path between u and v with the least possible sum of link weights
         """
+
         return self.weighted_graph().minimal_path(u, v)
 
 
@@ -1803,7 +1892,9 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
         Args:
             neighborhood: A dictionary of nodes and a tuple with each node's weight and another dictionary, associated with each node. Each such dictionary has for keys the neighbors of said node and the value of each neighbor is the weight of the link between them
         """
+
         WeightedNodesUndirectedGraph.__init__(self), WeightedLinksUndirectedGraph.__init__(self)
+
         for n, (w, _) in neighborhood.items():
             self.add((n, w))
 
@@ -1817,6 +1908,7 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
         Returns:
             The sum of all weights in the graph
         """
+
         return self.total_nodes_weight + self.total_links_weight
 
     def add(self, n_w: tuple[Node, float], nodes_weights: dict[Node, float] = {}) -> WeightedUndirectedGraph:
@@ -1848,6 +1940,7 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
             w: The new weight of object el
         Set the weight of object el to w
         """
+
         if not isinstance(el, (Node, Link)):
             el = Node(el)
 
@@ -1868,6 +1961,7 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
             w: A real value
         Increase the weight of object el with w
         """
+
         try:
             if el in self.link_weights():
                 self.set_weight(el, self.link_weights(el) + float(w))
