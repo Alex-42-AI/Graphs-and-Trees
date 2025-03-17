@@ -200,6 +200,7 @@ class UndirectedGraph(Graph):
 
         if u not in self:
             self.__nodes.add(u)
+
             if current_nodes:
                 UndirectedGraph.connect(self, u, *current_nodes)
 
@@ -213,6 +214,7 @@ class UndirectedGraph(Graph):
             if u in self:
                 if tmp := self.neighbors(u):
                     UndirectedGraph.disconnect(self, u, *tmp)
+
                 self.__nodes.remove(u)
 
         return self
@@ -286,6 +288,7 @@ class UndirectedGraph(Graph):
             u = Node(u)
 
         res, total, layer = -1, {u}, {u}
+
         while layer:
             new = []
 
@@ -346,7 +349,10 @@ class UndirectedGraph(Graph):
         from tree import Tree
 
         if root is None:
-            root = self.nodes.pop()
+            try:
+                root = self.nodes.pop()
+            except KeyError:
+                raise ValueError("Can't make an empty tree")
 
         if not isinstance(root, Node):
             root = Node(root)
@@ -483,6 +489,7 @@ class UndirectedGraph(Graph):
                     min_back = levels[v]
 
             colors[u] = 2
+
             return min_back
 
         levels = {n: 0 for n in self.nodes}
@@ -954,13 +961,18 @@ class UndirectedGraph(Graph):
 
             rest = neighborhood[u := nodes.pop()]
             neighborhood.pop(u)
+            neighborhood_copy = neighborhood.copy()
 
             for v in rest:
                 res.add(l := Link(u, v))
 
+                for k in neighborhood:
+                    neighborhood[k].discard(v)
+
                 if curr := helper(nodes, neighborhood, res):
                     return curr
 
+                neighborhood = neighborhood_copy
                 res.remove(l)
 
             return set()
@@ -1115,11 +1127,14 @@ class UndirectedGraph(Graph):
         if not self.connected():
             return reduce(lambda x, y: x.union(y), [comp.independent_set() for comp in self.connection_components()])
 
+        if not self:
+            return set()
+
         if self.is_tree(True):
             return self.tree().independent_set()
 
         if self.is_full_k_partite():
-            return max([set(), *(comp.nodes for comp in self.complementary().connection_components())], key=len)
+            return max([comp.nodes for comp in self.complementary().connection_components()], key=len)
 
         if sort := self.interval_sort():
             result = set()
@@ -1204,6 +1219,7 @@ class UndirectedGraph(Graph):
             for y in neighbors:
                 if dfs(y):
                     tmp.add(x, *neighbors)
+
                     return True
 
             tmp.add(x, *neighbors)
