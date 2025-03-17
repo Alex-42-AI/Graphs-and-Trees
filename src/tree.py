@@ -239,6 +239,7 @@ class BinTree:
 
         self.__root, self.__left, self.__right = self.right.root, BinTree(self.root, self.left,
                                                                           self.right.left), self.right.right
+
         return self
 
     def rotate_right(self) -> BinTree:
@@ -248,6 +249,7 @@ class BinTree:
 
         self.__root, self.__left, self.__right = self.left.root, self.left.left, BinTree(self.root, self.left.right,
                                                                                          self.right)
+
         return self
 
     def subtree(self, u: Node) -> BinTree:
@@ -800,6 +802,7 @@ class Tree:
         Returns:
             The parent node of node u if it's given, otherwise the parent of each node
         """
+
         if u is None:
             return self.__parent.copy()
 
