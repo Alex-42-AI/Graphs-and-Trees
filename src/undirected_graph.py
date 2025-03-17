@@ -147,7 +147,7 @@ class UndirectedGraph(Graph):
             u = Node(u)
 
         if u not in self:
-            raise KeyError("Unrecognized node!")
+            raise KeyError("Unrecognized node")
 
         return {l.other(u) for l in self.links if u in l}
 
@@ -368,7 +368,7 @@ class UndirectedGraph(Graph):
             v = Node(v)
 
         if u not in self or v not in self:
-            raise KeyError("Unrecognized node(s)!")
+            raise KeyError("Unrecognized node(s)")
 
         rest, total = {u}, {u}
 
@@ -394,7 +394,7 @@ class UndirectedGraph(Graph):
 
             return UndirectedGraph({u: self.neighbors(u).intersection(nodes) for u in nodes})
         except TypeError:
-            raise TypeError("Iterable of nodes expected!")
+            raise TypeError("Iterable of nodes expected")
 
     def component(self, u: Node) -> UndirectedGraph:
         """
@@ -408,7 +408,7 @@ class UndirectedGraph(Graph):
             u = Node(u)
 
         if u not in self:
-            raise KeyError("Unrecognized node!")
+            raise KeyError("Unrecognized node")
 
         rest, total = {u}, {u}
 
@@ -505,7 +505,7 @@ class UndirectedGraph(Graph):
             v = Node(v)
 
         if u not in self or v not in self:
-            raise KeyError("Unrecognized node(s)!")
+            raise KeyError("Unrecognized node(s)")
 
         previous, queue, total = {}, [u], {u}
 
@@ -540,7 +540,7 @@ class UndirectedGraph(Graph):
             v = Node(v)
 
         if u not in self or v not in self:
-            raise KeyError("Unrecognized node(s)!")
+            raise KeyError("Unrecognized node(s)")
 
         if u == v:
             return self.euler_tour_exists()
@@ -567,7 +567,7 @@ class UndirectedGraph(Graph):
             v = Node(v)
 
         if u not in self or v not in self:
-            raise KeyError("Unrecognized node(s)!")
+            raise KeyError("Unrecognized node(s)")
 
         if self.euler_walk_exists(u, v):
             path = self.get_shortest_path(u, v)
@@ -755,7 +755,7 @@ class UndirectedGraph(Graph):
                     begin = c
                     break
             else:
-                raise KeyError("Unrecognized node!")
+                raise KeyError("Unrecognized node")
 
             components.remove(begin)
 
@@ -780,7 +780,7 @@ class UndirectedGraph(Graph):
             start = Node(start)
 
         if start not in self:
-            raise KeyError("Unrecognized node!")
+            raise KeyError("Unrecognized node")
 
         return helper(start, self, {u: Link(start, u) in self.links for u in self.nodes - {start}})
 
@@ -796,7 +796,7 @@ class UndirectedGraph(Graph):
             try:
                 k = int(k)
             except ValueError:
-                raise TypeError("Integer expected!")
+                raise TypeError("Integer expected")
 
         return k in {None, len(comps := self.complementary().connection_components())} and all(c.full() for c in comps)
 
@@ -836,7 +836,7 @@ class UndirectedGraph(Graph):
         try:
             k = int(k)
         except ValueError:
-            raise TypeError("Integer expected!")
+            raise TypeError("Integer expected")
 
         if k < 0:
             return []
@@ -1136,7 +1136,7 @@ class UndirectedGraph(Graph):
         try:
             length = int(length)
         except ValueError:
-            raise TypeError("Integer expected!")
+            raise TypeError("Integer expected")
 
         if length < 3:
             return []
@@ -1180,7 +1180,7 @@ class UndirectedGraph(Graph):
         try:
             length = int(length)
         except ValueError:
-            raise TypeError("Integer expected!")
+            raise TypeError("Integer expected")
 
         if not (tmp := self.get_shortest_path(u, v)) or (k := len(tmp)) > length + 1:
             return []
@@ -1230,7 +1230,7 @@ class UndirectedGraph(Graph):
             v = Node(v)
 
         if u not in self or v not in self:
-            raise KeyError("Unrecognized node(s)!")
+            raise KeyError("Unrecognized node(s)")
 
         if Link(u, v) in self.links:
             return True if self.nodes == {u, v} else self.hamilton_tour_exists()
@@ -1302,7 +1302,7 @@ class UndirectedGraph(Graph):
 
         if u is None:
             if v is not None and v not in self:
-                raise KeyError("Unrecognized node.")
+                raise KeyError("Unrecognized node")
 
             for n in self.nodes:
                 if result := dfs(n, [n]):
@@ -1314,7 +1314,7 @@ class UndirectedGraph(Graph):
             return []
 
         if u not in self or v is not None and v not in self:
-            raise KeyError("Unrecognized node(s).")
+            raise KeyError("Unrecognized node(s)")
 
         return dfs(u, [u])
 
@@ -1430,7 +1430,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
             try:
                 self.__node_weights[u] = float(w)
             except ValueError:
-                raise TypeError("Real value expected!")
+                raise TypeError("Real value expected")
 
         return self
 
@@ -1449,7 +1449,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
             try:
                 self.set_weight(u, self.node_weights(u) + float(w))
             except ValueError:
-                raise TypeError("Real value expected!")
+                raise TypeError("Real value expected")
 
         return self
 
@@ -1489,7 +1489,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
 
             return WeightedNodesUndirectedGraph(neighborhood)
         except TypeError:
-            raise TypeError("Iterable of nodes expected!")
+            raise TypeError("Iterable of nodes expected")
 
     def weighted_graph(self, weights: dict[Link, float] = None) -> WeightedUndirectedGraph:
         if weights is None:
@@ -1721,7 +1721,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
 
             return self
         except TypeError:
-            raise TypeError("Real value expected!")
+            raise TypeError("Real value expected")
 
     def increase_weight(self, l: Link, w: float) -> WeightedLinksUndirectedGraph:
         """
@@ -1737,7 +1737,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
 
             return self
         except ValueError:
-            raise TypeError("Real value expected!")
+            raise TypeError("Real value expected")
 
     def copy(self) -> WeightedLinksUndirectedGraph:
         return WeightedLinksUndirectedGraph({n: self.link_weights(n) for n in self.nodes})
@@ -1749,7 +1749,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
 
             return WeightedLinksUndirectedGraph(neighborhood)
         except TypeError:
-            raise TypeError("Iterable of nodes expected!")
+            raise TypeError("Iterable of nodes expected")
 
     def minimal_spanning_tree(self) -> set[Link]:
         """
@@ -1952,7 +1952,7 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
 
             return self
         except ValueError:
-            raise TypeError("Real value expected!")
+            raise TypeError("Real value expected")
 
     def increase_weight(self, el: Node | Link, w: float) -> WeightedUndirectedGraph:
         """
@@ -1974,7 +1974,7 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
 
             return self
         except ValueError:
-            raise TypeError("Real value expected!")
+            raise TypeError("Real value expected")
 
     def copy(self) -> WeightedUndirectedGraph:
         neighborhood = {n: (self.node_weights(n), self.link_weights(n)) for n in self.nodes}
@@ -1989,7 +1989,7 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
 
             return WeightedUndirectedGraph(neighborhood)
         except TypeError:
-            raise TypeError("Iterable of nodes expected!")
+            raise TypeError("Iterable of nodes expected")
 
     def minimal_path(self, u: Node, v: Node) -> list[Node]:
         """
@@ -2067,6 +2067,7 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
             if v in (tmp := self.component(u)):
                 nodes_negative_weights = sum(tmp.node_weights(n) for n in tmp.nodes if tmp.node_weights(n) < 0)
                 links_negative_weights = sum(tmp.link_weights(l) for l in tmp.links if tmp.link_weights(l) < 0)
+
                 upper_limit = self.total_weight - nodes_negative_weights - links_negative_weights
                 res = dfs(u, [], tmp.node_weights(u), nodes_negative_weights + links_negative_weights, [], upper_limit)
 
@@ -2074,4 +2075,4 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
 
             return []
 
-        raise KeyError("Unrecognized node(s)!")
+        raise KeyError("Unrecognized node(s)")
