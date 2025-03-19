@@ -1012,7 +1012,7 @@ class UndirectedGraph(Graph):
                     res = min(res, curr, key=len)
 
             if not entered:
-                res = partition + self.subgraph(self.nodes - union).chromatic_nodes_partition()
+                return partition + self.subgraph(self.nodes - union).chromatic_nodes_partition()
 
             return res
 
