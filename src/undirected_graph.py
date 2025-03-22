@@ -644,11 +644,6 @@ class UndirectedGraph(Graph):
             if nodes is None:
                 nodes = graph.nodes
 
-            subgraph = graph.subgraph(nodes)
-
-            if not nodes:
-                return
-
             max_nodes = set()
             max_exc = 0
 
@@ -658,6 +653,8 @@ class UndirectedGraph(Graph):
                     max_exc = e
                 elif e == max_exc:
                     max_nodes.add(n)
+
+            subgraph = graph.subgraph(nodes)
 
             if common := {n for n in max_nodes if subgraph.simplicial(n)}:
                 return common.pop()
