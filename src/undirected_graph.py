@@ -659,10 +659,8 @@ class UndirectedGraph(Graph):
                 elif e == max_exc:
                     max_nodes.add(n)
 
-            try:
-                return {n for n in max_nodes if subgraph.simplicial(n)}.pop()
-            except KeyError:
-                ...
+            if common := {n for n in max_nodes if subgraph.simplicial(n)}:
+                return common.pop()
 
         def component_interval_sort(graph, nodes, priority):
             max_priority = priority[nodes[0]]
