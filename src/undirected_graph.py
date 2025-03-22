@@ -645,12 +645,24 @@ class UndirectedGraph(Graph):
                 nodes = graph.nodes
 
             subgraph = graph.subgraph(nodes)
-            nodes = {n for n in nodes if subgraph.simplicial(n)}
 
             if not nodes:
                 return
 
-            return max(nodes, key=graph.excentricity)
+            max_nodes = set()
+            max_exc = 0
+
+            for n in nodes:
+                if (e := graph.excentricity(n)) > max_exc:
+                    max_nodes = {n}
+                    max_exc = e
+                elif e == max_exc:
+                    max_nodes.add(n)
+
+            try:
+                return {n for n in max_nodes if subgraph.simplicial(n)}.pop()
+            except KeyError:
+                ...
 
         def component_interval_sort(graph, nodes, priority):
             max_priority = priority[nodes[0]]
