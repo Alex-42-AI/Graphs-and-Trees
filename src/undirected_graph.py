@@ -640,10 +640,7 @@ class UndirectedGraph(Graph):
             fails, it returns an empty list. If start is given, t only tries to find a way to start from it
         """
 
-        def find_start_node(graph, nodes=None):
-            if nodes is None:
-                nodes = graph.nodes
-
+        def find_start_node(graph, nodes):
             max_nodes = set()
             max_exc = 0
 
@@ -785,7 +782,7 @@ class UndirectedGraph(Graph):
             return result
 
         if start is None:
-            start = find_start_node(self)
+            start = find_start_node(self, self.nodes)
 
             if start is None:
                 return []
