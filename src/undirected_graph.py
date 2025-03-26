@@ -335,7 +335,7 @@ class UndirectedGraph(Graph):
             Whether the graph could be a tree
         """
 
-        return not self or len(self.nodes) == len(self.links) + 1 and (connected or self.connected())
+        return len(self.nodes) == len(self.links) + 1 and (connected or self.connected())
 
     def tree(self, root: Node = None, dfs: bool = False) -> "Tree":
         """
@@ -641,25 +641,18 @@ class UndirectedGraph(Graph):
         """
 
         def find_start_node(graph, nodes):
-            max_nodes = set()
-            max_exc = 0
-
-            for n in nodes:
-                if (e := graph.excentricity(n)) > max_exc:
-                    max_nodes = {n}
-                    max_exc = e
-                elif e == max_exc:
-                    max_nodes.add(n)
-
             subgraph = graph.subgraph(nodes)
+            simplicial = {n for n in nodes if subgraph.simplicial(n)}
 
-            if common := {n for n in max_nodes if subgraph.simplicial(n)}:
-                return common.pop()
+            if len(simplicial) == 1:
+                return simplicial.pop()
+
+            return max(simplicial, key=graph.excentricity, default=None)
 
         def component_interval_sort(graph, nodes, priority):
-            max_priority = priority[nodes[0]]
+            max_priority = priority[n := nodes[0]]
             curr_graph = graph.subgraph(nodes)
-            max_priority_nodes = {nodes[0]}
+            max_priority_nodes = {n}
 
             for u in nodes[1:]:
                 if priority[u] < max_priority:
@@ -685,8 +678,8 @@ class UndirectedGraph(Graph):
             if graph.full():
                 return [u, *sorted(graph.nodes - {u}, key=priority.get, reverse=True)]
 
-            order, neighbors = [u], graph.neighbors(u)
-            comps, total, final = [], {u}, []
+            order, neighbors, comps = [u], graph.neighbors(u), []
+            final_neighbors, final, total = [], [], {u}
 
             for v in neighbors:
                 if v not in total:
@@ -705,6 +698,7 @@ class UndirectedGraph(Graph):
                                     this_final = True
 
                     if this_final:
+                        final_neighbors = comp
                         final = sorted((graph.nodes - neighbors - {u}).union(comp),
                                        key=lambda x: (priority[x], x in neighbors), reverse=True)
                     else:
@@ -720,8 +714,6 @@ class UndirectedGraph(Graph):
 
             if final and comps and priority[final[0]] > priority[comps[-1][-1]]:
                 return []
-
-            final_neighbors = neighbors.intersection(final)
 
             if final and set(final[:len(final_neighbors)]) != final_neighbors:
                 return []
