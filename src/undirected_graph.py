@@ -636,8 +636,7 @@ class UndirectedGraph(Graph):
         Args:
             start: A present node or None
         Returns:
-            A sort of the graph nodes, based on how early the interval a particular node could represent begins. If it
-            fails, it returns an empty list. If start is given, t only tries to find a way to start from it
+            A sort of the graph nodes, based on how early the interval a particular node could represent begins. If it fails, it returns an empty list. If start is given, it only tries to find a sort, which starts from it
         """
 
         def find_start_node(graph, nodes):
