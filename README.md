@@ -12,6 +12,7 @@ A library for working with graph and tree data structures.
 A graph is a data structure, consisting of nodes and links between some of them. There are different types of graphs, such as graphs with or without loops, directed/undirected, weighted/unweighted and multigraphs.
 
 https://en.wikipedia.org/wiki/Graph_theory
+
 https://en.wikipedia.org/wiki/Graph_(abstract_data_type)
 
 ## Implementation
