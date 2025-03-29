@@ -718,6 +718,8 @@ class UndirectedGraph(Graph):
 
                 comps.append(final)
 
+                del final, final_neighbors
+
             for i in range(len(comps) - 1):
                 if priority[comps[i][-1]] < priority[comps[i + 1][0]]:
                     return []
