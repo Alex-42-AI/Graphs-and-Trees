@@ -287,6 +287,9 @@ class UndirectedGraph(Graph):
         if not isinstance(u, Node):
             u = Node(u)
 
+        if self.full():
+            return 1
+
         res, total, layer = -1, {u}, {u}
 
         while layer:
@@ -704,18 +707,20 @@ class UndirectedGraph(Graph):
                         comps.append(sorted(comp, key=priority.get, reverse=True))
 
             max_length = max(map(len, comps)) if comps else 0
-            comparison_function = lambda c: extend_last(tuple(map(priority.get, c)))
-            comps = sorted(comps, key=comparison_function, reverse=True)
+            comps = sorted(comps, key=lambda c: extend_last(tuple(map(priority.get, c))), reverse=True)
+
+            if final:
+                if comps and priority[final[0]] > priority[comps[-1][-1]]:
+                    return []
+
+                if set(final[:len(final_neighbors)]) != final_neighbors:
+                    return []
+
+                comps.append(final)
 
             for i in range(len(comps) - 1):
                 if priority[comps[i][-1]] < priority[comps[i + 1][0]]:
                     return []
-
-            if final and comps and priority[final[0]] > priority[comps[-1][-1]]:
-                return []
-
-            if final and set(final[:len(final_neighbors)]) != final_neighbors:
-                return []
 
             for comp in comps:
                 curr_sort = component_interval_sort(graph, comp, priority)
@@ -725,15 +730,7 @@ class UndirectedGraph(Graph):
 
                 order += curr_sort
 
-            if set(order) == graph.nodes:
-                return order
-
-            curr_sort = component_interval_sort(graph, final, priority)
-
-            if not curr_sort:
-                return []
-
-            return order + curr_sort
+            return order
 
         if not self.connected():
             if start is None:
@@ -784,7 +781,7 @@ class UndirectedGraph(Graph):
         if start not in self:
             raise KeyError("Unrecognized node")
 
-        return helper(start, self, {u: Link(start, u) in self.links for u in self.nodes - {start}})
+        return helper(start, self, {u: int(Link(start, u) in self.links) for u in self.nodes - {start}})
 
     def is_full_k_partite(self, k: int = None) -> bool:
         """
