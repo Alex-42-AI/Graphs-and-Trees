@@ -633,6 +633,48 @@ class UndirectedGraph(Graph):
                        link_weights: dict[Link, float] = None) -> WeightedUndirectedGraph:
         return self.weighted_links_graph(link_weights).weighted_graph(node_weights)
 
+    def lex_bfs(self, start: Node = None) -> list[Node]:
+        """
+        Args:
+            start: A present node or None
+        Returns:
+            A lexicographical order of the graph nodes, starting from a given (or arbitrary) node
+        """
+
+        def shift(node):
+            new_priority = priority[node]
+            j = i
+
+            while priority[remaining[j]] > new_priority:
+                j -= 1
+
+            remaining.pop(i)
+            remaining.insert(j, node)
+
+        if start is None:
+            start = self.nodes.pop()
+        elif not isinstance(start, Node):
+            start = Node(start)
+
+        remaining = self.neighbors(start)
+        remaining = list(remaining) + list(self.nodes - {start} - remaining)
+        priority = {node: 0 for node in remaining}
+        order = [start]
+
+        while remaining:
+            order.append(max_node := remaining.pop(0))
+            priority.pop(max_node)
+
+            for n in priority:
+                priority[n] *= 2
+
+            for i, node in enumerate(remaining):
+                if node in self.neighbors(max_node):
+                    priority[node] += 1
+                    shift(node)
+
+        return order
+
     def interval_sort(self, start: Node = None) -> list[Node]:
         """
         Assume a set of intervals over the real number line, some of which could intersect. Such a set of intervals can be sorted based on multiple criteria. An undirected graph could be defined to represent the intervals the following way: Nodes represent the intervals and two nodes are connected exactly when the intervals they represent intersect
@@ -653,7 +695,6 @@ class UndirectedGraph(Graph):
 
         def component_interval_sort(graph, nodes, priority):
             max_priority = priority[n := nodes[0]]
-            curr_graph = graph.subgraph(nodes)
             max_priority_nodes = {n}
 
             for u in nodes[1:]:
@@ -662,7 +703,7 @@ class UndirectedGraph(Graph):
 
                 max_priority_nodes.add(u)
 
-            start = find_start_node(curr_graph, max_priority_nodes)
+            start = find_start_node(curr_graph := graph.subgraph(nodes), max_priority_nodes)
 
             if start is None:
                 return []
@@ -725,9 +766,7 @@ class UndirectedGraph(Graph):
                     return []
 
             for comp in comps:
-                curr_sort = component_interval_sort(graph, comp, priority)
-
-                if not curr_sort:
+                if not (curr_sort := component_interval_sort(graph, comp, priority)):
                     return []
 
                 order += curr_sort
@@ -735,10 +774,12 @@ class UndirectedGraph(Graph):
             return order
 
         if not self.connected():
+            components = self.connection_components()
+
             if start is None:
                 result = []
 
-                for component in self.connection_components():
+                for component in components:
                     if not (curr := component.interval_sort()):
                         return []
 
@@ -749,11 +790,10 @@ class UndirectedGraph(Graph):
             if not isinstance(start, Node):
                 start = Node(start)
 
-            components = self.connection_components()
-
             for c in components:
                 if start in c:
                     begin = c
+
                     break
             else:
                 raise KeyError("Unrecognized node")
@@ -776,8 +816,7 @@ class UndirectedGraph(Graph):
 
             if start is None:
                 return []
-
-        if not isinstance(start, Node):
+        elif not isinstance(start, Node):
             start = Node(start)
 
         if start not in self:
@@ -850,6 +889,27 @@ class UndirectedGraph(Graph):
 
         return [set(p) for p in combinations(self.nodes, abs(k)) if self.clique(*p)]
 
+    def maximal_cliques(self) -> list[set[Node]]:
+        """
+        Returns:
+            All maximal by inclusion cliques in the graph
+        """
+
+        if sort := self.interval_sort():
+            cliques = []
+            rest = self.nodes
+
+            for n in reversed(sort):
+                curr = self.neighbors(n).intersection(rest).union({n})
+                rest.remove(n)
+
+                if all(not curr.issubset(x) for x in cliques):
+                    cliques.append(curr)
+
+            return cliques
+
+        return self.complementary().maximal_independent_sets()
+
     def max_cliques(self) -> list[set[Node]]:
         """
         Returns:
@@ -882,7 +942,7 @@ class UndirectedGraph(Graph):
 
         return list(map({u}.union, self.subgraph(self.neighbors(u)).max_cliques()))
 
-    def all_maximal_cliques_node(self, u: Node) -> list[set[Node]]:
+    def maximal_cliques_node(self, u: Node) -> list[set[Node]]:
         """
         Args:
             u: A present node
@@ -893,7 +953,7 @@ class UndirectedGraph(Graph):
         if not isinstance(u, Node):
             u = Node(u)
 
-        return list(map({u}.union, self.subgraph(self.neighbors(u)).complementary().maximal_independent_sets()))
+        return list(map({u}.union, self.subgraph(self.neighbors(u)).maximal_cliques()))
 
     def maximal_independent_sets(self) -> list[set[Node]]:
         """
@@ -1025,6 +1085,7 @@ class UndirectedGraph(Graph):
                 for i, partition in enumerate(result):
                     if self.neighbors(u).isdisjoint(partition):
                         result[i].add(u)
+
                         break
                 else:
                     result.append({u})
@@ -2037,7 +2098,7 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
 
                     if y == v and new_curr_w < res_weight:
                         res_path = current_path + [Link(x, y)]
-                        res_weight = current_weight + l_w + n_w
+                        res_weight = new_curr_w
 
                     curr = dfs(y, current_path + [Link(x, y)], new_curr_w, new_total_negative, res_path, res_weight)
 
