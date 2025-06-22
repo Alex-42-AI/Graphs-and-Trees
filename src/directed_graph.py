@@ -393,6 +393,13 @@ class DirectedGraph(Graph):
         return len(self.links) == (n := len(self.nodes)) * (n - 1)
 
     def subgraph(self, u_or_nodes: Node | Iterable[Node]) -> DirectedGraph:
+        """
+        Args:
+            u_or_nodes: Given node or set of nodes
+        Returns:
+            If a set of nodes is given, return the subgraph, that only contains these nodes and all links between them. If a node is given, return the subgraph of all nodes and links, reachable by it, in a directed graph
+        """
+
         try:
             u_or_nodes = self.nodes.intersection(u_or_nodes)
 
@@ -1483,7 +1490,7 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
 
                     if y == v and new_curr_w < res_weight:
                         res_path = current_path + [(x, y)]
-                        res_weight = current_weight + l_w + n_w
+                        res_weight = new_curr_w
 
                     curr = dfs(y, current_path + [(x, y)], new_curr_w, new_total_negative, res_path, res_weight)
 
