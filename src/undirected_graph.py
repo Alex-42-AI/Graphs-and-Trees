@@ -990,36 +990,14 @@ class UndirectedGraph(Graph):
             A list of independent sets in the graph, that cover all nodes without intersecting. This list has as few elements as possible
         """
 
-        def helper(partition, union=set(), i=0):
-            if union == self.nodes:
-                return partition
-
-            res, entered = list(map(lambda x: {x}, self.nodes)), False
-
-            for j, s in enumerate(independent_sets[i:]):
-                if {*s, *union} == self.nodes or s.isdisjoint(union):
-                    entered = True
-
-                    if len(curr := helper(partition + [s - union], {*s, *union}, i + j + 1)) == 2:
-                        return curr
-
-                    res = min(res, curr, key=len)
-
-            if not entered:
-                return partition + self.subgraph(self.nodes - union).chromatic_nodes_partition()
-
-            return res
-
         if not self.connected():
             r = [comp.chromatic_nodes_partition() for comp in self.connection_components()]
-            final = r[0]
+            final = max(r, key=len)
+            r.remove(final)
 
-            for c in r[1:]:
-                for i in range(min(len(c), len(final))):
-                    final[i].update(c[i])
-
-                for i in range(len(final), len(c)):
-                    final.append(c[i])
+            for c in r:
+                for i, i_s in enumerate(c):
+                    final[i].update(i_s)
 
             return final
 
@@ -1053,9 +1031,15 @@ class UndirectedGraph(Graph):
 
             return result
 
-        independent_sets = self.maximal_independent_sets()
+        result = list(map(lambda x: {x}, self.nodes))
 
-        return helper([])
+        for i_s in self.maximal_independent_sets():
+            curr = [i_s] + self.subgraph(self.nodes - i_s).chromatic_nodes_partition()
+
+            if len(curr) < len(result):
+                result = curr.copy()
+
+        return result
 
     def chromatic_links_partition(self) -> list[set[Link]]:
         """
