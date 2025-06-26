@@ -26,6 +26,8 @@ Graphs can be directed or undirected. For each of them there are the following p
 - Weights only on the links;
 - Weights on both the nodes and the links.
 
+For each of them exists an interval graph class, which implements a set of intervals as undirected graphs.
+
 ### Trees
 
 Trees, defined in this project, are:
