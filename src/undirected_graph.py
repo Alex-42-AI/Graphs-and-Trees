@@ -962,13 +962,15 @@ class UndirectedGraph(Graph):
         """
 
         def generator(result=set(), total=set(), i=0):
-            for j, n in enumerate(list(self.nodes)[i:]):
+            for j, n in enumerate(nodes[i:]):
                 if result.isdisjoint(self.neighbors(n)):
                     for res in generator({n, *result}, {n, *self.neighbors(n), *total}, i + j + 1):
                         yield res
 
             if total == self.nodes:
                 yield result
+
+        nodes = list(self.nodes)
 
         return [i_s for i_s in generator()]
 
@@ -1096,6 +1098,9 @@ class UndirectedGraph(Graph):
 
         for i_s in self.maximal_independent_sets():
             curr = [i_s] + self.subgraph(self.nodes - i_s).chromatic_nodes_partition()
+
+            if len(curr) == 2:
+                return curr
 
             if len(curr) < len(result):
                 result = curr.copy()
