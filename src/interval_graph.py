@@ -81,8 +81,7 @@ class IntervalGraph:
         for i, interval in enumerate(intervals):
             starts = [i[0] for i in intervals]
             j = bisect_right(starts, interval[1])
-            neighbors = set(intervals[i:j])
-            self.graph.add(interval, *neighbors)
+            self.graph.add(interval, *set(intervals[i:j]))
 
         return self
 
@@ -96,6 +95,14 @@ class IntervalGraph:
         self.graph.remove(*intervals)
 
         return self
+
+    def copy(self) -> IntervalGraph:
+        """
+        Returns:
+            An identical copy of the graph
+        """
+
+        return type(self)(*self.nodes)
 
     def sort(self, end: bool = False) -> list[Interval]:
         """
@@ -200,7 +207,44 @@ class WeightedNodesIntervalGraph(IntervalGraph):
     Class for implementing a set of intervals as a graph with node weights, where the weights are interval lengths
     """
 
-    pass
+    def __init__(self, *intervals: Interval) -> None:
+        """
+        Args:
+            intervals (Interval): list of intervals
+        Creates a WeightedNodesIntervalGraph object
+        """
+
+        super().__init__()
+        self.__graph = WeightedNodesUndirectedGraph()
+        self.add(*intervals)
+
+    def node_weights(self, i: Interval = None) -> dict[Interval, float] | float:
+        """
+        Args:
+            i: A present interval or None
+        Returns:
+            The length of interval i or the dictionary with all interval lengths
+        """
+
+        return self.graph.node_weights(i)
+
+    def total_node_weights(self) -> float:
+        """
+        Returns:
+            The combined length of all intervals
+        """
+
+        return self.graph.total_node_weights()
+
+    def add(self, *intervals: Interval) -> WeightedNodesIntervalGraph:
+        intervals = sorted({i for i in intervals if i[0] <= i[1]})
+
+        for i, interval in enumerate(intervals):
+            starts = [i[0] for i in intervals]
+            j = bisect_right(starts, interval[1])
+            self.graph.add((interval, interval[1] - interval[0]), *set(intervals[i:j]))
+
+        return self
 
 
 class WeightedLinksIntervalGraph(IntervalGraph):
@@ -209,7 +253,49 @@ class WeightedLinksIntervalGraph(IntervalGraph):
     intersections
     """
 
-    pass
+    def __init__(self, *intervals: Interval) -> None:
+        """
+        Args:
+            intervals (Interval): list of intervals
+        Creates a WeightedLinksIntervalGraph object
+        """
+
+        super().__init__()
+        self.__graph = WeightedLinksUndirectedGraph()
+        self.add(*intervals)
+
+    def link_weights(self, u_l: Interval | Link = None, v: Interval = None) -> dict[Interval, float] | dict[
+        Link, float] | float:
+        """
+        Args:
+            u_l: Given first interval, a link or None
+            v: Given second interval or None
+        Returns:
+            Information about intersection lengths the following way:
+            If no argument is passed, return the lengths of all intersection;
+            if a link or two intervals are passed, return the length of the given intersection between them;
+            If one interval is passed, return a dictionary with all of its neighbors and the length of the intersection it shares with each of them
+        """
+
+        return self.graph.link_weights(u_l, v)
+
+    def total_link_weights(self) -> float:
+        """
+        Returns:
+            The combined length of all intervals intersections
+        """
+
+        return self.graph.total_link_weights()
+
+    def add(self, *intervals: Interval) -> WeightedLinksIntervalGraph:
+        intervals = sorted({i for i in intervals if i[0] <= i[1]})
+
+        for i, interval in enumerate(intervals):
+            starts = [i[0] for i in intervals]
+            j = bisect_right(starts, interval[1])
+            self.graph.add(interval, {k: interval[1] - k[0] for k in intervals[i:j]})
+
+        return self
 
 
 class WeightedIntervalGraph(WeightedNodesIntervalGraph, WeightedLinksIntervalGraph):
@@ -218,4 +304,31 @@ class WeightedIntervalGraph(WeightedNodesIntervalGraph, WeightedLinksIntervalGra
     interval lengths and link weights are lengths of interval intersections
     """
 
-    pass
+    def __init__(self, *intervals: Interval) -> None:
+        """
+        Args:
+            intervals (Interval): list of intervals
+        Creates a WeightedIntervalGraph object
+        """
+
+        super().__init__()
+        self.__graph = WeightedUndirectedGraph()
+        self.add(*intervals)
+
+    def total_weights(self) -> float:
+        """
+        Returns:
+            The combined length of all intervals and all interval intersections
+        """
+
+        return self.graph.total_weights()
+
+    def add(self, *intervals: Interval) -> WeightedIntervalGraph:
+        intervals = sorted({i for i in intervals if i[0] <= i[1]})
+
+        for i, interval in enumerate(intervals):
+            starts = [i[0] for i in intervals]
+            j = bisect_right(starts, interval[1])
+            self.graph.add((interval, interval[1] - interval[0]), {k: interval[1] - k[0] for k in intervals[i:j]})
+
+        return self
