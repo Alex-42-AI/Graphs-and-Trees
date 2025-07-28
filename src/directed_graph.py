@@ -76,6 +76,7 @@ class DirectedGraph(Graph):
         """
 
         self.__nodes, self.__links = set(), set()
+        self.__prev, self.__next = {}, {}
 
         for u, (prev_nodes, next_nodes) in neighborhood.items():
             self.add(u)
@@ -116,7 +117,7 @@ class DirectedGraph(Graph):
         """
 
         if u is None:
-            return {n: self.prev(n) for n in self.nodes}
+            return self.__prev.copy()
 
         if u not in self:
             raise KeyError("Unrecognized node")
@@ -124,7 +125,7 @@ class DirectedGraph(Graph):
         if not isinstance(u, Node):
             u = Node(u)
 
-        return {v for v in self.nodes if (v, u) in self.links}
+        return self.__prev[u].copy()
 
     def next(self, u: Node = None) -> dict[Node, set[Node]] | set[Node]:
         """
@@ -135,7 +136,7 @@ class DirectedGraph(Graph):
         """
 
         if u is None:
-            return {n: self.next(n) for n in self.nodes}
+            return self.__next.copy()
 
         if u not in self:
             raise KeyError("Unrecognized node")
@@ -143,7 +144,7 @@ class DirectedGraph(Graph):
         if not isinstance(u, Node):
             u = Node(u)
 
-        return {v for v in self.nodes if (u, v) in self.links}
+        return self.__next[u].copy()
 
     @property
     def sources(self) -> set[Node]:
@@ -199,6 +200,7 @@ class DirectedGraph(Graph):
 
         if u not in self:
             self.__nodes.add(u)
+            self.__prev[u], self.__next[u] = set(), set()
             DirectedGraph.connect(self, u, pointed_by, points_to)
 
         return self
@@ -210,7 +212,7 @@ class DirectedGraph(Graph):
 
             if n in self:
                 DirectedGraph.disconnect(self, n, self.prev(n), self.next(n))
-                self.__nodes.remove(n)
+                self.__nodes.remove(n), self.__prev.pop(n), self.__next.pop(n)
 
         return self
 
@@ -233,6 +235,8 @@ class DirectedGraph(Graph):
 
                 if u != v and (v, u) not in self.links and v in self:
                     self.__links.add((v, u))
+                    self.__prev[u].add(v)
+                    self.__next[v].add(u)
 
             for v in points_to:
                 if not isinstance(v, Node):
@@ -240,6 +244,8 @@ class DirectedGraph(Graph):
 
                 if u != v and (u, v) not in self.links and v in self:
                     self.__links.add((u, v))
+                    self.__prev[v].add(u)
+                    self.__next[u].add(v)
 
         return self
 
@@ -271,6 +277,8 @@ class DirectedGraph(Graph):
 
                 if (v, u) in self.links:
                     self.__links.remove((v, u))
+                    self.__prev[u].discard(v)
+                    self.__next[v].discard(u)
 
             for v in points_to:
                 if not isinstance(v, Node):
@@ -278,6 +286,8 @@ class DirectedGraph(Graph):
 
                 if (u, v) in self.links:
                     self.__links.remove((u, v))
+                    self.__prev[v].discard(u)
+                    self.__next[u].discard(v)
 
         return self
 
@@ -878,8 +888,7 @@ class DirectedGraph(Graph):
     def __str__(self) -> str:
         return string(self)
 
-    def __repr__(self) -> str:
-        return str(self)
+    __repr__: str = __str__
 
 
 class WeightedNodesDirectedGraph(DirectedGraph):
