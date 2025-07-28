@@ -98,6 +98,7 @@ class UndirectedGraph(Graph):
         """
 
         self.__nodes, self.__links = set(), set()
+        self.__neighbors = {}
 
         for u, neighbors in neighborhood.items():
             if u not in self:
@@ -141,15 +142,15 @@ class UndirectedGraph(Graph):
         """
 
         if u is None:
-            return {n: self.neighbors(n) for n in self.nodes}
+            return self.__neighbors.copy()
 
         if not isinstance(u, Node):
             u = Node(u)
 
-        if u not in self:
+        try:
+            return self.__neighbors[u].copy()
+        except KeyError:
             raise KeyError("Unrecognized node")
-
-        return {l.other(u) for l in self.links if u in l}
 
     def degrees(self, u: Node = None) -> dict[Node, int] | int:
         if u is None:
@@ -200,6 +201,7 @@ class UndirectedGraph(Graph):
 
         if u not in self:
             self.__nodes.add(u)
+            self.__neighbors[u] = set()
 
             if current_nodes:
                 UndirectedGraph.connect(self, u, *current_nodes)
@@ -216,6 +218,7 @@ class UndirectedGraph(Graph):
                     UndirectedGraph.disconnect(self, u, *tmp)
 
                 self.__nodes.remove(u)
+                self.__neighbors.pop(u)
 
         return self
 
@@ -237,6 +240,8 @@ class UndirectedGraph(Graph):
 
             if u != n and Link(n, u) not in self.links and n in self:
                 self.__links.add(Link(u, n))
+                self.__neighbors[u].add(n)
+                self.__neighbors[n].add(u)
 
         return self
 
@@ -258,9 +263,17 @@ class UndirectedGraph(Graph):
         Disconnect a given node from a non-empty set of nodes, all present in the graph
         """
 
+        if not isinstance(u, Node):
+            u = Node(u)
+
         for n in {v, *rest}:
-            if Link(n, u) in self.links:
-                self.__links.remove(Link(u, n))
+            if not isinstance(n, Node):
+                n = Node(n)
+
+            if (l := Link(n, u)) in self.links:
+                self.__links.remove(l)
+                self.__neighbors[u].discard(n)
+                self.__neighbors[n].discard(u)
 
         return self
 
@@ -751,9 +764,6 @@ class UndirectedGraph(Graph):
             comps = sorted(comps, key=lambda c: extend_last(tuple(map(priority.get, c))), reverse=True)
 
             if final:
-                if comps and priority[final[0]] > priority[comps[-1][-1]]:
-                    return []
-
                 if set(final[:len(final_neighbors)]) != final_neighbors:
                     return []
 
@@ -822,7 +832,7 @@ class UndirectedGraph(Graph):
         if start not in self:
             raise KeyError("Unrecognized node")
 
-        return helper(start, self, {u: int(Link(start, u) in self.links) for u in self.nodes - {start}})
+        return helper(start, self, {u: u in self.neighbors(start) for u in self.nodes - {start}})
 
     def is_full_k_partite(self, k: int = None) -> bool:
         """
@@ -1406,8 +1416,7 @@ class UndirectedGraph(Graph):
     def __str__(self) -> str:
         return string(self)
 
-    def __repr__(self) -> str:
-        return str(self)
+    __repr__: str = __str__
 
 
 class WeightedNodesUndirectedGraph(UndirectedGraph):
