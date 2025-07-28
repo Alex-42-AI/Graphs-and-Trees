@@ -73,6 +73,7 @@ def isomorphic_bijection(tree0: Tree, tree1: Tree) -> dict[Node, Node]:
                 if hash0[x] == hash1[y]:
                     total.add(y)
                     res[x] = y
+
                     break
             else:
                 return {}
@@ -648,6 +649,7 @@ class Tree:
 
         self.__root = root
         self.__parent = {}
+        self.__descendants = {root: set()}
 
         if root in inheritance:
             inheritance.pop(root)
@@ -662,6 +664,8 @@ class Tree:
         for u, desc in inheritance.items():
             if not isinstance(u, Node):
                 u = Node(u)
+
+            self.__descendants[u] = set()
 
             if u in root_descendants:
                 self.add(root, u)
@@ -729,6 +733,8 @@ class Tree:
 
                 if v not in self:
                     self.__parent[v] = curr
+                    self.__descendants[curr].add(v)
+                    self.__descendants[v] = set()
 
         return self
 
@@ -772,15 +778,18 @@ class Tree:
                 raise ValueError("Can't remove root")
 
             if subtree:
-                for d in self.descendants(u):
+                desc = self.descendants(u).copy()
+
+                for d in desc:
                     self.remove(d)
 
             v = self.parent(u)
 
             for n in self.descendants(u):
                 self.__parent[n] = v
+                self.__descendants[v].add(n)
 
-            self.__parent.pop(u)
+            self.__parent.pop(u), self.__descendants.pop(u), self.__descendants[v].discard(u)
 
         return self
 
@@ -841,7 +850,7 @@ class Tree:
         if u not in self:
             raise KeyError("Unrecognized node")
 
-        return {k for k, v in self.parent().items() if v == u}
+        return self.__descendants[u]
 
     def copy(self) -> Tree:
         """
@@ -1173,7 +1182,9 @@ class WeightedTree(Tree):
 
         if u in self:
             if subtree:
-                for d in self.descendants(u):
+                desc = self.descendants(u).copy()
+
+                for d in desc:
                     self.remove(d)
 
             self.__weights.pop(u)
