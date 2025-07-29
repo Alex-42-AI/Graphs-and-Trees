@@ -8,7 +8,7 @@
 
 ## Summary
 
-A library for working with graph and tree data structures.
+A library for working with graph and tree data structures. This implementation focuses on speed over memory.
 A graph is a data structure, consisting of nodes and links between some of them. There are different types of graphs, such as graphs with or without loops, directed/undirected, weighted/unweighted and multigraphs.
 
 https://en.wikipedia.org/wiki/Graph_theory
@@ -26,7 +26,7 @@ Graphs can be directed or undirected. For each of them there are the following p
 - Weights only on the links;
 - Weights on both the nodes and the links.
 
-For each of them exists an interval graph class, which implements a set of intervals as undirected graphs.
+Additionally, the project includes specialized classes for interval graphs — undirected graphs where each node represents an interval and edges represent interval overlaps.
 
 ### Trees
 
@@ -36,7 +36,7 @@ Trees, defined in this project, are:
 - Tree with unlimited descendants;
 - Tree with unlimited descendants and node weights.
 
-## Functionalities
+## Features
 
 - Defining an object of any given data type;
 - Property getters;
@@ -49,3 +49,8 @@ Trees, defined in this project, are:
 - Multi-graphs (where multiple links can exist from one node to another).
 - Graphs with loops (a link, both ends of which are the same node).
 
+## Getting started
+
+```git clone https://github.com/yourname/Graphs-and-Trees.git
+cd Graphs-and-Trees
+python3```
