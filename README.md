@@ -51,6 +51,8 @@ Trees, defined in this project, are:
 
 ## Getting started
 
-```git clone https://github.com/yourname/Graphs-and-Trees.git
+```
+git clone https://github.com/yourname/Graphs-and-Trees.git
 cd Graphs-and-Trees
-python3```
+python3
+```
