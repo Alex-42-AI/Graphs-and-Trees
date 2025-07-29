@@ -15,6 +15,14 @@ https://en.wikipedia.org/wiki/Graph_theory
 
 https://en.wikipedia.org/wiki/Graph_(abstract_data_type)
 
+## Getting started
+
+```
+git clone https://github.com/yourname/Graphs-and-Trees.git
+cd Graphs-and-Trees
+python3
+```
+
 ## Implementation
 
 ### Graphs
@@ -44,15 +52,11 @@ Trees, defined in this project, are:
 - Representation of given objects;
 - Complex algorithms over graphs and trees, such as interval sort, (weighted) vertex cover, (weighted) dominating set, (weighted) independent set, maximal clique and chromatic nodes/links partition for an undirected graph, topological sort and strongly-connected components partition for a directed graph and so on.
 
+## Restrictions
+
+- Node values can only be of a hashable type.
+
 ## Not supported
 
-- Multi-graphs (where multiple links can exist from one node to another).
+- Multi-graphs (where multiple links can exist from one node to another);
 - Graphs with loops (a link, both ends of which are the same node).
-
-## Getting started
-
-```
-git clone https://github.com/yourname/Graphs-and-Trees.git
-cd Graphs-and-Trees
-python3
-```
