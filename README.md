@@ -54,7 +54,8 @@ Trees, defined in this project, are:
 
 ## Restrictions
 
-- Node values can only be of a hashable type.
+- Node values can only be of a hashable type;
+- And they can't themselves be of type Node.
 
 ## Not supported
 
