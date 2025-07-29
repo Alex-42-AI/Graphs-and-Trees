@@ -19,8 +19,11 @@ class Node:
     """
 
     def __init__(self, value: Hashable) -> None:
-        if not hasattr(value, "__hash__"):
+        if type(value).__hash__ is None:
             raise ValueError(f"Unhashable type: {type(value).__name__}")
+
+        if isinstance(value, Node):
+            value = value.value
 
         self.__value = value
 
@@ -240,12 +243,6 @@ class Graph(ABC):
 
     @abstractmethod
     def subgraph(self, u_or_s: Node | Iterable[Node]) -> Graph:
-        """
-        Args:
-            u_or_s: Given node or set of nodes
-        Returns:
-            If a set of nodes is given, return the subgraph, that only contains these nodes and all links between them. If a node is given, return the subgraph of all nodes and links, reachable by it, in a directed graph
-        """
         pass
 
     @abstractmethod
