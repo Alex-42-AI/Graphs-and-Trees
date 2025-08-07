@@ -34,7 +34,7 @@ Graphs can be directed or undirected. For each of them there are the following p
 - Weights only on the links;
 - Weights on both the nodes and the links.
 
-Additionally, the project includes specialized classes for interval graphs — undirected graphs where each node represents an interval and links represent interval overlaps. In the version with node weights, the weights represent interval length and for link weights - intersection length.
+Additionally, the project includes specialized classes for interval graphs — undirected graphs where each node represents an interval and links represent interval overlaps. In the version with node weights, the weights represent interval length and for link weights — intersection length.
 
 ### Trees
 
