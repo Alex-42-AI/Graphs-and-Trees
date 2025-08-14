@@ -885,6 +885,16 @@ class Tree:
 
         return res
 
+    def tree_from_node(self, u: Node) -> Tree:
+        """
+        Args:
+            u: A present node
+        Returns:
+            A version of the tree, rooted in node u
+        """
+
+        return self.undirected_graph().tree(u)
+
     def undirected_graph(self) -> UndirectedGraph:
         """
         Returns:
@@ -1357,3 +1367,4 @@ class WeightedTree(Tree):
         inheritance.pop(self.root)
 
         return f"WeightedTree({(self.root, self.weights(self.root))}, {inheritance})"
+
