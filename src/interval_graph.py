@@ -186,7 +186,7 @@ class IntervalGraph:
             Whether the two interval graphs are equal
         """
 
-        if type(other) != IntervalGraph:
+        if type(self) != type(other):
             return False
 
         return self.nodes == other.nodes
@@ -332,3 +332,4 @@ class WeightedIntervalGraph(WeightedNodesIntervalGraph, WeightedLinksIntervalGra
             self.graph.add((interval, interval[1] - interval[0]), {k: interval[1] - k[0] for k in intervals[i:j]})
 
         return self
+
