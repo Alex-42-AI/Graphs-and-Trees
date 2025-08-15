@@ -11,6 +11,8 @@ from undirected_graph import UndirectedGraph, WeightedNodesUndirectedGraph, Weig
 
 from bisect import bisect_right
 
+__all__ = ["IntervalGraph", "WeightedNodesIntervalGraph", "WeightedLinksIntervalGraph", "WeightedUndirectedGraph"]
+
 Interval = tuple[float, float]
 
 class IntervalGraph:
@@ -332,4 +334,5 @@ class WeightedIntervalGraph(WeightedNodesIntervalGraph, WeightedLinksIntervalGra
             self.graph.add((interval, interval[1] - interval[0]), {k: interval[1] - k[0] for k in intervals[i:j]})
 
         return self
+
 
