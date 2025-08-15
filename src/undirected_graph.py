@@ -144,20 +144,14 @@ class UndirectedGraph(Graph):
         if u is None:
             return self.__neighbors.copy()
 
-        if not isinstance(u, Node):
-            u = Node(u)
-
         try:
-            return self.__neighbors[u].copy()
+            return self.__neighbors[Node(u)].copy()
         except KeyError:
             raise KeyError("Unrecognized node")
 
-    def degrees(self, u: Node = None) -> dict[Node, int] | int:
+    def degree(self, u: Node = None) -> dict[Node, int] | int:
         if u is None:
-            return {n: self.degrees(n) for n in self.nodes}
-
-        if not isinstance(u, Node):
-            u = Node(u)
+            return {n: self.degree(n) for n in self.nodes}
 
         return len(self.neighbors(u))
 
@@ -169,10 +163,7 @@ class UndirectedGraph(Graph):
             Whether n is a leaf (if it has a degree of 1)
         """
 
-        if not isinstance(n, Node):
-            n = Node(n)
-
-        return self.degrees(n) == 1
+        return self.degree(n) == 1
 
     def simplicial(self, u: Node) -> bool:
         """
@@ -182,9 +173,6 @@ class UndirectedGraph(Graph):
         Returns:
             Whether u is simplicial
         """
-
-        if not isinstance(u, Node):
-            u = Node(u)
 
         return self.clique(*self.neighbors(u))
 
@@ -196,8 +184,7 @@ class UndirectedGraph(Graph):
         Add node u to already present nodes
         """
 
-        if not isinstance(u, Node):
-            u = Node(u)
+        u = Node(u)
 
         if u not in self:
             self.__nodes.add(u)
@@ -210,8 +197,7 @@ class UndirectedGraph(Graph):
 
     def remove(self, n: Node, *rest: Node) -> UndirectedGraph:
         for u in {n, *rest}:
-            if not isinstance(u, Node):
-                u = Node(u)
+            u = Node(u)
 
             if u in self:
                 if tmp := self.neighbors(u):
@@ -231,17 +217,16 @@ class UndirectedGraph(Graph):
         Connect u to v and nodes in rest, all present in the graph
         """
 
-        if not isinstance(u, Node):
-            u = Node(u)
+        u = Node(u)
 
-        for n in {v, *rest}:
-            if not isinstance(n, Node):
+        if u in self:
+            for n in {v, *rest}:
                 n = Node(n)
 
-            if u != n and Link(n, u) not in self.links and n in self:
-                self.__links.add(Link(u, n))
-                self.__neighbors[u].add(n)
-                self.__neighbors[n].add(u)
+                if u != n and Link(n, u) not in self.links and n in self:
+                    self.__links.add(Link(u, n))
+                    self.__neighbors[u].add(n)
+                    self.__neighbors[n].add(u)
 
         return self
 
@@ -263,12 +248,10 @@ class UndirectedGraph(Graph):
         Disconnect a given node from a non-empty set of nodes, all present in the graph
         """
 
-        if not isinstance(u, Node):
-            u = Node(u)
+        u = Node(u)
 
         for n in {v, *rest}:
-            if not isinstance(n, Node):
-                n = Node(n)
+            n = Node(n)
 
             if (l := Link(n, u)) in self.links:
                 self.__links.remove(l)
@@ -297,13 +280,10 @@ class UndirectedGraph(Graph):
             Excentricity of u (the length of the longest of all shortest paths, starting from it)
         """
 
-        if not isinstance(u, Node):
-            u = Node(u)
-
         if self.full():
             return 1
 
-        res, total, layer = -1, {u}, {u}
+        res, total, layer = -1, {u := Node(u)}, {u}
 
         while layer:
             new = []
@@ -370,10 +350,7 @@ class UndirectedGraph(Graph):
             except KeyError:
                 raise ValueError("Can't make an empty tree")
 
-        if not isinstance(root, Node):
-            root = Node(root)
-
-        tree = Tree(root)
+        tree = Tree(root := Node(root))
         rest, total = [root], {root}
 
         while rest:
@@ -383,11 +360,7 @@ class UndirectedGraph(Graph):
         return tree
 
     def reachable(self, u: Node, v: Node) -> bool:
-        if not isinstance(u, Node):
-            u = Node(u)
-
-        if not isinstance(v, Node):
-            v = Node(v)
+        u, v = Node(u), Node(v)
 
         if u not in self or v not in self:
             raise KeyError("Unrecognized node(s)")
@@ -426,13 +399,10 @@ class UndirectedGraph(Graph):
             The connection component, to which a given node belongs
         """
 
-        if not isinstance(u, Node):
-            u = Node(u)
-
         if u not in self:
             raise KeyError("Unrecognized node")
 
-        rest, total = {u}, {u}
+        rest, total = {u := Node(u)}, {u}
 
         while rest:
             rest.update(next_nodes := self.neighbors(rest.pop()) - total)
@@ -521,11 +491,7 @@ class UndirectedGraph(Graph):
         return self.degrees_sum == (n := len(self.nodes)) * (n - 1)
 
     def get_shortest_path(self, u: Node, v: Node) -> list[Node]:
-        if not isinstance(u, Node):
-            u = Node(u)
-
-        if not isinstance(v, Node):
-            v = Node(v)
+        u, v = Node(u), Node(v)
 
         if u not in self or v not in self:
             raise KeyError("Unrecognized node(s)")
@@ -550,17 +516,13 @@ class UndirectedGraph(Graph):
 
     def euler_tour_exists(self) -> bool:
         for n in self.nodes:
-            if self.degrees(n) % 2:
+            if self.degree(n) % 2:
                 return False
 
         return self.connected()
 
     def euler_walk_exists(self, u: Node, v: Node) -> bool:
-        if not isinstance(u, Node):
-            u = Node(u)
-
-        if not isinstance(v, Node):
-            v = Node(v)
+        u, v = Node(u), Node(v)
 
         if u not in self or v not in self:
             raise KeyError("Unrecognized node(s)")
@@ -569,7 +531,7 @@ class UndirectedGraph(Graph):
             return self.euler_tour_exists()
 
         for n in self.nodes:
-            if self.degrees(n) % 2 - (n in {u, v}):
+            if self.degree(n) % 2 - (n in {u, v}):
                 return False
 
         return self.connected()
@@ -583,11 +545,7 @@ class UndirectedGraph(Graph):
         return []
 
     def euler_walk(self, u: Node, v: Node) -> list[Node]:
-        if not isinstance(u, Node):
-            u = Node(u)
-
-        if not isinstance(v, Node):
-            v = Node(v)
+        u, v = Node(u), Node(v)
 
         if u not in self or v not in self:
             raise KeyError("Unrecognized node(s)")
@@ -666,11 +624,9 @@ class UndirectedGraph(Graph):
 
         if start is None:
             start = self.nodes.pop()
-        elif not isinstance(start, Node):
-            start = Node(start)
 
         remaining = self.neighbors(start)
-        remaining = list(remaining) + list(self.nodes - {start} - remaining)
+        remaining = list(remaining) + list(self.nodes - {start := Node(start)} - remaining)
         priority = {node: 0 for node in remaining}
         order = [start]
 
@@ -797,11 +753,8 @@ class UndirectedGraph(Graph):
 
                 return result
 
-            if not isinstance(start, Node):
-                start = Node(start)
-
             for c in components:
-                if start in c:
+                if (start := Node(start)) in c:
                     begin = c
 
                     break
@@ -826,8 +779,8 @@ class UndirectedGraph(Graph):
 
             if start is None:
                 return []
-        elif not isinstance(start, Node):
-            start = Node(start)
+
+        start = Node(start)
 
         if start not in self:
             raise KeyError("Unrecognized node")
@@ -867,7 +820,7 @@ class UndirectedGraph(Graph):
 
             return helper(rest)
 
-        nodes = {x if isinstance(x, Node) else Node(x) for x in nodes}
+        nodes = {Node(x) for x in nodes}
         nodes.intersection_update(self.nodes)
 
         if nodes == self.nodes:
@@ -947,10 +900,7 @@ class UndirectedGraph(Graph):
             All, maximal by cardinality, cliques in the graph, to which node u belongs
         """
 
-        if not isinstance(u, Node):
-            u = Node(u)
-
-        return list(map({u}.union, self.subgraph(self.neighbors(u)).max_cliques()))
+        return list(map({Node(u)}.union, self.subgraph(self.neighbors(u)).max_cliques()))
 
     def maximal_cliques_node(self, u: Node) -> list[set[Node]]:
         """
@@ -960,10 +910,7 @@ class UndirectedGraph(Graph):
             All maximal by inclusion cliques in the graph, to which node u belongs
         """
 
-        if not isinstance(u, Node):
-            u = Node(u)
-
-        return list(map({u}.union, self.subgraph(self.neighbors(u)).maximal_cliques()))
+        return list(map({Node(u)}.union, self.subgraph(self.neighbors(u)).maximal_cliques()))
 
     def maximal_independent_sets(self) -> list[set[Node]]:
         """
@@ -1043,7 +990,7 @@ class UndirectedGraph(Graph):
 
             return set()
 
-        nodes = {n if isinstance(n, Node) else Node(n) for n in nodes}
+        nodes = {Node(n) for n in nodes}
         nodes.intersection_update(self.nodes)
 
         if len(nodes) > len(rest := self.nodes - nodes):
@@ -1067,8 +1014,8 @@ class UndirectedGraph(Graph):
             final = max(r, key=len)
             r.remove(final)
 
-            for c in r:
-                for i, i_s in enumerate(c):
+            for part in r:
+                for i, i_s in enumerate(part):
                     final[i].update(i_s)
 
             return final
@@ -1161,7 +1108,7 @@ class UndirectedGraph(Graph):
             if not self:
                 return set()
 
-            res = {u := max(self.nodes, key=self.degrees)}
+            res = {u := max(self.nodes, key=self.degree)}
 
             if (neighbors := self.neighbors(u)) and {u, *neighbors} != self.nodes:
                 res.add(neighbors.pop())
@@ -1240,11 +1187,7 @@ class UndirectedGraph(Graph):
 
             return []
 
-        if not isinstance(u, Node):
-            u = Node(u)
-
-        if not isinstance(v, Node):
-            v = Node(v)
+        u, v = Node(u), Node(v)
 
         try:
             length = int(length)
@@ -1281,7 +1224,7 @@ class UndirectedGraph(Graph):
             return False
 
         if (n := len(self.nodes)) == 1 or (2 * (m := len(self.links)) > (n - 1) * (n - 2) + 2 or n > 2 and all(
-                2 * self.degrees(node) >= n for node in self.nodes)):
+                2 * self.degree(node) >= n for node in self.nodes)):
             return True
 
         if n > m or self.leaves or not self.connected():
@@ -1293,11 +1236,7 @@ class UndirectedGraph(Graph):
         return dfs(u)
 
     def hamilton_walk_exists(self, u: Node, v: Node) -> bool:
-        if not isinstance(u, Node):
-            u = Node(u)
-
-        if not isinstance(v, Node):
-            v = Node(v)
+        u, v = Node(u), Node(v)
 
         if u not in self or v not in self:
             raise KeyError("Unrecognized node(s)")
@@ -1359,10 +1298,10 @@ class UndirectedGraph(Graph):
 
             return []
 
-        if u is not None and not isinstance(u, Node):
+        if u is not None:
             u = Node(u)
 
-        if v is not None and not isinstance(v, Node):
+        if v is not None:
             v = Node(v)
 
         tmp = UndirectedGraph.copy(self)
@@ -1395,10 +1334,7 @@ class UndirectedGraph(Graph):
         return bool(self.nodes)
 
     def __contains__(self, u: Node) -> bool:
-        if not isinstance(u, Node):
-            u = Node(u)
-
-        return u in self.nodes
+        return Node(u) in self.nodes
 
     def __add__(self, other: UndirectedGraph) -> UndirectedGraph:
         """
@@ -1448,13 +1384,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
             The weight of node n or the dictionary with all node weights
         """
 
-        if n is None:
-            return {u: self.node_weights(u) for u in self.nodes}
-
-        if not isinstance(n, Node):
-            n = Node(n)
-
-        return self.__node_weights[n]
+        return {u: self.node_weights(u) for u in self.nodes} if n is None else self.__node_weights[Node(n)]
 
     @property
     def total_nodes_weight(self) -> float:
@@ -1466,7 +1396,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         return sum(self.node_weights().values())
 
     def add(self, n_w: tuple[Node, float], *current_nodes: Node) -> WeightedNodesUndirectedGraph:
-        n = n_w[0] if isinstance(n_w[0], Node) else Node(n_w[0])
+        n = n_w[0]
 
         if n not in self:
             UndirectedGraph.add(self, n, *current_nodes)
@@ -1477,10 +1407,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
     def remove(self, n: Node, *rest: Node) -> WeightedNodesUndirectedGraph:
         for u in {n, *rest}:
             if u in self:
-                if not isinstance(u, Node):
-                    u = Node(u)
-
-                self.__node_weights.pop(u)
+                self.__node_weights.pop(Node(u))
 
         return super().remove(n, *rest)
 
@@ -1492,12 +1419,9 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         Set the weight of node u to w
         """
 
-        if not isinstance(u, Node):
-            u = Node(u)
-
         if u in self:
             try:
-                self.__node_weights[u] = float(w)
+                self.__node_weights[Node(u)] = float(w)
             except ValueError:
                 raise TypeError("Real value expected")
 
@@ -1511,10 +1435,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         Increase the weight of node u by w
         """
 
-        if not isinstance(u, Node):
-            u = Node(u)
-
-        if u in self.node_weights():
+        if Node(u) in self.node_weights():
             try:
                 self.set_weight(u, self.node_weights(u) + float(w))
             except ValueError:
@@ -1539,8 +1460,7 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         if n is None:
             n = self.nodes.pop()
 
-        if not isinstance(n, Node):
-            n = Node(n)
+        n = Node(n)
 
         tree = WeightedTree((n, self.node_weights(n)))
         queue, total = [n], {n}
@@ -1625,9 +1545,9 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
             if not self:
                 return set()
 
-            res = {min({u for u in nodes if self.degrees(u) + 1 == len(nodes)}, key=self.node_weights)}
+            res = {min({u for u in nodes if self.degree(u) + 1 == len(nodes)}, key=self.node_weights)}
             potential = [{n, m} for l in self.links if
-                         self.degrees(n := l.u) + 1 < len(nodes) and self.degrees(m := l.v) + 1 < len(nodes)]
+                         self.degree(n := l.u) + 1 < len(nodes) and self.degree(m := l.v) + 1 < len(nodes)]
             potential = min(potential, key=lambda s: sum(map(self.node_weights, s)))
 
             return min([res, potential], key=lambda s: sum(map(self.node_weights, s)))
@@ -1703,15 +1623,13 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         """
 
         if u_l is None:
-            return {l: self.link_weights(l) for l in self.links}
+            return self.__link_weights.copy()
 
         if isinstance(u_l, Link):
             return self.__link_weights[u_l]
 
-        if v is None:
-            return {n: self.link_weights(Link(n, u_l)) for n in self.neighbors(u_l)}
-
-        return self.link_weights(Link(u_l, v))
+        return {n: self.link_weights(Link(n, u_l)) for n in self.neighbors(u_l)} if v is None else self.link_weights(
+            Link(u_l, v))
 
     @property
     def total_links_weight(self) -> float:
@@ -1723,8 +1641,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         return sum(self.link_weights().values())
 
     def add(self, u: Node, nodes_weights: dict[Node, float] = {}) -> WeightedLinksUndirectedGraph:
-        if not isinstance(u, Node):
-            u = Node(u)
+        u = Node(u)
 
         if u not in self:
             UndirectedGraph.add(self, u, *nodes_weights)
@@ -1743,16 +1660,13 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
         return super().remove(n, *rest)
 
     def connect(self, u: Node, nodes_weights: dict[Node, float] = {}) -> WeightedLinksUndirectedGraph:
-        if not isinstance(u, Node):
-            u = Node(u)
+        if u in self:
+            nodes_weights = {Node(k): v for k, v in nodes_weights.items()}
+            nodes_weights = {v: w for v, w in nodes_weights.items() if v not in self.neighbors(u)}
 
-        nodes_weights = {(k if isinstance(k, Node) else Node(k)): v for k, v in nodes_weights.items()}
-        nodes_weights = {v: w for v, w in nodes_weights.items() if Link(u, v) not in self.links}
+            if nodes_weights:
+                super().connect(u, *nodes_weights)
 
-        if nodes_weights:
-            super().connect(u, *nodes_weights)
-
-            if u in self:
                 for v, w in nodes_weights.items():
                     self.set_weight(Link(u, v), w)
 
@@ -1981,7 +1895,7 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
         return self.total_nodes_weight + self.total_links_weight
 
     def add(self, n_w: tuple[Node, float], nodes_weights: dict[Node, float] = {}) -> WeightedUndirectedGraph:
-        n = n_w[0] if isinstance(n_w[0], Node) else Node(n_w[0])
+        n = Node(n_w[0])
 
         if n not in self:
             super().add(n, nodes_weights)
@@ -1991,9 +1905,6 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
 
     def remove(self, u: Node, *rest: Node) -> WeightedUndirectedGraph:
         for n in {u, *rest}:
-            if not isinstance(n, Node):
-                n = Node(n)
-
             if n in self:
                 if neighbors := self.neighbors(n):
                     super().disconnect(n, *neighbors)
@@ -2010,14 +1921,11 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
         Set the weight of object el to w
         """
 
-        if not isinstance(el, (Node, Link)):
-            el = Node(el)
-
         try:
-            if el in self:
-                WeightedNodesUndirectedGraph.set_weight(self, el, float(w))
-            elif el in self.links:
+            if el in self.links:
                 super().set_weight(el, float(w))
+            elif el in self:
+                WeightedNodesUndirectedGraph.set_weight(self, el, float(w))
 
             return self
         except ValueError:
@@ -2034,12 +1942,8 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
         try:
             if el in self.link_weights():
                 self.set_weight(el, self.link_weights(el) + float(w))
-            else:
-                if not isinstance(el, Node):
-                    el = Node(el)
-
-                if el in self.node_weights():
-                    return self.set_weight(el, self.node_weights(el) + float(w))
+            elif Node(el) in self.node_weights():
+                return self.set_weight(el, self.node_weights(el) + float(w))
 
             return self
         except ValueError:
@@ -2126,11 +2030,7 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
 
             return res_path, res_weight
 
-        if not isinstance(u, Node):
-            u = Node(u)
-
-        if not isinstance(v, Node):
-            v = Node(v)
+        u, v = Node(u), Node(v)
 
         if v in self:
             if v in (tmp := self.component(u)):
