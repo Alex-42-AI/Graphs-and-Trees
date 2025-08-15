@@ -166,7 +166,7 @@ class BinTree:
             right: The right subtree of the binary tree
         """
 
-        self.__root = root if isinstance(root, Node) else Node(root)
+        self.__root = Node(root)
         self.__left, self.__right = None, None
 
         if isinstance(left, BinTree):
@@ -274,8 +274,7 @@ class BinTree:
             if (r := dfs(tree.right)) is not None:
                 return r
 
-        if not isinstance(u, Node):
-            u = Node(u)
+        u = Node(u)
 
         res = dfs(self)
 
@@ -395,8 +394,7 @@ class BinTree:
             if res := dfs(r):
                 return "- " + res
 
-        if not isinstance(u, Node):
-            u = Node(u)
+        u = Node(u)
 
         res = dfs(self)
 
@@ -589,8 +587,7 @@ class BinTree:
             Whether u is a node, present in the tree
         """
 
-        if not isinstance(u, Node):
-            u = Node(u)
+        u = Node(u)
 
         if self.root == u:
             return True
@@ -644,31 +641,26 @@ class Tree:
             inheritance: Inheritance dictionary
         """
 
-        if not isinstance(root, Node):
-            root = Node(root)
-
-        self.__root = root
+        self.__root = Node(root)
         self.__parent = {}
-        self.__descendants = {root: set()}
+        self.__descendants = {self.root: set()}
 
-        if root in inheritance:
-            inheritance.pop(root)
+        if self.root in inheritance:
+            inheritance.pop(self.root)
 
-        inheritance = {k if isinstance(k, Node) else Node(k): v for k, v in inheritance.items()}
+        inheritance = {Node(k): v for k, v in inheritance.items()}
         remaining = reduce(lambda x, y: x.union(y), inheritance.values(), set())
-        remaining = {x if isinstance(x, Node) else Node(x) for x in remaining}
+        remaining = {Node(x) for x in remaining}
 
         if not (root_descendants := set(inheritance) - remaining) and inheritance:
             raise ValueError("This dictionary doesn't represent a tree")
 
         for u, desc in inheritance.items():
-            if not isinstance(u, Node):
-                u = Node(u)
-
+            u = Node(u)
             self.__descendants[u] = set()
 
             if u in root_descendants:
-                self.add(root, u)
+                self.add(self.root, u)
 
             if desc:
                 self.add(u, *desc)
@@ -706,8 +698,7 @@ class Tree:
             Whether node n is a leaf
         """
 
-        if not isinstance(n, Node):
-            n = Node(n)
+        n = Node(n)
 
         if n not in self:
             raise KeyError("Unrecognized node")
@@ -723,13 +714,11 @@ class Tree:
         Add new nodes as descendants of a given present node
         """
 
-        if not isinstance(curr, Node):
-            curr = Node(curr)
+        curr = Node(curr)
 
         if curr in self:
             for v in {u, *rest}:
-                if not isinstance(v, Node):
-                    v = Node(v)
+                v = Node(v)
 
                 if v not in self:
                     self.__parent[v] = curr
@@ -770,8 +759,7 @@ class Tree:
         Remove a node and make its descendants direct descendants of its parent node if subtree is False
         """
 
-        if not isinstance(u, Node):
-            u = Node(u)
+        u = Node(u)
 
         if u in self:
             if u == self.root:
@@ -815,8 +803,7 @@ class Tree:
         if u is None:
             return self.__parent.copy()
 
-        if not isinstance(u, Node):
-            u = Node(u)
+        u = Node(u)
 
         if u not in self:
             raise KeyError("Unrecognized node")
@@ -844,8 +831,7 @@ class Tree:
             The descendants of node u
         """
 
-        if not isinstance(u, Node):
-            u = Node(u)
+        u = Node(u)
 
         if u not in self:
             raise KeyError("Unrecognized node")
@@ -868,8 +854,7 @@ class Tree:
             The subtree, rooted in node u
         """
 
-        if not isinstance(u, Node):
-            u = Node(u)
+        u = Node(u)
 
         if u not in self:
             raise KeyError("Unrecognized node")
@@ -938,8 +923,7 @@ class Tree:
             The distance (in links) from the root to a node u
         """
 
-        if not isinstance(u, Node):
-            u = Node(u)
+        u = Node(u)
 
         if u not in self:
             raise KeyError("Unrecognized node")
@@ -960,8 +944,7 @@ class Tree:
             The path from the root to node u
         """
 
-        if not isinstance(u, Node):
-            u = Node(u)
+        u = Node(u)
 
         if u not in self:
             raise KeyError("Unrecognized node")
@@ -1081,10 +1064,7 @@ class Tree:
             Whether u is a node in the tree
         """
 
-        if not isinstance(u, Node):
-            u = Node(u)
-
-        return u in self.nodes
+        return Node(u) in self.nodes
 
     def __eq__(self, other: Tree) -> bool:
         """
@@ -1121,14 +1101,13 @@ class WeightedTree(Tree):
 
         super().__init__(root := root_and_weight[0])
 
-        if not isinstance(root, Node):
-            root = Node(root)
+        root = Node(root)
 
         self.__weights = {root: float(root_and_weight[1])}
 
-        inheritance = {k if isinstance(k, Node) else Node(k): v for k, v in inheritance.items()}
+        inheritance = {Node(k): v for k, v in inheritance.items()}
         remaining = reduce(lambda x, y: x.union(y[1]), inheritance.values(), set())
-        remaining = {x if isinstance(x, Node) else Node(x) for x in remaining}
+        remaining = {Node(x) for x in remaining}
 
         if not (root_descendants := set(inheritance) - remaining) and inheritance:
             raise ValueError("This dictionary doesn't represent a tree")
@@ -1138,7 +1117,7 @@ class WeightedTree(Tree):
 
         for u, (_, desc) in inheritance.items():
             if desc:
-                desc = {d if isinstance(d, Node) else Node(d) for d in desc}
+                desc = {Node(d) for d in desc}
                 self.add(u, {d: inheritance[d][0] if d in inheritance else 0 for d in desc})
 
     def weights(self, u: Node = None) -> dict[Node, float] | float:
@@ -1152,14 +1131,10 @@ class WeightedTree(Tree):
         if u is None:
             return {n: self.weights(n) for n in self.nodes}
 
-        if not isinstance(u, Node):
-            u = Node(u)
-
-        return self.__weights[u]
+        return self.__weights[Node(u)]
 
     def add(self, curr: Node, rest: dict[Node, float] = {}) -> WeightedTree:
-        if not isinstance(curr, Node):
-            curr = Node(curr)
+        curr = Node(curr)
 
         if curr in self:
             for u, w in rest.items():
@@ -1187,8 +1162,7 @@ class WeightedTree(Tree):
         return self
 
     def remove(self, u: Node, subtree: bool = True) -> WeightedTree:
-        if not isinstance(u, Node):
-            u = Node(u)
+        u = Node(u)
 
         if u in self:
             if subtree:
@@ -1210,11 +1184,8 @@ class WeightedTree(Tree):
         Set the weight of node u to w
         """
 
-        if not isinstance(u, Node):
-            u = Node(u)
-
         try:
-            self.__weights[u] = float(w)
+            self.__weights[Node(u)] = float(w)
         except ValueError:
             raise TypeError("Real value expected")
 
@@ -1228,8 +1199,7 @@ class WeightedTree(Tree):
         Increase the weight of node u by w
         """
 
-        if not isinstance(u, Node):
-            u = Node(u)
+        u = Node(u)
 
         try:
             try:
@@ -1247,8 +1217,7 @@ class WeightedTree(Tree):
         return WeightedTree((self.root, self.weights(self.root)), inheritance)
 
     def subtree(self, u: Node) -> WeightedTree:
-        if not isinstance(u, Node):
-            u = Node(u)
+        u = Node(u)
 
         if u not in self:
             raise KeyError("Unrecognized node")
@@ -1367,4 +1336,3 @@ class WeightedTree(Tree):
         inheritance.pop(self.root)
 
         return f"WeightedTree({(self.root, self.weights(self.root))}, {inheritance})"
-
