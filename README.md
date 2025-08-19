@@ -18,7 +18,7 @@ https://en.wikipedia.org/wiki/Graph_(abstract_data_type)
 ## Getting started
 
 ```
-git clone https://github.com/yourname/Graphs-and-Trees.git
+git clone https://github.com/Alex-42-AI/Graphs-and-Trees.git
 cd Graphs-and-Trees
 python3
 ```
