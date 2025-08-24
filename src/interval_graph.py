@@ -48,15 +48,6 @@ class IntervalGraph:
 
         return {u.value for u in self.graph.nodes}
 
-    @property
-    def links(self) -> set[Link]:
-        """
-        Returns:
-            The set of links
-        """
-
-        return self.graph.links
-
     def neighbors(self, interval: Interval = None) -> set[Interval] | dict[Interval, set[Interval]]:
         """
         Args:
@@ -115,6 +106,15 @@ class IntervalGraph:
         """
 
         return sorted(self.nodes, key=lambda i: i[bool(end)])
+
+    def weighted_nodes_graph(self) -> WeightedNodesIntervalGraph:
+        return WeightedNodesIntervalGraph(*self.nodes)
+
+    def weighted_links_graph(self) -> WeightedLinksIntervalGraph:
+        return WeightedLinksIntervalGraph(*self.nodes)
+
+    def weighted_graph(self) -> WeightedIntervalGraph:
+        return WeightedIntervalGraph(*self.nodes)
 
     def chromatic_partition(self) -> list[set[Interval]]:
         """
@@ -176,7 +176,11 @@ class IntervalGraph:
         """
 
         if isinstance(other, IntervalGraph):
-            return IntervalGraph(*self.nodes.union(other.nodes))
+            nodes = isinstance(self, WeightedNodesIntervalGraph) or isinstance(other, WeightedNodesIntervalGraph)
+            links = isinstance(self, WeightedLinksIntervalGraph) or isinstance(other, WeightedLinksIntervalGraph)
+            res_t = [IntervalGraph, WeightedNodesIntervalGraph, WeightedLinksIntervalGraph, WeightedUndirectedGraph][
+                nodes + 2 * links]
+            return res_t(*self.nodes.union(other.nodes))
 
         raise TypeError(f"Can't add type {type(other).__name__} to type IntervalGraph")
 
@@ -248,6 +252,9 @@ class WeightedNodesIntervalGraph(IntervalGraph):
 
         return self
 
+    def weighted_graph(self) -> WeightedIntervalGraph:
+        return WeightedIntervalGraph(*self.nodes)
+
 
 class WeightedLinksIntervalGraph(IntervalGraph):
     """
@@ -299,6 +306,9 @@ class WeightedLinksIntervalGraph(IntervalGraph):
 
         return self
 
+    def weighted_graph(self) -> WeightedIntervalGraph:
+        return WeightedIntervalGraph(*self.nodes)
+
 
 class WeightedIntervalGraph(WeightedNodesIntervalGraph, WeightedLinksIntervalGraph):
     """
@@ -334,5 +344,3 @@ class WeightedIntervalGraph(WeightedNodesIntervalGraph, WeightedLinksIntervalGra
             self.graph.add((interval, interval[1] - interval[0]), {k: interval[1] - k[0] for k in intervals[i:j]})
 
         return self
-
-
