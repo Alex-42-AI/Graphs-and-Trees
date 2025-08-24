@@ -4,7 +4,7 @@ Module for implementing a set of intervals as an undirected graph
 
 from __future__ import annotations
 
-from base import Link, Hashable
+from base import Hashable
 
 from undirected_graph import UndirectedGraph, WeightedNodesUndirectedGraph, WeightedLinksUndirectedGraph, \
     WeightedUndirectedGraph
@@ -273,20 +273,16 @@ class WeightedLinksIntervalGraph(IntervalGraph):
         self.__graph = WeightedLinksUndirectedGraph()
         self.add(*intervals)
 
-    def link_weights(self, u_l: Interval | Link = None, v: Interval = None) -> dict[Interval, float] | dict[
-        Link, float] | float:
+    def link_weights(self, u: Interval, v: Interval) -> float:
         """
         Args:
-            u_l: Given first interval, a link or None
-            v: Given second interval or None
+            u: Given first interval
+            v: Given second interval
         Returns:
-            Information about intersection lengths the following way:
-            If no argument is passed, return the lengths of all intersection;
-            if a link or two intervals are passed, return the length of the given intersection between them;
-            If one interval is passed, return a dictionary with all of its neighbors and the length of the intersection it shares with each of them
+            Intervals intersection
         """
 
-        return self.graph.link_weights(u_l, v)
+        return self.graph.link_weights(u, v)
 
     def total_link_weights(self) -> float:
         """
