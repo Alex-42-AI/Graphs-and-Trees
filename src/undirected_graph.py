@@ -184,9 +184,7 @@ class UndirectedGraph(Graph):
         Add node u to already present nodes
         """
 
-        u = Node(u)
-
-        if u not in self:
+        if (u := Node(u)) not in self:
             self.__nodes.add(u)
             self.__neighbors[u] = set()
 
@@ -197,9 +195,7 @@ class UndirectedGraph(Graph):
 
     def remove(self, n: Node, *rest: Node) -> UndirectedGraph:
         for u in {n, *rest}:
-            u = Node(u)
-
-            if u in self:
+            if (u := Node(u)) in self:
                 if tmp := self.neighbors(u):
                     UndirectedGraph.disconnect(self, u, *tmp)
 
@@ -217,9 +213,7 @@ class UndirectedGraph(Graph):
         Connect u to v and nodes in rest, all present in the graph
         """
 
-        u = Node(u)
-
-        if u in self:
+        if (u := Node(u)) in self:
             for n in {v, *rest}:
                 n = Node(n)
 
@@ -753,8 +747,10 @@ class UndirectedGraph(Graph):
 
                 return result
 
+            start = Node(start)
+
             for c in components:
-                if (start := Node(start)) in c:
+                if start in c:
                     begin = c
 
                     break
@@ -780,9 +776,7 @@ class UndirectedGraph(Graph):
             if start is None:
                 return []
 
-        start = Node(start)
-
-        if start not in self:
+        if (start := Node(start)) not in self:
             raise KeyError("Unrecognized node")
 
         return helper(start, self, {u: u in self.neighbors(start) for u in self.nodes - {start}})
@@ -1020,9 +1014,6 @@ class UndirectedGraph(Graph):
 
             return final
 
-        if self.is_full_k_partite():
-            return [comp.nodes for comp in self.complementary().connection_components()]
-
         if self.is_tree(True):
             queue, c0, c1, total = [self.nodes.pop()], self.nodes, set(), set()
 
@@ -1036,6 +1027,9 @@ class UndirectedGraph(Graph):
                     queue.append(v), total.add(v)
 
             return [c0, c1]
+
+        if self.is_full_k_partite():
+            return [comp.nodes for comp in self.complementary().connection_components()]
 
         if sort := self.interval_sort():
             result = []
