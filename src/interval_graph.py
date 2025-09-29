@@ -1,19 +1,254 @@
 """
-Module for implementing a set of intervals as an undirected graph
+Module for implementing sets of intervals as undirected graphs
 """
 
 from __future__ import annotations
+
+from functools import total_ordering
 
 from base import Hashable
 
 from undirected_graph import UndirectedGraph, WeightedNodesUndirectedGraph, WeightedLinksUndirectedGraph, \
     WeightedUndirectedGraph
 
-from bisect import bisect_right
+__all__ = ["Interval", "IntervalGraph", "WeightedNodesIntervalGraph", "WeightedLinksIntervalGraph",
+           "WeightedIntervalGraph"]
 
-__all__ = ["IntervalGraph", "WeightedNodesIntervalGraph", "WeightedLinksIntervalGraph", "WeightedUndirectedGraph"]
 
-Interval = tuple[float, float]
+@total_ordering
+class Interval:
+    """
+    A class for creating an interval on the real number line
+    """
+
+    def __init__(self, a: float, b: float, left_closed: bool = True, right_closed: bool = True) -> None:
+        """
+        Creates an Interval object
+        """
+
+        a, b = float(a), float(b)
+        self.__a, self.__b = min(a, b), max(a, b)
+        self.__left_closed, self.__right_closed = bool(left_closed), bool(right_closed)
+
+    @property
+    def a(self) -> float:
+        """
+        Returns:
+            Interval beginning
+        """
+
+        return self.__a
+
+    @property
+    def b(self) -> float:
+        """
+        Returns:
+            Interval ending
+        """
+
+        return self.__b
+
+    @property
+    def length(self) -> float:
+        return self.b - self.a
+
+    @property
+    def left_closed(self) -> bool:
+        """
+        Returns:
+            Whether the beginning point of the interval is in it
+        """
+
+        return self.__left_closed
+
+    @property
+    def right_closed(self) -> bool:
+        """
+        Returns:
+            Whether the ending point of the interval is in it
+        """
+
+        return self.__right_closed
+
+    def copy(self) -> Interval:
+        """
+        Returns:
+            An identical copy of the Interval object
+        """
+
+        return Interval(self.a, self.b, self.left_closed, self.right_closed)
+
+    def intersects(self, other: Interval) -> bool:
+        """
+        Returns:
+            Whether the interval intersects with the other interval
+        """
+
+        return bool(self * other)
+
+    def issubset(self, other: Interval) -> bool:
+        """
+        Args:
+            other (Interval): Another Interval object
+        Returns:
+            Whether the interval is a subset of the other interval
+        """
+
+        return (self.a > other.a or self.a == other.a and (not self.left_closed or other.right_closed)) and (
+                self.b < other.b or self.b == other.b and (not self.right_closed or other.left_closed))
+
+    def __contains__(self, item: float) -> bool:
+        """
+        Returns:
+            Whether the given number is in the interval
+        """
+
+        return self.left_closed and item == self.a or self.a < item < self.b or self.right_closed and item == self.b
+
+    def __hash__(self) -> int:
+        """
+        Returns:
+            The hash value of the Interval object
+        """
+
+        return hash((self.a, self.left_closed, self.b, self.right_closed))
+
+    def __bool__(self) -> bool:
+        """
+        Returns:
+            Whether the interval isn't the empty set
+        """
+
+        return self.a < self.b or self.left_closed and self.right_closed
+
+    def __add__(self, other: Interval) -> Interval:
+        """
+        Args:
+            other (Interval): Another Interval object
+        Returns:
+            The union of the two intervals if it's also an interval, otherwise raises a ValueError
+        """
+
+        if self.intersects(other):
+            return Interval(min(self.a, other.a), max(self.b, other.b), self.left_closed or other.left_closed,
+                            self.right_closed or other.right_closed)
+
+        raise ValueError("Resulting set is not an interval")
+
+    def __sub__(self, other: Interval) -> Interval:
+        """
+        Args:
+            other (Interval): Another Interval object
+        Returns:
+            The set of points on the real number line belonging to self but not to other, if it's an interval, otherwise raises a ValueError
+        """
+
+        if not self.intersects(other):
+            return self.copy()
+
+        if self.b == other.a:
+            return Interval(self.a, self.b, self.left_closed, self.right_closed and not other.left_closed)
+
+        if self.a == other.b:
+            return Interval(self.a, self.b, self.left_closed and not other.right_closed, self.right_closed)
+
+        if self.issubset(other):
+            return Interval(self.a, self.a, False, False)
+
+        if self.a < other.a or self.a == other.a and (not self.left_closed or other.left_closed):
+            if self.b < other.b or self.b == other.b and other.right_closed or not self.right_closed:
+                return Interval(self.a, other.a, self.left_closed, not other.left_closed)
+
+            raise ValueError("Resulting set is not an interval")
+
+        if self.a > other.a or self.a == other.a and (not self.left_closed or other.left_closed):
+            if self.b > other.b or self.b == other.b and other.right_closed or not self.right_closed:
+                return Interval(other.b, self.b, not other.right_closed, self.right_closed)
+
+            raise ValueError("Resulting set is not an interval")
+
+        raise ValueError("Resulting set is not an interval")
+
+    def __mul__(self, other: Interval) -> Interval:
+        """
+        Args:
+            other (Interval): Another Interval object
+        Returns:
+            The intersection interval of the intervals
+        """
+
+        res_a, res_b = max(self.a, other.a), min(self.b, other.b)
+
+        if res_a > res_b:
+            return Interval(res_a, res_a, False, False)
+
+        res_left = self.left_closed and other.left_closed if self.a == other.a else (
+            self.left_closed if self.a > other.a else other.left_closed)
+        res_right = self.right_closed and other.right_closed if self.b == other.b else (
+            self.right_closed if self.b < other.b else other.right_closed)
+
+        return Interval(res_a, res_b, res_left, res_right)
+
+    def __lt__(self, other: Interval) -> bool:
+        """
+        Args:
+            other (Interval): Another Interval object
+        Returns:
+            self < other
+        """
+
+        return (self.a, not self.left_closed, self.b, not self.right_closed) < (other.a, not other.left_closed,
+                                                                                other.b, not other.right_closed)
+
+    def __eq__(self, other: Interval) -> bool:
+        """
+        Args:
+            other (Interval): Another Interval object
+        Returns:
+            self == other
+        """
+
+        if type(other) is not Interval:
+            return False
+
+        return (self.a, self.left_closed, self.b, self.right_closed) == (other.a, other.left_closed, other.b,
+                                                                         other.right_closed) or not (self or other)
+
+    def __str__(self):
+        """
+        Returns:
+            String representation of the interval
+        """
+
+        left, right = "(["[self.left_closed], ")]"[self.right_closed]
+        return f"{left}{self.a}, {self.b}{right}"
+
+    def __repr__(self):
+        """
+        Returns:
+            repr(self)
+        """
+
+        return f"Interval{(self.a, self.b, self.left_closed, self.right_closed)}"
+
+
+def find_last(iv: Interval, intervals: list[Interval], i, j) -> int:
+    if not intervals:
+        return -1
+
+    if (len(intervals)) == 1:
+        return iv.intersects(intervals[0]) - 1
+
+    index = (i + j) // 2
+
+    if iv.intersects(intervals[index]) and not iv.intersects(intervals[index + 1]):
+        return index
+
+    if not iv.intersects(intervals[index]):
+        return find_last(iv, intervals, i, index - 1)
+
+    return index + 1 + find_last(iv, intervals, index + 1, j)
+
 
 class IntervalGraph:
     """
@@ -69,12 +304,20 @@ class IntervalGraph:
         Adds new intervals to the graph
         """
 
-        intervals = sorted({i for i in intervals if i[0] <= i[1]})
+        intervals = sorted(set(intervals) - self.nodes)
 
-        for i, interval in enumerate(intervals):
-            starts = [i[0] for i in intervals]
-            j = bisect_right(starts, interval[1])
-            self.graph.add(interval, *set(intervals[i:j]))
+        for iv in intervals:
+            self.graph.add(iv)
+
+        all_intervals = sorted(self.nodes.union(intervals))
+        n = len(all_intervals)
+
+        for i, interval in enumerate(all_intervals):
+            if interval in intervals:
+                j = find_last(interval, all_intervals, i + 1, n) + i + 1
+
+                if neighbors := all_intervals[i + 1:j + 1]:
+                    self.graph.connect(interval, *neighbors)
 
         return self
 
@@ -108,12 +351,27 @@ class IntervalGraph:
         return sorted(self.nodes, key=lambda i: i[bool(end)])
 
     def weighted_nodes_graph(self) -> WeightedNodesIntervalGraph:
+        """
+        Returns:
+            The version of the object with node weights
+        """
+
         return WeightedNodesIntervalGraph(*self.nodes)
 
     def weighted_links_graph(self) -> WeightedLinksIntervalGraph:
+        """
+        Returns:
+            The version of the object with link weights
+        """
+
         return WeightedLinksIntervalGraph(*self.nodes)
 
     def weighted_graph(self) -> WeightedIntervalGraph:
+        """
+        Returns:
+            The version of the object with node and link weights
+        """
+
         return WeightedIntervalGraph(*self.nodes)
 
     def chromatic_partition(self) -> list[set[Interval]]:
@@ -178,8 +436,8 @@ class IntervalGraph:
         if isinstance(other, IntervalGraph):
             nodes = isinstance(self, WeightedNodesIntervalGraph) or isinstance(other, WeightedNodesIntervalGraph)
             links = isinstance(self, WeightedLinksIntervalGraph) or isinstance(other, WeightedLinksIntervalGraph)
-            res_t = [IntervalGraph, WeightedNodesIntervalGraph, WeightedLinksIntervalGraph, WeightedUndirectedGraph][
-                nodes + 2 * links]
+            res_t = [[IntervalGraph, WeightedNodesIntervalGraph], [WeightedLinksIntervalGraph, WeightedIntervalGraph]][
+                links][nodes]
             return res_t(*self.nodes.union(other.nodes))
 
         raise TypeError(f"Can't add type {type(other).__name__} to type IntervalGraph")
@@ -232,6 +490,9 @@ class WeightedNodesIntervalGraph(IntervalGraph):
             The length of interval i or the dictionary with all interval lengths
         """
 
+        if i is None:
+            return {k.value: v for k, v in self.graph.node_weights()}
+
         return self.graph.node_weights(i)
 
     def total_node_weights(self) -> float:
@@ -243,12 +504,20 @@ class WeightedNodesIntervalGraph(IntervalGraph):
         return self.graph.total_node_weights()
 
     def add(self, *intervals: Interval) -> WeightedNodesIntervalGraph:
-        intervals = sorted({i for i in intervals if i[0] <= i[1]})
+        intervals = sorted(set(intervals) - self.nodes)
 
-        for i, interval in enumerate(intervals):
-            starts = [i[0] for i in intervals]
-            j = bisect_right(starts, interval[1])
-            self.graph.add((interval, interval[1] - interval[0]), *set(intervals[i:j]))
+        for iv in intervals:
+            self.graph.add((iv, iv.length))
+
+        all_intervals = sorted(self.nodes.union(intervals))
+        n = len(all_intervals)
+
+        for i, interval in enumerate(all_intervals):
+            if interval in intervals:
+                j = find_last(interval, all_intervals, i + 1, n) + i + 1
+
+                if neighbors := all_intervals[i + 1:j + 1]:
+                    self.graph.connect(interval, *neighbors)
 
         return self
 
@@ -293,12 +562,18 @@ class WeightedLinksIntervalGraph(IntervalGraph):
         return self.graph.total_link_weights()
 
     def add(self, *intervals: Interval) -> WeightedLinksIntervalGraph:
-        intervals = sorted({i for i in intervals if i[0] <= i[1]})
+        intervals = sorted(set(intervals) - self.nodes)
 
-        for i, interval in enumerate(intervals):
-            starts = [i[0] for i in intervals]
-            j = bisect_right(starts, interval[1])
-            self.graph.add(interval, {k: interval[1] - k[0] for k in intervals[i:j]})
+        for iv in intervals:
+            self.graph.add(iv)
+
+        all_intervals = sorted(self.nodes.union(intervals))
+        n = len(all_intervals)
+
+        for i, interval in enumerate(all_intervals):
+            if interval in intervals:
+                j = find_last(interval, all_intervals, i + 1, n) + i + 1
+                self.graph.connect(interval, {iv: iv.length for iv in all_intervals[i + 1:j + 1]})
 
         return self
 
@@ -332,11 +607,17 @@ class WeightedIntervalGraph(WeightedNodesIntervalGraph, WeightedLinksIntervalGra
         return self.graph.total_weights()
 
     def add(self, *intervals: Interval) -> WeightedIntervalGraph:
-        intervals = sorted({i for i in intervals if i[0] <= i[1]})
+        intervals = sorted(set(intervals) - self.nodes)
 
-        for i, interval in enumerate(intervals):
-            starts = [i[0] for i in intervals]
-            j = bisect_right(starts, interval[1])
-            self.graph.add((interval, interval[1] - interval[0]), {k: interval[1] - k[0] for k in intervals[i:j]})
+        for iv in intervals:
+            self.graph.add((iv, iv.length))
+
+        all_intervals = sorted(self.nodes.union(intervals))
+        n = len(all_intervals)
+
+        for i, interval in enumerate(all_intervals):
+            if interval in intervals:
+                j = find_last(interval, all_intervals, i + 1, n) + i + 1
+                self.graph.connect(interval, {iv: iv.length for iv in all_intervals[i + 1:j + 1]})
 
         return self
