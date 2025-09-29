@@ -8,11 +8,14 @@ from collections import defaultdict
 
 from abc import ABC, abstractmethod
 
+from functools import total_ordering
+
 from typing import Iterable, Hashable, Any
 
 from itertools import permutations, product
 
 
+@total_ordering
 class Node:
     """
     Helper class Node with a hashable value
@@ -53,24 +56,6 @@ class Node:
             return self.value < other.value
 
         return self.value < other
-
-    def __le__(self, other: Node) -> bool:
-        if isinstance(other, Node):
-            return self.value <= other.value
-
-        return self.value <= other
-
-    def __ge__(self, other: Node) -> bool:
-        if isinstance(other, Node):
-            return self.value >= other.value
-
-        return self.value >= other
-
-    def __gt__(self, other: Node) -> bool:
-        if isinstance(other, Node):
-            return self.value > other.value
-
-        return self.value > other
 
     def __str__(self) -> str:
         return "(" + str(self.value) + ")"
