@@ -232,22 +232,23 @@ class Interval:
         return f"Interval{(self.a, self.b, self.left_closed, self.right_closed)}"
 
 
-def find_last(iv: Interval, intervals: list[Interval], i, j) -> int:
-    if not intervals:
-        return -1
+def find_last(iv: Interval, intervals: list[Interval], i=0, j=-1) -> int:
+    if j == -1:
+        j = len(intervals)
 
-    if (len(intervals)) == 1:
-        return iv.intersects(intervals[0]) - 1
+    if i >= j:
+        return i - 1
+
+    if j - i == 1:
+        return i + iv.intersects(intervals[i]) - 1
 
     index = (i + j) // 2
 
-    if iv.intersects(intervals[index]) and not iv.intersects(intervals[index + 1]):
+    if iv.intersects(intervals[index]) and (index == j - 1 or not iv.intersects(intervals[index + 1])):
         return index
 
-    if not iv.intersects(intervals[index]):
-        return find_last(iv, intervals, i, index - 1)
-
-    return index + 1 + find_last(iv, intervals, index + 1, j)
+    return find_last(iv, intervals, index + 1, j) if iv.intersects(intervals[index]) else find_last(iv, intervals, i,
+                                                                                                    index - 1)
 
 
 class IntervalGraph:
@@ -310,11 +311,10 @@ class IntervalGraph:
             self.graph.add(iv)
 
         all_intervals = sorted(self.nodes.union(intervals))
-        n = len(all_intervals)
 
         for i, interval in enumerate(all_intervals):
             if interval in intervals:
-                j = find_last(interval, all_intervals, i + 1, n) + i + 1
+                j = find_last(interval, all_intervals, i + 1) + i + 1
 
                 if neighbors := all_intervals[i + 1:j + 1]:
                     self.graph.connect(interval, *neighbors)
@@ -510,11 +510,10 @@ class WeightedNodesIntervalGraph(IntervalGraph):
             self.graph.add((iv, iv.length))
 
         all_intervals = sorted(self.nodes.union(intervals))
-        n = len(all_intervals)
 
         for i, interval in enumerate(all_intervals):
             if interval in intervals:
-                j = find_last(interval, all_intervals, i + 1, n) + i + 1
+                j = find_last(interval, all_intervals, i + 1) + i + 1
 
                 if neighbors := all_intervals[i + 1:j + 1]:
                     self.graph.connect(interval, *neighbors)
@@ -568,11 +567,10 @@ class WeightedLinksIntervalGraph(IntervalGraph):
             self.graph.add(iv)
 
         all_intervals = sorted(self.nodes.union(intervals))
-        n = len(all_intervals)
 
         for i, interval in enumerate(all_intervals):
             if interval in intervals:
-                j = find_last(interval, all_intervals, i + 1, n) + i + 1
+                j = find_last(interval, all_intervals, i + 1) + i + 1
                 self.graph.connect(interval, {iv: iv.length for iv in all_intervals[i + 1:j + 1]})
 
         return self
@@ -613,11 +611,10 @@ class WeightedIntervalGraph(WeightedNodesIntervalGraph, WeightedLinksIntervalGra
             self.graph.add((iv, iv.length))
 
         all_intervals = sorted(self.nodes.union(intervals))
-        n = len(all_intervals)
 
         for i, interval in enumerate(all_intervals):
             if interval in intervals:
-                j = find_last(interval, all_intervals, i + 1, n) + i + 1
+                j = find_last(interval, all_intervals, i + 1) + i + 1
                 self.graph.connect(interval, {iv: iv.length for iv in all_intervals[i + 1:j + 1]})
 
         return self
