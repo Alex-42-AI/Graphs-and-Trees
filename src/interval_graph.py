@@ -214,7 +214,7 @@ class Interval:
         return (self.a, self.left_closed, self.b, self.right_closed) == (other.a, other.left_closed, other.b,
                                                                          other.right_closed) or not (self or other)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Returns:
             String representation of the interval
@@ -223,7 +223,7 @@ class Interval:
         left, right = "(["[self.left_closed], ")]"[self.right_closed]
         return f"{left}{self.a}, {self.b}{right}"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Returns:
             repr(self)
@@ -618,3 +618,4 @@ class WeightedIntervalGraph(WeightedNodesIntervalGraph, WeightedLinksIntervalGra
                 self.graph.connect(interval, {iv: iv.length for iv in all_intervals[i + 1:j + 1]})
 
         return self
+
