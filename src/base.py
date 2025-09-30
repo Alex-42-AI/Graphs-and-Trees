@@ -75,13 +75,7 @@ class Link:
             v: A node object
         """
 
-        if not isinstance(u, Node):
-            u = Node(u)
-
-        if not isinstance(v, Node):
-            v = Node(v)
-
-        self.__u, self.__v = u, v
+        self.__u, self.__v = Node(u), Node(v)
 
     @property
     def u(self) -> Node:
@@ -109,10 +103,7 @@ class Link:
             The other node
         """
 
-        if not isinstance(n, Node):
-            n = Node(n)
-
-        if n not in self:
+        if Node(n) not in self:
             raise KeyError("Unrecognized node")
 
         return [(u := self.u), self.v][n == u]
@@ -125,10 +116,7 @@ class Link:
             Whether given node is in the link
         """
 
-        if not isinstance(node, Node):
-            node = Node(node)
-
-        return node in {self.u, self.v}
+        return Node(node) in {self.u, self.v}
 
     def __hash__(self) -> int:
         return hash(frozenset({self.u, self.v}))
@@ -156,6 +144,7 @@ class Graph(ABC):
         Returns:
             Graph nodes
         """
+
         pass
 
     @abstractmethod
@@ -164,16 +153,18 @@ class Graph(ABC):
         Returns:
             Graph links
         """
+
         pass
 
     @abstractmethod
-    def degrees(self, u: Node = None) -> dict | int:
+    def degree(self, u: Node = None) -> dict | int | tuple[int, int]:
         """
         Args:
             u: Node object or None
         Returns:
             Node degree or dictionary with all node degrees
         """
+
         pass
 
     @abstractmethod
@@ -184,6 +175,7 @@ class Graph(ABC):
             n: First given node
             rest: Other given nodes
         """
+
         pass
 
     @abstractmethod
@@ -194,6 +186,7 @@ class Graph(ABC):
             rest: Node objects
         Connect every given node to every other given node, all present in the graph
         """
+
         pass
 
     @abstractmethod
@@ -204,6 +197,7 @@ class Graph(ABC):
             rest: Other given nodes
         Disconnect all given nodes, all present in the graph
         """
+
         pass
 
     @abstractmethod
@@ -212,6 +206,7 @@ class Graph(ABC):
         Returns:
             Identical copy of the graph
         """
+
         pass
 
     @abstractmethod
@@ -220,6 +215,7 @@ class Graph(ABC):
         Returns:
             A graph, where there are links between nodes exactly where there aren't in the original graph
         """
+
         pass
 
     @abstractmethod
@@ -236,6 +232,7 @@ class Graph(ABC):
         Returns:
             A list of all connection components of the graph
         """
+
         pass
 
     @abstractmethod
@@ -244,6 +241,7 @@ class Graph(ABC):
         Returns:
             Whether the graph is connected
         """
+
         pass
 
     @abstractmethod
@@ -255,6 +253,7 @@ class Graph(ABC):
         Returns:
             Whether the first given node can reach the second one
         """
+
         pass
 
     @abstractmethod
@@ -263,6 +262,7 @@ class Graph(ABC):
         Returns:
             Whether the graph is fully connected
         """
+
         pass
 
     @abstractmethod
@@ -274,6 +274,7 @@ class Graph(ABC):
         Returns:
             One shortest path from u to v, if such path exists, otherwise empty list
         """
+
         pass
 
     @abstractmethod
@@ -282,6 +283,7 @@ class Graph(ABC):
         Returns:
             Whether an Euler tour exists
         """
+
         pass
 
     @abstractmethod
@@ -293,6 +295,7 @@ class Graph(ABC):
         Returns:
             Whether an Euler walk from u to v exists
         """
+
         pass
 
     @abstractmethod
@@ -301,6 +304,7 @@ class Graph(ABC):
         Returns:
              An Euler tour, if such exists, otherwise empty list
         """
+
         pass
 
     @abstractmethod
@@ -312,26 +316,29 @@ class Graph(ABC):
         Returns:
              An Euler walk, if such exists, otherwise empty list
         """
+
         pass
 
     @abstractmethod
     def weighted_nodes_graph(self, weights: dict[Node, float] = None) -> Graph:
         """
         Args:
-            weights: A dictionary, mapping nodes to their weights
+            weights: A dictionary, mapping nodes to their weights (if a node is missing, its weight is 0)
         Returns:
             The version of the graph with node weights
         """
+
         pass
 
     @abstractmethod
     def weighted_links_graph(self, weights: dict) -> Graph:
         """
         Args:
-            weights: A dictionary, mapping links to their weights
+            weights: A dictionary, mapping links to their weights (if a link is missing, its weight is 0)
         Returns:
             The version of the graph with link weights
         """
+
         pass
 
     @abstractmethod
@@ -343,6 +350,7 @@ class Graph(ABC):
         Returns:
             The version of the graph with node and link weights
         """
+
         pass
 
     @abstractmethod
@@ -353,6 +361,7 @@ class Graph(ABC):
         Returns:
             A cycle with given length, if such exists, otherwise empty list
         """
+
         pass
 
     @abstractmethod
@@ -365,6 +374,7 @@ class Graph(ABC):
         Returns:
             A path from u to v with given length, if such path exists, otherwise empty list
         """
+
         pass
 
     @abstractmethod
@@ -373,6 +383,7 @@ class Graph(ABC):
         Returns:
             Whether a Hamilton tour exists
         """
+
         pass
 
     @abstractmethod
@@ -384,6 +395,7 @@ class Graph(ABC):
         Returns:
             Whether a Hamilton walk exists from u to v
         """
+
         pass
 
     @abstractmethod
@@ -392,6 +404,7 @@ class Graph(ABC):
         Returns:
             A Hamilton tour, if such exists, otherwise empty list
         """
+
         pass
 
     @abstractmethod
@@ -403,6 +416,7 @@ class Graph(ABC):
         Returns:
             A Hamilton walk from u to v, if such exists, otherwise empty list. If a node isn't given, it could be any
         """
+
         pass
 
     @abstractmethod
@@ -413,6 +427,7 @@ class Graph(ABC):
         Returns:
             An isomorphic function (bijection) between the nodes of the graph and those of the given graph, if such exists, otherwise empty dictionary. Let f be such a bijection and u and v be nodes in the graph. f(u) and f(v) are nodes in the other graph and f(u) and f(v) are neighbors (or f(u) points to f(v) for directed graphs) exactly when the same applies for u and v. For weighted graphs, the weights are taken into account
         """
+
         pass
 
     @abstractmethod
@@ -421,6 +436,7 @@ class Graph(ABC):
         Returns:
             Whether the graph has nodes
         """
+
         pass
 
     @abstractmethod
@@ -431,6 +447,7 @@ class Graph(ABC):
         Returns:
             Whether u is a node in the graph
         """
+
         pass
 
     @abstractmethod
@@ -445,6 +462,7 @@ class Graph(ABC):
         Returns:
             Whether both graphs are equal
         """
+
         pass
 
     @abstractmethod
@@ -467,12 +485,14 @@ def combine_undirected(graph0: "UndirectedGraph", graph1: "UndirectedGraph") -> 
             for n in graph1.nodes:
                 if n in res:
                     res.increase_weight(n, graph1.node_weights(n))
+
                 else:
                     res.add((n, graph1.node_weights(n)))
 
             for l in graph1.links:
                 if l in res.links:
                     res.increase_weight(l, graph1.link_weights(l))
+
                 else:
                     res.connect(l.u, {l.v: graph1.link_weights(l)})
 
@@ -490,6 +510,7 @@ def combine_undirected(graph0: "UndirectedGraph", graph1: "UndirectedGraph") -> 
             for n in graph1.nodes:
                 if n in res:
                     res.increase_weight(n, graph1.node_weights(n))
+
                 else:
                     res.add((n, graph1.node_weights(n)))
 
@@ -513,6 +534,7 @@ def combine_undirected(graph0: "UndirectedGraph", graph1: "UndirectedGraph") -> 
             for l in graph1.links:
                 if l in res.links:
                     res.increase_weight(l, graph1.link_weights(l))
+
                 else:
                     res.connect(l.u, {l.v: graph1.link_weights(l)})
 
@@ -564,6 +586,7 @@ def isomorphic_bijection_undirected(graph0: "UndirectedGraph", graph1: "Undirect
 
                 if node_weights:
                     hash0, hash1 = tree0.unique_structure_hash(), tree1.unique_structure_hash()
+
                 else:
                     hash0, hash1 = Tree.unique_structure_hash(tree0), Tree.unique_structure_hash(tree1)
 
@@ -574,8 +597,7 @@ def isomorphic_bijection_undirected(graph0: "UndirectedGraph", graph1: "Undirect
                 rest, total = {tree0.root}, set()
 
                 while rest:
-                    u = rest.pop()
-                    v = map_dict[u]
+                    v = map_dict[u := rest.pop()]
 
                     for x in tree0.descendants(u):
                         rest.add(x)
@@ -585,6 +607,7 @@ def isomorphic_bijection_undirected(graph0: "UndirectedGraph", graph1: "Undirect
                                 total.add(y)
                                 map_dict[x] = y
                                 break
+
                         else:
                             return {}
 
@@ -597,6 +620,7 @@ def isomorphic_bijection_undirected(graph0: "UndirectedGraph", graph1: "Undirect
 
         for u in graph1.nodes:
             tree1 = graph1.weighted_tree(u) if node_weights else graph1.tree()
+
             if map_dict := tree0.isomorphic_bijection(tree1):
                 return map_dict
 
@@ -613,16 +637,17 @@ def isomorphic_bijection_undirected(graph0: "UndirectedGraph", graph1: "Undirect
 
         if this_weights != other_weights:
             return {}
+
     elif len(graph0.nodes) != len(graph1.nodes):
         return {}
 
     this_nodes_degrees, other_nodes_degrees = defaultdict(set), defaultdict(set)
 
     for n in graph0.nodes:
-        this_nodes_degrees[graph0.degrees(n)].add(n)
+        this_nodes_degrees[graph0.degree(n)].add(n)
 
     for n in graph1.nodes:
-        other_nodes_degrees[graph1.degrees(n)].add(n)
+        other_nodes_degrees[graph1.degree(n)].add(n)
 
     if any(len(this_nodes_degrees[d]) != len(other_nodes_degrees[d]) for d in this_nodes_degrees):
         return {}
@@ -671,12 +696,14 @@ def combine_directed(graph0: "DirectedGraph", graph1: "DirectedGraph") -> "Direc
             for n in graph1.nodes:
                 if n in res:
                     res.increase_weight(n, graph1.node_weights(n))
+
                 else:
                     res.add((n, graph1.node_weights(n)))
 
             for u, v in graph1.links:
                 if v in res.next(u):
                     res.increase_weight((u, v), graph1.link_weights(u, v))
+
                 else:
                     res.connect(v, {u: graph1.link_weights(u, v)})
 
@@ -694,6 +721,7 @@ def combine_directed(graph0: "DirectedGraph", graph1: "DirectedGraph") -> "Direc
             for n in graph1.nodes:
                 if n in res:
                     res.increase_weight(n, graph1.node_weights(n))
+
                 else:
                     res.add((n, graph1.node_weights(n)))
 
@@ -717,6 +745,7 @@ def combine_directed(graph0: "DirectedGraph", graph1: "DirectedGraph") -> "Direc
             for u, v in graph1.links:
                 if v in res.next(u):
                     res.increase_weight((u, v), graph1.link_weights(u, v))
+
                 else:
                     res.connect(v, {u: graph1.link_weights((u, v))})
 
@@ -756,6 +785,7 @@ def isomorphic_bijection_directed(graph0: "DirectedGraph", graph1: "DirectedGrap
 
         if this_weights != other_weights:
             return {}
+
     elif len(graph0.nodes) != len(graph1.nodes):
         return {}
 
@@ -770,16 +800,17 @@ def isomorphic_bijection_directed(graph0: "DirectedGraph", graph1: "DirectedGrap
 
         if this_weights != other_weights:
             return {}
+
     elif len(graph0.links) != len(graph1.links):
         return {}
 
     this_nodes_degrees, other_nodes_degrees = defaultdict(set), defaultdict(set)
 
     for n in graph0.nodes:
-        this_nodes_degrees[graph0.degrees(n)].add(n)
+        this_nodes_degrees[graph0.degree(n)].add(n)
 
     for n in graph1.nodes:
-        other_nodes_degrees[graph1.degrees(n)].add(n)
+        other_nodes_degrees[graph1.degree(n)].add(n)
 
     if any(len(this_nodes_degrees[d]) != len(other_nodes_degrees[d]) for d in this_nodes_degrees):
         return {}
@@ -818,7 +849,7 @@ def isomorphic_bijection_directed(graph0: "DirectedGraph", graph1: "DirectedGrap
 
 
 def compare(graph0: Graph, graph1: Graph) -> bool:
-    if type(graph0) != type(graph1):
+    if type(graph0) is not type(graph1):
         return False
 
     if hasattr(graph0, "node_weights"):
@@ -845,6 +876,7 @@ def string(graph: Graph) -> str:
     if hasattr(graph, "neighbors"):
         if hasattr(graph, "link_weights"):
             links = "{" + ", ".join(f"{l} -> {graph.link_weights(l)}" for l in links) + "}"
+
     else:
         links = "{" + ", ".join(
             f"<{l[0]}, {l[1]}>" + (f" -> {graph.link_weights(l)}" if hasattr(graph, "link_weights") else "") for l in
