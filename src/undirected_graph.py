@@ -658,7 +658,7 @@ class UndirectedGraph(Graph):
         Args:
             start: A present node or None
         Returns:
-            A sort of the graph nodes, based on how early the interval a particular node could represent begins. If it fails, it returns an empty list. If start is given, it only tries to find a sort, which starts from it
+            A sort of the graph nodes, based on how early the interval a particular node could represent begins. If it fails, it returns an empty list. If start is given, it only tries to find a sort with start in the beginning
         """
 
         def find_start_node(graph, nodes):
@@ -687,7 +687,7 @@ class UndirectedGraph(Graph):
 
             new_neighbors = graph.neighbors(start)
 
-            return helper(start, curr_graph, {v: 2 * priority[v] + (v in new_neighbors) for v in set(nodes) - {start}})
+            return helper(start, curr_graph, {u: 2 * priority[u] + (u in new_neighbors) for u in set(nodes) - {start}})
 
         def helper(u, graph, priority):
             def extend_last(ll):
@@ -699,7 +699,7 @@ class UndirectedGraph(Graph):
                 return [u, *sorted(graph.nodes - {u}, key=priority.get, reverse=True)]
 
             result, neighbors, comps = [u], graph.neighbors(u), []
-            final_neighbors, final, total = [], [], {u}
+            final_neighbors, final, total = set(), [], {u}
 
             for v in neighbors:
                 if v not in total:
@@ -726,7 +726,7 @@ class UndirectedGraph(Graph):
                     else:
                         comps.append(sorted(comp, key=priority.get, reverse=True))
 
-            max_length = max(map(len, comps)) if comps else 0
+            max_length = max(map(len, comps), default=0)
             comps = sorted(comps, key=lambda c: extend_last(tuple(map(priority.get, c))), reverse=True)
 
             if final:
