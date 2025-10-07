@@ -94,11 +94,14 @@ class UndirectedGraph(Graph):
     Class for implementing an unweighted undirected graph
     """
 
-    def __init__(self, neighborhood: dict[Node, Iterable[Node]] = {}) -> None:
+    def __init__(self, neighborhood: dict[Node, Iterable[Node]] = None) -> None:
         """
         Args:
             neighborhood: A dictionary that maps a node to its neighbors in the graph
         """
+
+        if neighborhood is None:
+            neighborhood = {}
 
         self.__nodes, self.__links = set(), set()
         self.__neighbors = {}
@@ -1367,11 +1370,14 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
     Class for implementing and undirected graph with weights on the nodes
     """
 
-    def __init__(self, neighborhood: dict[Node, tuple[float, Iterable[Node]]] = {}) -> None:
+    def __init__(self, neighborhood: dict[Node, tuple[float, Iterable[Node]]] = None) -> None:
         """
         Args:
             neighborhood: A dictionary that maps a node to a tuple of its weight and its neighbors
         """
+
+        if neighborhood is None:
+            neighborhood = {}
 
         super().__init__()
         self.__node_weights = {}
@@ -1608,11 +1614,14 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
     Class for implementing and undirected graph with weights on the links
     """
 
-    def __init__(self, neighborhood: dict[Node, dict[Node, float]] = {}) -> None:
+    def __init__(self, neighborhood: dict[Node, dict[Node, float]] = None) -> None:
         """
         Args:
             neighborhood: A dictionary, mapping to each node the link weight between it and each of its neighbors
         """
+
+        if neighborhood is None:
+            neighborhood = {}
 
         super().__init__()
         self.__link_weights = {}
@@ -1653,7 +1662,10 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
 
         return sum(self.link_weights().values())
 
-    def add(self, u: Node, nodes_weights: dict[Node, float] = {}) -> WeightedLinksUndirectedGraph:
+    def add(self, u: Node, nodes_weights: dict[Node, float] = None) -> WeightedLinksUndirectedGraph:
+        if nodes_weights is None:
+            nodes_weights = {}
+
         if u not in self:
             UndirectedGraph.add(self, u, *nodes_weights)
 
@@ -1670,7 +1682,10 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
 
         return super().remove(n, *rest)
 
-    def connect(self, u: Node, nodes_weights: dict[Node, float] = {}) -> WeightedLinksUndirectedGraph:
+    def connect(self, u: Node, nodes_weights: dict[Node, float] = None) -> WeightedLinksUndirectedGraph:
+        if nodes_weights is None:
+            nodes_weights = {}
+
         if u in self:
             nodes_weights = {Node(k): v for k, v in nodes_weights.items()}
             nodes_weights = {v: w for v, w in nodes_weights.items() if v not in self.neighbors(u)}
@@ -1890,11 +1905,14 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
     Class for implementing an undirected graph with weights on the nodes and the links
     """
 
-    def __init__(self, neighborhood: dict[Node, tuple[float, dict[Node, float]]] = {}) -> None:
+    def __init__(self, neighborhood: dict[Node, tuple[float, dict[Node, float]]] = None) -> None:
         """
         Args:
             neighborhood: A dictionary, mapping nodes to a tuple with each node's weight and another dictionary, representing the weight of the link between it and each of its neighbors
         """
+
+        if neighborhood is None:
+            neighborhood = {}
 
         WeightedNodesUndirectedGraph.__init__(self), WeightedLinksUndirectedGraph.__init__(self)
 
@@ -1914,7 +1932,10 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
 
         return self.total_nodes_weight + self.total_links_weight
 
-    def add(self, n_w: tuple[Node, float], nodes_weights: dict[Node, float] = {}) -> WeightedUndirectedGraph:
+    def add(self, n_w: tuple[Node, float], nodes_weights: dict[Node, float] = None) -> WeightedUndirectedGraph:
+        if nodes_weights is None:
+            nodes_weights = {}
+
         if (n := n_w[0]) not in self:
             super().add(n, nodes_weights)
             self.set_weight(*n_w)
