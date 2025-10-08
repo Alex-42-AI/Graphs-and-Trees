@@ -69,11 +69,14 @@ class DirectedGraph(Graph):
     Class for implementing an unweighted directed graph
     """
 
-    def __init__(self, neighborhood: dict[Node, tuple[Iterable[Node], Iterable[Node]]] = {}) -> None:
+    def __init__(self, neighborhood: dict[Node, tuple[Iterable[Node], Iterable[Node]]] = None) -> None:
         """
         Args:
             neighborhood: A dictionary with nodes for keys. The value of each node is a tuple of 2 sets of nodes. The first one is the nodes, which point to it, and the second one is the nodes it points to
         """
+
+        if neighborhood is None:
+            neighborhood = {}
 
         self.__nodes, self.__links = set(), set()
         self.__prev, self.__next = {}, {}
@@ -697,8 +700,6 @@ class DirectedGraph(Graph):
 
             for y in next_x:
                 if dfs(y):
-                    tmp.add(x, prev_x, next_x)
-
                     return True
 
             tmp.add(x, prev_x, next_x)
@@ -735,8 +736,8 @@ class DirectedGraph(Graph):
         u = self.nodes.pop()
 
         for v in self.prev(u):
-            if result := self.hamilton_walk(u, v):
-                return result + [u]
+            if res := self.hamilton_walk(u, v):
+                return res + [u]
 
         return []
 
@@ -768,15 +769,11 @@ class DirectedGraph(Graph):
             for y in next_x:
                 if y == v:
                     if tmp.nodes == {v}:
-                        tmp.add(x, prev_x, next_x)
-
                         return stack + [v]
 
                     continue
 
                 if res := dfs(y, stack + [y]):
-                    tmp.add(x, prev_x, next_x)
-
                     return res
 
             tmp.add(x, prev_x, next_x)
@@ -843,11 +840,14 @@ class WeightedNodesDirectedGraph(DirectedGraph):
     Class for implementing a directed graph with node weights
     """
 
-    def __init__(self, neighborhood: dict[Node, tuple[float, tuple[Iterable[Node], Iterable[Node]]]] = {}) -> None:
+    def __init__(self, neighborhood: dict[Node, tuple[float, tuple[Iterable[Node], Iterable[Node]]]] = None) -> None:
         """
         Args:
             neighborhood: A dictionary with nodes for keys. The value of each node is a tuple with 2 elements. The first one is the node's weight. The second one is a tuple with 2 sets of nodes. The first one is the nodes, that point to it, and the second one are the nodes it points to
         """
+
+        if neighborhood is None:
+            neighborhood = {}
 
         super().__init__()
         self.__node_weights = {}
@@ -987,11 +987,14 @@ class WeightedLinksDirectedGraph(DirectedGraph):
     Class for implementing directed graphs with link weights
     """
 
-    def __init__(self, neighborhood: dict[Node, tuple[dict[Node, float], dict[Node, float]]] = {}) -> None:
+    def __init__(self, neighborhood: dict[Node, tuple[dict[Node, float], dict[Node, float]]] = None) -> None:
         """
         Args:
             neighborhood: A dictionary with nodes for keys. The value of each node is a tuple with 2 dictionaries. The first one contains the nodes, which point to it, and the second one contains the nodes it points to. The values in these dictionaries are the link weights
         """
+
+        if neighborhood is None:
+            neighborhood = {}
 
         super().__init__()
         self.__link_weights = {}
@@ -1039,9 +1042,15 @@ class WeightedLinksDirectedGraph(DirectedGraph):
 
         return sum(self.link_weights().values())
 
-    def add(self, u: Node, pointed_by_weights: dict[Node, float] = {},
-            points_to_weights: dict[Node, float] = {}) -> WeightedLinksDirectedGraph:
+    def add(self, u: Node, pointed_by_weights: dict[Node, float] = None,
+            points_to_weights: dict[Node, float] = None) -> WeightedLinksDirectedGraph:
         u = Node(u)
+
+        if pointed_by_weights is None:
+            pointed_by_weights = {}
+
+        if points_to_weights is None:
+            points_to_weights = {}
 
         if u not in self:
             DirectedGraph.add(self, u, pointed_by_weights.keys(), points_to_weights.keys())
@@ -1069,9 +1078,15 @@ class WeightedLinksDirectedGraph(DirectedGraph):
 
         return super().remove(u, *rest)
 
-    def connect(self, u: Node, pointed_by_weights: dict[Node, float] = {},
-                points_to_weights: dict[Node, float] = {}) -> WeightedLinksDirectedGraph:
+    def connect(self, u: Node, pointed_by_weights: dict[Node, float] = None,
+                points_to_weights: dict[Node, float] = None) -> WeightedLinksDirectedGraph:
         u = Node(u)
+
+        if pointed_by_weights is None:
+            pointed_by_weights = {}
+
+        if points_to_weights is None:
+            points_to_weights = {}
 
         if u in self:
             pointed_by_weights = {Node(k): v for k, v in pointed_by_weights.items()}
@@ -1244,11 +1259,14 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
     """
 
     def __init__(self,
-                 neighborhood: dict[Node, tuple[float, tuple[dict[Node, float], dict[Node, float]]]] = {}) -> None:
+                 neighborhood: dict[Node, tuple[float, tuple[dict[Node, float], dict[Node, float]]]] = None) -> None:
         """
         Args:
             neighborhood: A dictionary with nodes for keys. The value of each node is a tuple with its weight and another tuple with 2 dictionaries. The first one contains the nodes, which point to it, and the second one contains the nodes it points to. The values in these dictionaries are the link weights
         """
+
+        if neighborhood is None:
+            neighborhood = {}
 
         WeightedNodesDirectedGraph.__init__(self), WeightedLinksDirectedGraph.__init__(self)
 
@@ -1273,9 +1291,15 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
 
         return self.total_nodes_weight + self.total_links_weight
 
-    def add(self, n_w: tuple[Node, float], pointed_by_weights: dict[Node, float] = {},
-            points_to_weights: dict[Node, float] = {}) -> WeightedDirectedGraph:
+    def add(self, n_w: tuple[Node, float], pointed_by_weights: dict[Node, float] = None,
+            points_to_weights: dict[Node, float] = None) -> WeightedDirectedGraph:
         n = Node(n_w[0])
+
+        if pointed_by_weights is None:
+            pointed_by_weights = {}
+
+        if points_to_weights is None:
+            points_to_weights = {}
 
         if n not in self:
             super().add(n, pointed_by_weights, points_to_weights)
