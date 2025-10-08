@@ -634,12 +634,15 @@ class Tree:
     Class for implementing a tree with multiple descendants
     """
 
-    def __init__(self, root: Node, inheritance: dict[Node, Iterable[Node]] = {}) -> None:
+    def __init__(self, root: Node, inheritance: dict[Node, Iterable[Node]] = None) -> None:
         """
         Args:
             root: Root node
             inheritance: Inheritance dictionary
         """
+
+        if inheritance is None:
+            inheritance = {}
 
         self.__root = Node(root)
         self.__parent = {}
@@ -1092,12 +1095,15 @@ class WeightedTree(Tree):
     """
 
     def __init__(self, root_and_weight: tuple[Node, float],
-                 inheritance: dict[Node, tuple[float, Iterable[Node]]] = {}) -> None:
+                 inheritance: dict[Node, tuple[float, Iterable[Node]]] = None) -> None:
         """
         Args:
             root_and_weight: A tuple of the root node and its weight
             inheritance: An inheritance dictionary. Each node is mapped to a tuple, where the first element is its weight and the second element is the set of its descendants.
         """
+
+        if inheritance is None:
+            inheritance = {}
 
         super().__init__(root := root_and_weight[0])
 
@@ -1133,8 +1139,11 @@ class WeightedTree(Tree):
 
         return self.__weights[Node(u)]
 
-    def add(self, curr: Node, rest: dict[Node, float] = {}) -> WeightedTree:
+    def add(self, curr: Node, rest: dict[Node, float] = None) -> WeightedTree:
         curr = Node(curr)
+
+        if rest is None:
+            rest = {}
 
         if curr in self:
             for u, w in rest.items():
