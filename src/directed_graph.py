@@ -727,7 +727,7 @@ class DirectedGraph(Graph):
             raise KeyError("Unrecognized node(s)")
 
         if (v, u) in self.links:
-            return True if self.nodes == {u, v} else self.hamilton_tour_exists()
+            return self.nodes == {u, v} or self.hamilton_tour_exists()
 
         return DirectedGraph.copy(self).connect(u, {v}).hamilton_tour_exists()
 
@@ -1491,3 +1491,4 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
             return []
 
         raise KeyError("Unrecognized node(s)")
+
