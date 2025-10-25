@@ -474,6 +474,9 @@ class Graph(ABC):
         pass
 
 
+Path = list[Node]
+
+
 def combine_undirected(graph0: "UndirectedGraph", graph1: "UndirectedGraph") -> "UndirectedGraph":
     if not hasattr(graph1, "neighbors"):
         raise TypeError(f"Addition not defined between type {type(graph0).__name__} and type {type(graph1).__name__}")
@@ -883,3 +886,4 @@ def string(graph: Graph) -> str:
             graph.links) + "}"
 
     return f"<{nodes}, {links}>"
+
