@@ -4,7 +4,9 @@ Module for implementing directed graphs
 
 from __future__ import annotations
 
-from base import combine_directed, isomorphic_bijection_directed, compare, string, Any
+from math import inf
+
+from base import combine_directed, isomorphic_bijection_directed, compare, string, Any, Path
 
 from undirected_graph import *
 
@@ -444,7 +446,7 @@ class DirectedGraph(Graph):
 
         return total == self.nodes
 
-    def toposort(self) -> list[Node]:
+    def toposort(self) -> Path:
         """
         Returns:
             A topological sort of the nodes if the graph is a DAG, otherwise an empty list
@@ -468,7 +470,7 @@ class DirectedGraph(Graph):
 
         return res
 
-    def get_shortest_path(self, u: Node, v: Node) -> list[Node]:
+    def get_shortest_path(self, u: Node, v: Node) -> Path:
         u, v = Node(u), Node(v)
 
         if u not in self or v not in self:
@@ -486,9 +488,9 @@ class DirectedGraph(Graph):
 
                 return result
 
-            for y in self.next(n) - total:
-                queue.append(y), total.add(y)
-                previous[y] = n
+            for m in self.next(n) - total:
+                queue.append(m), total.add(m)
+                previous[m] = n
 
         return []
 
@@ -514,14 +516,14 @@ class DirectedGraph(Graph):
 
         return self.connected()
 
-    def euler_tour(self) -> list[Node]:
+    def euler_tour(self) -> Path:
         if self.euler_tour_exists():
             tmp = DirectedGraph.copy(self)
             return tmp.disconnect(u := (l := tmp.links.pop())[1], {v := l[0]}).euler_walk(u, v) + [u]
 
         return []
 
-    def euler_walk(self, u: Node, v: Node) -> list[Node]:
+    def euler_walk(self, u: Node, v: Node) -> Path:
         u, v = Node(u), Node(v)
 
         if u not in self or v not in self:
@@ -636,7 +638,7 @@ class DirectedGraph(Graph):
 
         return scc_dag(self)
 
-    def cycle_with_length(self, length: int) -> list[Node]:
+    def cycle_with_length(self, length: int) -> Path:
         try:
             length = int(length)
         except TypeError:
@@ -657,7 +659,7 @@ class DirectedGraph(Graph):
 
         return []
 
-    def path_with_length(self, u: Node, v: Node, length: int) -> list[Node]:
+    def path_with_length(self, u: Node, v: Node, length: int) -> Path:
         def dfs(x, l, stack):
             if not l:
                 return (list(map(lambda link: link[0], stack)) + [v]) if x == v else []
@@ -729,7 +731,7 @@ class DirectedGraph(Graph):
 
         return DirectedGraph.copy(self).connect(u, {v}).hamilton_tour_exists()
 
-    def hamilton_tour(self) -> list[Node]:
+    def hamilton_tour(self) -> Path:
         if self.sources or self.sinks or not self:
             return []
 
@@ -741,7 +743,7 @@ class DirectedGraph(Graph):
 
         return []
 
-    def hamilton_walk(self, u: Node = None, v: Node = None) -> list[Node]:
+    def hamilton_walk(self, u: Node = None, v: Node = None) -> Path:
         def dfs(x, stack):
             if not tmp.connected:
                 return []
@@ -970,7 +972,7 @@ class WeightedNodesDirectedGraph(DirectedGraph):
 
             return res
 
-    def minimal_path_nodes(self, u: Node, v: Node) -> list[Node]:
+    def minimal_path_nodes(self, u: Node, v: Node) -> Path:
         """
         Args:
             u: First given node
@@ -1241,7 +1243,7 @@ class WeightedLinksDirectedGraph(DirectedGraph):
 
             return res
 
-    def minimal_path_links(self, u: Node, v: Node) -> list[Node]:
+    def minimal_path_links(self, u: Node, v: Node) -> Path:
         """
         Args:
             u: First given node
@@ -1387,7 +1389,7 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
 
             return res
 
-    def minimal_path(self, u: Node, v: Node) -> list[Node]:
+    def minimal_path(self, u: Node, v: Node) -> Path:
         """
         Args:
             u: First given node
@@ -1396,57 +1398,78 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
             A path between u and v with the least possible sum of node and link weights
         """
 
-        def dfs(x, current_path, current_weight, total_negative, res_path, res_weight):
-            def dijkstra(s, curr_path, curr_weight):
-                curr_tmp = tmp.copy()
+        def dfs(x, res_path, res_weight):
+            nonlocal total_negative, curr_path, curr_weight
+
+            def dijkstra(s):
+                tmp_cpy = tmp.copy()
 
                 for l in curr_path:
-                    curr_tmp.disconnect(l[1], {l[0]})
+                    tmp_cpy.disconnect(l[1], {l[0]})
 
-                paths = {n: {m: [] for m in curr_tmp.nodes} for n in curr_tmp.nodes}
-                weights_from_to = {n: {m: curr_tmp.total_weight for m in curr_tmp.nodes} for n in curr_tmp.nodes}
+                pq = {s}
+                prev_weight: dict[Node, tuple[Node, float]] = {s: (None, 0)}
 
-                for n in curr_tmp.nodes:
-                    weights_from_to[n][n] = 0
+                while pq:
+                    s_ = min(pq, key=lambda _s: prev_weight[_s][1])
+                    pq.remove(s_)
 
-                    for m in curr_tmp.next(n):
-                        weights_from_to[n][m] = curr_tmp.link_weights(n, m) + curr_tmp.node_weights(m)
-                        paths[n][m] = [(n, m)]
+                    if s_ == v:
+                        break
 
-                for x1 in curr_tmp.nodes:
-                    for x2 in curr_tmp.nodes:
-                        for x3 in curr_tmp.nodes:
-                            if (new_weight := weights_from_to[x1][x2] + weights_from_to[x2][x3]) < weights_from_to[x1][
-                                x3]:
-                                weights_from_to[x1][x3] = new_weight
-                                paths[x1][x3] = paths[x1][x2] + paths[x2][x3]
+                    s_weight = prev_weight[s_][1]
 
-                return curr_path + paths[s][v], curr_weight + weights_from_to[s][v]
+                    for t_ in tmp_cpy.next(s_):
+                        weight = tmp_cpy.link_weights(s_, t_) + tmp_cpy.node_weights(t_)
+
+                        if t_ not in prev_weight or s_weight + weight < prev_weight[t_][1]:
+                            prev_weight[t_] = (s_, s_weight + weight)
+                            pq.add(t_)
+
+                else:
+                    return [], inf
+
+                result, curr_node = [], v
+
+                while curr_node != s:
+                    result.insert(0, (prev_weight[curr_node][0], curr_node))
+                    curr_node = prev_weight[curr_node][0]
+
+                return curr_path + result, curr_weight + prev_weight[v][1]
 
             if total_negative:
-                for y in {y for y in tmp.next(x) if (x, y) not in current_path}:
-                    new_curr_w = current_weight + (l_w := tmp.link_weights(x, y)) + (n_w := tmp.node_weights(y))
-                    new_total_negative = total_negative
+                for y in {y for y in tmp.next(x) if (x, y) not in curr_path}:
+                    if (n_w := tmp.node_weights(y)) < 0:
+                        total_negative -= n_w
 
-                    if n_w < 0:
-                        new_total_negative -= n_w
+                    if (l_w := tmp.link_weights(x, y)) < 0:
+                        total_negative -= l_w
 
-                    if l_w < 0:
-                        new_total_negative -= l_w
-
-                    if new_curr_w + new_total_negative >= res_weight:
+                    if curr_weight + n_w + l_w + total_negative >= res_weight:
                         continue
 
-                    if y == v and new_curr_w < res_weight:
-                        res_path = current_path + [(x, y)]
-                        res_weight = new_curr_w
+                    curr_weight += n_w + l_w
 
-                    curr = dfs(y, current_path + [(x, y)], new_curr_w, new_total_negative, res_path, res_weight)
+                    if y == v and curr_weight < res_weight:
+                        res_path = curr_path + [(x, y)]
+                        res_weight = curr_weight
+
+                    curr_path.append((x, y))
+                    curr = dfs(y, res_path, res_weight)
+                    curr_path.pop()
+                    curr_weight -= n_w + l_w
+
+                    if n_w < 0:
+                        total_negative += n_w
+
+                    if l_w < 0:
+                        total_negative += l_w
 
                     if curr[1] < res_weight:
                         res_path, res_weight = curr
+
             else:
-                curr = dijkstra(x, current_path, current_weight)
+                curr = dijkstra(x)
 
                 if curr[1] < res_weight:
                     res_path, res_weight = curr
@@ -1459,11 +1482,11 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
             if v in (tmp := self.subgraph(u)):
                 nodes_negative_weights = sum(tmp.node_weights(n) for n in tmp.nodes if tmp.node_weights(n) < 0)
                 links_negative_weights = sum(tmp.link_weights(l) for l in tmp.links if tmp.link_weights(l) < 0)
+                total_negative = nodes_negative_weights + links_negative_weights
+                curr_path, curr_weight = [], tmp.node_weights(u)
+                res = dfs(u, [], inf)[0]
 
-                upper_limit = self.total_weight - nodes_negative_weights - links_negative_weights
-                res = dfs(u, [], tmp.node_weights(u), nodes_negative_weights + links_negative_weights, [], upper_limit)
-
-                return [l[0] for l in res[0]] + [res[0][-1][1]]
+                return [l[0] for l in res] + [res[-1][1]]
 
             return []
 
