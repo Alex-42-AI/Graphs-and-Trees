@@ -519,7 +519,7 @@ class UndirectedGraph(Graph):
                 return res
 
             for m in self.neighbors(n) - total:
-                queue.append(m)
+                queue.append(m), total.add(m)
                 previous[m] = n
 
         return []
@@ -2113,4 +2113,5 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
             return []
 
         raise KeyError("Unrecognized node(s)")
+
 
