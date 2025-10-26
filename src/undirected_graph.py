@@ -1840,7 +1840,8 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
                     low = mid
 
         if not self.connected():
-            return reduce(lambda x, y: x.union(y.minimal_spanning_tree()), self.connection_components(), set())
+            return reduce(lambda x, y: x.union(y),
+                          [comp.minimal_spanning_tree() for comp in self.connection_components()]
 
         if self.is_tree(True):
             return self.links
@@ -2113,5 +2114,6 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
             return []
 
         raise KeyError("Unrecognized node(s)")
+
 
 
