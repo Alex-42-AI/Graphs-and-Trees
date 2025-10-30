@@ -506,21 +506,30 @@ class UndirectedGraph(Graph):
         if u not in self or v not in self:
             raise KeyError("Unrecognized node(s)")
 
-        previous, queue, total = {}, [u], {u}
+        if u == v:
+            return [u]
 
-        while queue:
-            if (n := queue.pop(0)) == v:
-                res, curr_node = [n], n
+        previous, curr, wall = {}, {u}, set()
 
-                while curr_node != u:
-                    res.insert(0, previous[curr_node])
-                    curr_node = previous[curr_node]
+        while curr:
+            new = set()
 
-                return res
+            for n in curr:
+                for m in self.neighbors(n) - wall - curr:
+                    previous[m] = n
 
-            for m in self.neighbors(n) - total:
-                queue.append(m), total.add(m)
-                previous[m] = n
+                    if m == v:
+                        result, curr_node = [m], m
+
+                        while curr_node != u:
+                            result.insert(0, previous[curr_node])
+                            curr_node = previous[curr_node]
+
+                        return result
+
+                    new.add(m)
+
+            wall, curr = curr.copy(), new.copy()
 
         return []
 
@@ -1841,7 +1850,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
 
         if not self.connected():
             return reduce(lambda x, y: x.union(y),
-                          [comp.minimal_spanning_tree() for comp in self.connection_components()]
+                          [comp.minimal_spanning_tree() for comp in self.connection_components()])
 
         if self.is_tree(True):
             return self.links
@@ -2114,6 +2123,3 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
             return []
 
         raise KeyError("Unrecognized node(s)")
-
-
-
