@@ -2112,6 +2112,9 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
 
         if v in self:
             if v in (tmp := self.component(u)):
+                if tmp.is_tree(True):
+                    return tmp.get_shortest_path(u, v)
+
                 nodes_negative_weights = sum(tmp.node_weights(n) for n in tmp.nodes if tmp.node_weights(n) < 0)
                 links_negative_weights = sum(tmp.link_weights(l) for l in tmp.links if tmp.link_weights(l) < 0)
                 total_negative = nodes_negative_weights + links_negative_weights
@@ -2123,3 +2126,4 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
             return []
 
         raise KeyError("Unrecognized node(s)")
+
