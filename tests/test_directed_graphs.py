@@ -125,7 +125,7 @@ class TestDirectedGraph(TestCase):
             self.g1.sink(6)
 
     def test_get_degrees(self):
-        self.assertEqual(self.g0.degrees(),
+        self.assertEqual(self.g0.degree(),
                          {n0: (0, 2), n1: (2, 1), n2: (2, 2), n3: (2, 2), n4: (2, 1), n5: (2, 1), n6: (1, 2),
                           n7: (2, 2), n8: (1, 2), n9: (1, 0), n10: (0, 1), n11: (1, 2), n12: (1, 1), n13: (2, 0),
                           n14: (0, 0)})
@@ -396,7 +396,7 @@ class TestDirectedGraph(TestCase):
 
     def test_path_with_length_bad_length_type(self):
         with self.assertRaises(TypeError):
-            self.g0.path_with_length(5, 6, [2])
+            self.g0.path_with_length(5, 6, "[2]")
 
     def test_path_with_length_bad_length_value(self):
         self.assertListEqual(self.g0.path_with_length(0, 3, -1), [])
