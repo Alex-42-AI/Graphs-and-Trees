@@ -45,7 +45,7 @@ class Node:
     def __hash__(self) -> int:
         return hash(self.value)
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: Node) -> bool:
         if type(other) == Node:
             return self.value == other.value
 
@@ -138,6 +138,7 @@ class Graph(ABC):
     Abstract base class for graphs
     """
 
+    @property
     @abstractmethod
     def nodes(self) -> set[Node]:
         """
@@ -147,8 +148,9 @@ class Graph(ABC):
 
         pass
 
+    @property
     @abstractmethod
-    def links(self) -> set[Link | tuple[Node, Node]]:
+    def links(self) -> set[Link | DLink]:
         """
         Returns:
             Graph links
@@ -266,7 +268,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def get_shortest_path(self, u: Node, v: Node) -> list[Node]:
+    def get_shortest_path(self, u: Node, v: Node) -> Path:
         """
         Args:
             u: First given node
@@ -299,7 +301,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def euler_tour(self) -> list[Node]:
+    def euler_tour(self) -> Path:
         """
         Returns:
              An Euler tour, if such exists, otherwise empty list
@@ -308,7 +310,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def euler_walk(self, u: Node, v: Node) -> list[Node]:
+    def euler_walk(self, u: Node, v: Node) -> Path:
         """
         Args:
             u: First given node
@@ -354,7 +356,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def cycle_with_length(self, length: int) -> list[Node]:
+    def cycle_with_length(self, length: int) -> Path:
         """
         Args:
             length: Length of wanted cycle
@@ -365,7 +367,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def path_with_length(self, u: Node, v: Node, length: int) -> list[Node]:
+    def path_with_length(self, u: Node, v: Node, length: int) -> Path:
         """
         Args:
             u: First given node
@@ -399,7 +401,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def hamilton_tour(self) -> list[Node]:
+    def hamilton_tour(self) -> Path:
         """
         Returns:
             A Hamilton tour, if such exists, otherwise empty list
@@ -408,7 +410,7 @@ class Graph(ABC):
         pass
 
     @abstractmethod
-    def hamilton_walk(self, u: Node = None, v: Node = None) -> list[Node]:
+    def hamilton_walk(self, u: Node = None, v: Node = None) -> Path:
         """
         Args:
             u: first given node or None
@@ -475,6 +477,7 @@ class Graph(ABC):
 
 
 Path = list[Node]
+DLink = tuple[Node, Node]
 
 
 def combine_undirected(graph0: "UndirectedGraph", graph1: "UndirectedGraph") -> "UndirectedGraph":
@@ -886,4 +889,3 @@ def string(graph: Graph) -> str:
             graph.links) + "}"
 
     return f"<{nodes}, {links}>"
-
