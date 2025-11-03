@@ -124,13 +124,13 @@ class TestUndirectedGraph(TestCase):
             self.g0.neighbors(-2)
 
     def test_get_degrees(self):
-        self.assertDictEqual(self.g0.degrees(),
+        self.assertDictEqual(self.g0.degree(),
                              {n0: 2, n1: 2, n2: 5, n3: 2, n4: 3, n5: 3, n6: 4, n7: 3, n8: 3, n9: 1, n10: 1, n11: 3,
                               n12: 2, n13: 2, n14: 0})
 
     def test_get_degrees_missing_node(self):
         with self.assertRaises(KeyError):
-            self.g0.degrees(-2)
+            self.g0.degree(-2)
 
     def test_leaf(self):
         self.assertTrue(all(map(lambda x: self.g0.leaf(x) == (x in {n9, n10}), self.g0.nodes)))
@@ -399,9 +399,21 @@ class TestUndirectedGraph(TestCase):
         self.assertTrue(all(map(lambda g: g.full(), [g0, g6, self.g0.component(14)])))
 
     def test_get_shortest_path(self):
-        self.assertListEqual(self.g0.get_shortest_path(0, 6), [n0, n2, n3, n6])
-        self.assertListEqual(self.g0.get_shortest_path(7, 5), [n7, n8, n5])
-        self.assertListEqual(self.g4.get_shortest_path(7, 15), [n7, n4, n10, n13, n15])
+        path_0 = self.g0.get_shortest_path(0, 6)
+        self.assertEqual(len(path_0), 4)
+        self.assertTupleEqual((path_0[0], path_0[-1]), (n0, n6))
+        for i in range(len(path_0) - 1):
+            self.assertIn(path_0[i + 1], self.g0.neighbors(path_0[i]))
+        path_1 = self.g0.get_shortest_path(7, 5)
+        self.assertEqual(len(path_1), 3)
+        self.assertTupleEqual((path_1[0], path_1[-1]), (n7, n5))
+        for i in range(len(path_1) - 1):
+            self.assertIn(path_1[i + 1], self.g0.neighbors(path_1[i]))
+        path_2 = self.g4.get_shortest_path(7, 15)
+        self.assertEqual(len(path_2), 5)
+        self.assertTupleEqual((path_2[0], path_2[-1]), (n7, n15))
+        for i in range(len(path_2) - 1):
+            self.assertIn(path_2[i + 1], self.g4.neighbors(path_2[i]))
 
     def test_get_shortest_path_unreachable_nodes(self):
         self.assertListEqual(self.g0.get_shortest_path(3, 11), [])
@@ -586,7 +598,7 @@ class TestUndirectedGraph(TestCase):
             self.g1.max_cliques_node(-2)
 
     def test_all_maximal_cliques_node(self):
-        res = self.g7.all_maximal_cliques_node(1)
+        res = self.g7.maximal_cliques_node(1)
         self.assertIn({n0, n1, n2}, res)
         self.assertIn({n1, n2, n3}, res)
         self.assertIn({n1, n2, n4}, res)
@@ -596,7 +608,7 @@ class TestUndirectedGraph(TestCase):
 
     def test_all_maximal_cliques_node_missing_node(self):
         with self.assertRaises(KeyError):
-            self.g4.all_maximal_cliques_node(-2)
+            self.g4.maximal_cliques_node(-2)
 
     def test_maximal_independent_sets(self):
         res = self.g1.maximal_independent_sets()
@@ -1041,7 +1053,9 @@ class TestWeightedNodesUndirectedGraph(TestCase):
         self.assertSetEqual(self.g1.weighted_dominating_set(), {n1, n5})
 
     def test_weighted_dominating_set_on_full_k_partite_graph(self):
-        g = WeightedNodesUndirectedGraph({0: (5, {1, 2, 3, 4, 5}), 1: (4, {3, 4, 5}), 2: (2, {3, 4, 5}), 3: (2, {1, 2}), 4: (3, {1, 2}), 5: (4, {1, 2})})
+        g = WeightedNodesUndirectedGraph(
+            {0: (5, {1, 2, 3, 4, 5}), 1: (4, {3, 4, 5}), 2: (2, {3, 4, 5}), 3: (2, {1, 2}), 4: (3, {1, 2}),
+             5: (4, {1, 2})})
         self.assertSetEqual(g.weighted_dominating_set(), {n2, n3})
 
     def test_weighted_dominating_set_on_tree_graph(self):
@@ -1373,6 +1387,13 @@ class TestWeightedLinksUndirectedGraph(TestCase):
         g1 = UndirectedGraph.copy(g1)
         self.assertDictEqual(func, self.g1.isomorphic_bijection(g1))
 
+    def test_isomorphic_bijection_tree(self):
+        g3 = WeightedLinksUndirectedGraph(
+            {11: {10: 2, 13: 4, 14: 3, 15: -1}, 12: {10: 1, 16: 5, 17: 3}, 13: {18: 6, 19: 2}, 15: {20: 4, 21: 1}})
+        self.assertDictEqual(self.g3.isomorphic_bijection(g3),
+                             {n0: n10, n1: n11, n2: n12, n3: n13, n4: n14, n5: n15, n6: Node(16), n7: Node(17),
+                              n8: Node(18), n9: Node(19), n10: Node(20), n11: Node(21)})
+
     def test_equal(self):
         self.assertNotEqual(self.g1, self.g2)
         g1 = self.g1.copy().disconnect(n5, n2, n3).disconnect(n1, n4).connect(n3, {n2: 1, n4: 2})
@@ -1588,6 +1609,15 @@ class TestWeightedUndirectedGraph(TestCase):
         self.assertDictEqual(func, self.g1.isomorphic_bijection(UndirectedGraph.copy(g1)))
         g1 = WeightedNodesUndirectedGraph.copy(g1)
         self.assertDictEqual(func, self.g1.isomorphic_bijection(g1))
+
+    def test_isomorphic_bijection_tree(self):
+        g3 = WeightedUndirectedGraph(
+            {10: (7, {}), 11: (4, {10: 2, 13: 4, 14: 3, 15: -1}), 12: (3, {10: 1, 16: 5, 17: 3}),
+             13: (5, {18: 6, 19: 2}), 14: (6, {}), 15: (2, {20: 4, 21: 1}), 16: (2, {}), 17: (1, {}), 18: (6, {}),
+             19: (4, {}), 20: (5, {}), 21: (8, {})})
+        self.assertDictEqual(self.g3.isomorphic_bijection(g3),
+                             {n0: n10, n1: n11, n2: n12, n3: n13, n4: n14, n5: n15, n6: Node(16), n7: Node(17),
+                              n8: Node(18), n9: Node(19), n10: Node(20), n11: Node(21)})
 
     def test_equal(self):
         self.assertNotEqual(self.g1, self.g2)
