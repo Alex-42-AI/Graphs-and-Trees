@@ -6,11 +6,11 @@ from __future__ import annotations
 
 from typing import Callable
 
-from mypy.checkexpr import defaultdict
+from collections import defaultdict
 
 from directed_graph import DirectedGraph, WeightedNodesDirectedGraph
 
-from undirected_graph import Node, UndirectedGraph, WeightedNodesUndirectedGraph, Iterable, reduce
+from undirected_graph import Node, UndirectedGraph, WeightedNodesUndirectedGraph, Iterable, reduce, Path
 
 __all__ = ["print_zig_zag", "build_heap", "binary_heap", "BinTree", "Tree", "WeightedTree"]
 
@@ -53,6 +53,7 @@ def isomorphic_bijection(tree0: Tree, tree1: Tree) -> dict[Node, Node]:
 
     if isinstance(tree0, WeightedTree) and isinstance(tree1, WeightedTree):
         hash0, hash1 = tree0.unique_structure_hash(), tree1.unique_structure_hash()
+
     else:
         hash0, hash1 = Tree.unique_structure_hash(tree0), Tree.unique_structure_hash(tree1)
 
@@ -63,8 +64,7 @@ def isomorphic_bijection(tree0: Tree, tree1: Tree) -> dict[Node, Node]:
     rest, total = {tree0.root}, set()
 
     while rest:
-        u = rest.pop()
-        v = res[u]
+        v = res[u := rest.pop()]
 
         for x in tree0.descendants(u):
             rest.add(x)
@@ -75,6 +75,7 @@ def isomorphic_bijection(tree0: Tree, tree1: Tree) -> dict[Node, Node]:
                     res[x] = y
 
                     break
+
             else:
                 return {}
 
@@ -171,11 +172,13 @@ class BinTree:
 
         if isinstance(left, BinTree):
             self.__left = left
+
         elif left is not None:
             self.__left = BinTree(left)
 
         if isinstance(right, BinTree):
             self.__right = right
+
         elif right is not None:
             self.__right = BinTree(right)
 
@@ -320,6 +323,7 @@ class BinTree:
 
         try:
             return set(dfs(int(level), self))
+
         except TypeError:
             raise TypeError("Integer expected")
 
@@ -395,7 +399,6 @@ class BinTree:
                 return "- " + res
 
         u = Node(u)
-
         res = dfs(self)
 
         if res is None:
@@ -419,6 +422,7 @@ class BinTree:
             if c != " ":
                 if c in self:
                     res += self.code_in_morse(c)
+
                 else:
                     res += c
 
@@ -434,7 +438,7 @@ class BinTree:
 
         return ~self.copy()
 
-    def preorder(self) -> list[Node]:
+    def preorder(self) -> Path:
         """
         List out the nodes in a preorder traversal type (root, left, right)
         """
@@ -452,7 +456,7 @@ class BinTree:
 
         return dfs(self, [])
 
-    def in_order(self) -> list[Node]:
+    def in_order(self) -> Path:
         """
         List out the nodes in an in-order traversal type (left, root, right)
         """
@@ -470,7 +474,7 @@ class BinTree:
 
         return dfs(self, [])
 
-    def post_order(self) -> list[Node]:
+    def post_order(self) -> Path:
         """
         List out the nodes in a post-order traversal type (left, right, root)
         """
@@ -486,7 +490,7 @@ class BinTree:
 
         return dfs(self, [])
 
-    def traverse(self, traversal_type: str = "in-order") -> list[Node]:
+    def traverse(self, traversal_type: str = "in-order") -> Path:
         """
         Args:
             traversal_type: in-order, preorder, or postorder
@@ -542,6 +546,7 @@ class BinTree:
                     return {}
 
                 dfs(l0, l1)
+
             elif tree1.left:
                 return {}
 
@@ -550,6 +555,7 @@ class BinTree:
                     return {}
 
                 dfs(r0, r1)
+
             elif tree1.right:
                 return {}
 
@@ -674,6 +680,7 @@ class Tree:
         Returns:
             Tree root
         """
+
         return self.__root
 
     @property
@@ -682,6 +689,7 @@ class Tree:
         Returns:
             Nodes
         """
+
         return {self.root}.union(self.parent())
 
     @property
@@ -701,9 +709,7 @@ class Tree:
             Whether node n is a leaf
         """
 
-        n = Node(n)
-
-        if n not in self:
+        if (n := Node(n)) not in self:
             raise KeyError("Unrecognized node")
 
         return n in self.leaves
@@ -791,7 +797,7 @@ class Tree:
         """
 
         def helper(x):
-            return 1 + max([-1, *map(helper, self.descendants(x))])
+            return 1 + max(map(helper, self.descendants(x)), default=-1)
 
         return helper(self.root)
 
@@ -839,7 +845,7 @@ class Tree:
         if u not in self:
             raise KeyError("Unrecognized node")
 
-        return self.__descendants[u]
+        return self.__descendants[u].copy()
 
     def copy(self) -> Tree:
         """
@@ -939,7 +945,7 @@ class Tree:
 
         return d
 
-    def path_to(self, u: Node) -> list[Node]:
+    def path_to(self, u: Node) -> Path:
         """
         Args:
             u: A present node
@@ -983,6 +989,7 @@ class Tree:
             for d in self.descendants(r):
                 if self.leaf(d):
                     dp[r][1].add(min_no_root := d)
+
                 else:
                     only_leaves = False
 
@@ -1195,6 +1202,7 @@ class WeightedTree(Tree):
 
         try:
             self.__weights[Node(u)] = float(w)
+
         except ValueError:
             raise TypeError("Real value expected")
 
@@ -1213,8 +1221,10 @@ class WeightedTree(Tree):
         try:
             try:
                 self.set_weight(u, self.weights(u) + float(w))
+
             except ValueError:
                 raise TypeError("Real value expected")
+
         except KeyError:
             ...
 
@@ -1275,6 +1285,7 @@ class WeightedTree(Tree):
             for d in self.descendants(r):
                 if self.leaf(d):
                     dp[r][1].add(min_no_root := d)
+
                 else:
                     only_leaves = False
 
