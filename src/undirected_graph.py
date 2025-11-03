@@ -228,9 +228,7 @@ class UndirectedGraph(Graph):
                 n = Node(n)
 
                 if u != n and Link(n, u) not in self.links and n in self:
-                    self.__links.add(Link(u, n))
-                    self.__neighbors[u].add(n)
-                    self.__neighbors[n].add(u)
+                    self.__links.add(Link(u, n)), self.__neighbors[u].add(n), self.__neighbors[n].add(u)
 
         return self
 
@@ -290,16 +288,16 @@ class UndirectedGraph(Graph):
         if self.full():
             return 1 - (len(self.nodes) == 1)
 
-        res, total, layer = -1, {u := Node(u)}, {u}
+        res, wall, layer = -1, set(), {Node(u)}
 
         while layer:
-            new = set()
+            new, tmp = set(), layer.copy()
 
             while layer:
-                new.update(nodes := self.neighbors(layer.pop()) - total)
-                total.update(nodes)
+                new.update(self.neighbors(layer.pop()))
 
-            layer = new.copy()
+            new -= wall.union(tmp)
+            wall, layer = tmp, new.copy()
             res += 1
 
         return res
@@ -642,8 +640,7 @@ class UndirectedGraph(Graph):
             while priority[remaining[j]] > new_priority:
                 j -= 1
 
-            remaining.pop(i)
-            remaining.insert(j, node)
+            remaining.pop(i), remaining.insert(j, node)
 
         if start is None:
             start = next(iter(self.nodes))
@@ -654,8 +651,7 @@ class UndirectedGraph(Graph):
         order = [start]
 
         while remaining:
-            order.append(max_node := remaining.pop(0))
-            priority.pop(max_node)
+            order.append(max_node := remaining.pop(0)), priority.pop(max_node)
 
             for n in priority:
                 priority[n] *= 2
@@ -783,6 +779,7 @@ class UndirectedGraph(Graph):
             for c in components:
                 if start in c:
                     begin = c
+
                     break
 
             else:
@@ -1072,6 +1069,7 @@ class UndirectedGraph(Graph):
                 for i, partition in enumerate(result):
                     if self.neighbors(u).isdisjoint(partition):
                         result[i].add(u)
+
                         break
 
                 else:
@@ -1842,6 +1840,7 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
 
                 if w < f_mid:
                     high = mid
+
                 else:
                     if low == mid:
                         return
@@ -2040,7 +2039,7 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
                     tmp_cpy.disconnect(l.u, l.v)
 
                 pq = {s}
-                prev_weight: dict[Node, tuple[Node, float]] = {s: (None, 0)}
+                prev_weight = {s: (None, 0)}
 
                 while pq:
                     s_ = min(pq, key=lambda _s: prev_weight[_s][1])
@@ -2126,4 +2125,3 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
             return []
 
         raise KeyError("Unrecognized node(s)")
-
