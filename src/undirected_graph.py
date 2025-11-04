@@ -2029,15 +2029,23 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
             A path between u and v with the least possible sum of node and link weights
         """
 
-        def dfs(x, res_path, res_weight):
-            nonlocal total_negative, curr_path, curr_weight
+        def dfs(x, res_path: Path, res_weight):
+            nonlocal tmp, total_negative, curr_path, curr_weight
+
+            def tree_path(s):
+                res_p = tmp.get_shortest_path(s, v)
+
+                if not res_p:
+                    return [], inf
+
+                res_w = sum(map(tmp.node_weights, res_p[1:]))
+
+                for i, node in enumerate(res_p[:-1]):
+                    res_w += tmp.link_weights(node, res_p[i + 1])
+
+                return curr_path + res_p[1:], curr_weight + res_w
 
             def dijkstra(s):
-                tmp_cpy = tmp.copy()
-
-                for l in curr_path:
-                    tmp_cpy.disconnect(l.u, l.v)
-
                 pq = {s}
                 prev_weight = {s: (None, 0)}
 
@@ -2050,8 +2058,8 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
 
                     s_weight = prev_weight[s_][1]
 
-                    for t_ in tmp_cpy.neighbors(s_):
-                        weight = tmp_cpy.link_weights(s_, t_) + tmp_cpy.node_weights(t_)
+                    for t_ in tmp.neighbors(s_):
+                        weight = tmp.link_weights(s_, t_) + tmp.node_weights(t_)
 
                         if t_ not in prev_weight or s_weight + weight < prev_weight[t_][1]:
                             prev_weight[t_] = (s_, s_weight + weight)
@@ -2063,32 +2071,52 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
                 result, curr_node = [], v
 
                 while curr_node != s:
-                    result.insert(0, Link(prev_weight[curr_node][0], curr_node))
+                    result.insert(0, curr_node)
                     curr_node = prev_weight[curr_node][0]
 
                 return curr_path + result, curr_weight + prev_weight[v][1]
 
+            if x == v and tmp.leaf(x):
+                return [], inf
+
+            if tmp.is_tree(True):
+                curr = tree_path(x)
+
+                if curr[1] < res_weight:
+                    res_path, res_weight = curr
+
+                return res_path, res_weight
+
             if total_negative:
-                for y in {y for y in tmp.neighbors(x) if Link(x, y) not in curr_path}:
+                for y in tmp.neighbors(x):
                     if (n_w := tmp.node_weights(y)) < 0:
                         total_negative -= n_w
 
-                    if (l_w := tmp.link_weights(x, y)) < 0:
+                    if (l_w := tmp.link_weights(Link(x, y))) < 0:
                         total_negative -= l_w
 
                     if curr_weight + n_w + l_w + total_negative >= res_weight:
                         continue
 
+                    tmp_cpy = tmp.copy()
+
+                    if tmp.leaf(x):
+                        tmp.remove(x)
+
+                    else:
+                        tmp.disconnect(x, y)
+
                     curr_weight += n_w + l_w
 
                     if y == v and curr_weight < res_weight:
-                        res_path = curr_path + [Link(x, y)]
+                        res_path = curr_path + [v]
                         res_weight = curr_weight
 
-                    curr_path.append(Link(x, y))
+                    curr_path.append(y)
                     curr = dfs(y, res_path, res_weight)
                     curr_path.pop()
                     curr_weight -= n_w + l_w
+                    tmp = tmp_cpy
 
                     if n_w < 0:
                         total_negative += n_w
@@ -2111,16 +2139,12 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
 
         if v in self:
             if v in (tmp := self.component(u)):
-                if tmp.is_tree(True):
-                    return tmp.get_shortest_path(u, v)
-
                 nodes_negative_weights = sum(tmp.node_weights(n) for n in tmp.nodes if tmp.node_weights(n) < 0)
                 links_negative_weights = sum(tmp.link_weights(l) for l in tmp.links if tmp.link_weights(l) < 0)
                 total_negative = nodes_negative_weights + links_negative_weights
-                curr_path, curr_weight = [], tmp.node_weights(u)
-                res = dfs(u, [], inf)[0]
+                curr_path, curr_weight = [u], tmp.node_weights(u)
 
-                return [l.u for l in res] + [res[-1].v]
+                return dfs(u, [], inf)[0]
 
             return []
 
