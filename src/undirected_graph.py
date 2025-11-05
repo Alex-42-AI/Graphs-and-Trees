@@ -2041,40 +2041,6 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
 
                 return curr_path + result, curr_weight + prev_weight[v][1]
 
-            def bellman_ford_path(s):
-                prev_weight = {n: [None, inf] for n in tmp.nodes}
-                prev_weight[s][1] = 0
-
-                for _ in range(len(tmp.nodes) - 1):
-                    changed = False
-
-                    for l in tmp.links:
-                        _u, _v = l.u, l.v
-                        w = tmp.link_weights(l) + tmp.node_weights(_v)
-
-                        if prev_weight[_u][1] + w < prev_weight[_v][1]:
-                            prev_weight[_v][1] = prev_weight[_u][1] + w
-                            prev_weight[_v][0] = _u
-                            changed = True
-
-                    if not changed:
-                        break
-
-                for l in tmp.links:
-                    _u, _v = l.u, l.v
-                    w = tmp.link_weights(l) + tmp.node_weights(_v)
-
-                    if prev_weight[_u][1] + w < prev_weight[_v][1]:
-                        raise ValueError
-
-                path, curr_node = [], v
-
-                while curr_node != s:
-                    path.insert(0, curr_node)
-                    curr_node = prev_weight[curr_node][0]
-
-                return curr_path + path, curr_weight + prev_weight[v][1]
-
             if x == v and tmp.leaf(x) or v not in tmp:
                 return [], inf
 
@@ -2091,46 +2057,39 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
             total_negative = nodes_negative_weights + links_negative_weights
 
             if total_negative:
-                try:
-                    curr = bellman_ford_path(x)
+                for y in tmp.neighbors(x):
+                    n_w, l_w = tmp.node_weights(y), tmp.link_weights(x, y)
+
+                    if curr_weight + max(n_w, 0) + max(l_w, 0) + total_negative >= res_weight:
+                        continue
+
+                    if n_w < 0:
+                        total_negative -= n_w
+
+                    if l_w < 0:
+                        total_negative -= l_w
+
+                    tmp.disconnect(x, y)
+                    curr_weight += n_w + l_w
+
+                    if y == v and curr_weight < res_weight:
+                        res_path = curr_path + [v]
+                        res_weight = curr_weight
+
+                    curr_path.append(y)
+                    curr = dfs(y, res_path, res_weight, tmp.component(y))
+                    curr_path.pop()
+                    curr_weight -= n_w + l_w
+                    tmp.connect(x, {y: l_w})
+
+                    if n_w < 0:
+                        total_negative += n_w
+
+                    if l_w < 0:
+                        total_negative += l_w
 
                     if curr[1] < res_weight:
                         res_path, res_weight = curr
-
-                except ValueError:
-                    for y in tmp.neighbors(x):
-                        n_w, l_w = tmp.node_weights(y), tmp.link_weights(x, y)
-
-                        if curr_weight + max(n_w, 0) + max(l_w, 0) + total_negative >= res_weight:
-                            continue
-
-                        if n_w < 0:
-                            total_negative -= n_w
-
-                        if l_w < 0:
-                            total_negative -= l_w
-
-                        tmp.disconnect(x, y)
-                        curr_weight += n_w + l_w
-
-                        if y == v and curr_weight < res_weight:
-                            res_path = curr_path + [v]
-                            res_weight = curr_weight
-
-                        curr_path.append(y)
-                        curr = dfs(y, res_path, res_weight, tmp.component(y))
-                        curr_path.pop()
-                        curr_weight -= n_w + l_w
-                        tmp.connect(x, {y: l_w})
-
-                        if n_w < 0:
-                            total_negative += n_w
-
-                        if l_w < 0:
-                            total_negative += l_w
-
-                        if curr[1] < res_weight:
-                            res_path, res_weight = curr
 
             else:
                 curr = dijkstra(x)
@@ -2151,4 +2110,3 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
             return []
 
         raise KeyError("Unrecognized node(s)")
-
