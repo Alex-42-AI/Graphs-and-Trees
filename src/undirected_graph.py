@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from math import inf
 
+from heapq import heappush, heappop
+
 from collections import defaultdict
 
 from functools import reduce
@@ -16,7 +18,7 @@ from base import Node, Link, Graph, Iterable, combine_undirected, isomorphic_bij
     Any, Path
 
 __all__ = ["Node", "Link", "Graph", "UndirectedGraph", "WeightedNodesUndirectedGraph", "WeightedLinksUndirectedGraph",
-           "WeightedUndirectedGraph", "reduce", "Iterable"]
+           "WeightedUndirectedGraph", "reduce", "Iterable", "heappush", "heappop"]
 
 
 def links_graph(graph: UndirectedGraph) -> UndirectedGraph:
@@ -426,6 +428,19 @@ class UndirectedGraph(Graph):
 
         return components
 
+    def cut_node(self, u: Node) -> bool:
+        """
+        Args:
+            u (Node): A present node
+        Returns:
+            Whether removing u from the graph multiplies the total number of connection components
+        """
+
+        if (u := Node(u)) not in (tmp := UndirectedGraph.component(self, u)):
+            raise KeyError("Unrecognized node")
+
+        return not tmp.remove(u).connected()
+
     def cut_nodes(self) -> set[Node]:
         """
         A cut node in a graph is such that, if it's removed, the graph splits into more connection components
@@ -460,6 +475,21 @@ class UndirectedGraph(Graph):
                 dfs(n, 0)
 
         return res
+
+    def bridge_link(self, l: Link) -> bool:
+        """
+        Args:
+            l (Link): A present link
+        Returns:
+            Whether removing l multiplies the total connection components in the graph
+        """
+
+        u, v = l.u, l.v
+
+        if u not in (tmp := UndirectedGraph.component(self, u)) or v not in tmp:
+            raise KeyError("Unrecognized node(s)")
+
+        return not tmp.disconnect(u, v).connected()
 
     def bridge_links(self) -> set[Link]:
         """
@@ -1779,74 +1809,6 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
             A spanning tree or forrest of trees of the graph with the minimal possible weights sum
         """
 
-        def insert(x):
-            low, high, w = 0, len(bridge_links), self.link_weights(x)
-
-            while low < high:
-                mid = (low + high) // 2
-
-                if w == (mid_weight := self.link_weights(bridge_links[mid])):
-                    bridge_links.insert(mid, x)
-
-                    return
-
-                if w < mid_weight:
-                    high = mid
-
-                else:
-                    if low == mid:
-                        break
-
-                    low = mid + 1
-
-            bridge_links.insert(high, x)
-
-        def remove(x):
-            low, high, w = 0, len(bridge_links), self.link_weights(x)
-
-            while low < high:
-                mid = (low + high) // 2
-
-                if w == (f_mid := self.link_weights(mid_l := bridge_links[mid])):
-                    if x == mid_l:
-                        bridge_links.pop(mid)
-
-                        return
-
-                    i, j, still = mid - 1, mid + 1, True
-
-                    while still:
-                        still = False
-
-                        if i >= 0 and self.link_weights(bridge_links[i]) == w:
-                            if x == bridge_links[i]:
-                                bridge_links.pop(i)
-
-                                return
-
-                            i -= 1
-                            still = True
-
-                        if j < len(bridge_links) and self.link_weights(bridge_links[j]) == w:
-                            if x == bridge_links[j]:
-                                bridge_links.pop(j)
-
-                                return
-
-                            j += 1
-                            still = True
-
-                    return
-
-                if w < f_mid:
-                    high = mid
-
-                else:
-                    if low == mid:
-                        return
-
-                    low = mid
-
         if not self.connected():
             return reduce(lambda x, y: x.union(y),
                           [comp.minimal_spanning_tree() for comp in self.connection_components()])
@@ -1855,37 +1817,43 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
             return self.links
 
         res_links, total = set(), {u := next(iter(self.nodes))}
-        bridge_links = []
+        removed, links = set(), list(self.links)
+        links_indexes, bridge_links = {l: i for i, l in enumerate(links)}, []
 
         for v in self.neighbors(u):
-            insert(Link(u, v))
+            heappush(bridge_links, (self.link_weights(u, v), links_indexes[Link(u, v)]))
 
-        for _ in range(1, len(self.nodes)):
-            res_links.add(l := bridge_links.pop(0))
+        for _ in range(len(self.nodes) - 1):
+            l = links[heappop(bridge_links)[1]]
+
+            while l in removed:
+                l = links[heappop(bridge_links)[1]]
+
+            res_links.add(l)
 
             if (u := l.u) in total:
                 total.add(v := l.v)
 
                 for _v in self.neighbors(v):
-                    l = Link(v, _v)
+                    w = self.link_weights(l := Link(v, _v))
 
                     if _v in total:
-                        remove(l)
+                        removed.add(l)
 
                     else:
-                        insert(l)
+                        heappush(bridge_links, (w, links_indexes[l]))
 
             else:
                 total.add(u)
 
                 for _u in self.neighbors(u):
-                    l = Link(u, _u)
+                    w = self.link_weights(l := Link(u, _u))
 
                     if _u in total:
-                        remove(l)
+                        removed.add(l)
 
                     else:
-                        insert(l)
+                        heappush(bridge_links, (w, links_indexes[l]))
 
         return res_links
 
@@ -2029,8 +1997,8 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
             A path between u and v with the least possible sum of node and link weights
         """
 
-        def dfs(x, res_path: Path, res_weight):
-            nonlocal tmp, total_negative, curr_path, curr_weight
+        def dfs(x, res_path: Path, res_weight, tmp):
+            nonlocal curr_path, curr_weight
 
             def tree_path(s):
                 res_p = tmp.get_shortest_path(s, v)
@@ -2046,24 +2014,21 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
                 return curr_path + res_p[1:], curr_weight + res_w
 
             def dijkstra(s):
-                pq = {s}
+                pq = [(0, s)]
                 prev_weight = {s: (None, 0)}
 
                 while pq:
-                    s_ = min(pq, key=lambda _s: prev_weight[_s][1])
-                    pq.remove(s_)
+                    s_weight, s_ = heappop(pq)
 
                     if s_ == v:
                         break
 
-                    s_weight = prev_weight[s_][1]
-
                     for t_ in tmp.neighbors(s_):
-                        weight = tmp.link_weights(s_, t_) + tmp.node_weights(t_)
+                        new_w = s_weight + tmp.link_weights(s_, t_) + tmp.node_weights(t_)
 
-                        if t_ not in prev_weight or s_weight + weight < prev_weight[t_][1]:
-                            prev_weight[t_] = (s_, s_weight + weight)
-                            pq.add(t_)
+                        if t_ not in prev_weight or new_w < prev_weight[t_][1]:
+                            prev_weight[t_] = (s_, new_w)
+                            heappush(pq, (new_w, t_))
 
                 else:
                     return [], inf
@@ -2076,7 +2041,7 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
 
                 return curr_path + result, curr_weight + prev_weight[v][1]
 
-            if x == v and tmp.leaf(x):
+            if x == v and tmp.leaf(x) or v not in tmp:
                 return [], inf
 
             if tmp.is_tree(True):
@@ -2087,25 +2052,24 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
 
                 return res_path, res_weight
 
+            nodes_negative_weights = sum(tmp.node_weights(n) for n in tmp.nodes if tmp.node_weights(n) < 0)
+            links_negative_weights = sum(tmp.link_weights(l) for l in tmp.links if tmp.link_weights(l) < 0)
+            total_negative = nodes_negative_weights + links_negative_weights
+
             if total_negative:
                 for y in tmp.neighbors(x):
-                    if (n_w := tmp.node_weights(y)) < 0:
-                        total_negative -= n_w
+                    n_w, l_w = tmp.node_weights(y), tmp.link_weights(x, y)
 
-                    if (l_w := tmp.link_weights(Link(x, y))) < 0:
-                        total_negative -= l_w
-
-                    if curr_weight + n_w + l_w + total_negative >= res_weight:
+                    if curr_weight + max(n_w, 0) + max(l_w, 0) + total_negative >= res_weight:
                         continue
 
-                    tmp_cpy = tmp.copy()
+                    if n_w < 0:
+                        total_negative -= n_w
 
-                    if tmp.leaf(x):
-                        tmp.remove(x)
+                    if l_w < 0:
+                        total_negative -= l_w
 
-                    else:
-                        tmp.disconnect(x, y)
-
+                    tmp.disconnect(x, y)
                     curr_weight += n_w + l_w
 
                     if y == v and curr_weight < res_weight:
@@ -2113,10 +2077,10 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
                         res_weight = curr_weight
 
                     curr_path.append(y)
-                    curr = dfs(y, res_path, res_weight)
+                    curr = dfs(y, res_path, res_weight, tmp.component(y))
                     curr_path.pop()
                     curr_weight -= n_w + l_w
-                    tmp = tmp_cpy
+                    tmp.connect(x, {y: l_w})
 
                     if n_w < 0:
                         total_negative += n_w
@@ -2138,13 +2102,10 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
         u, v = Node(u), Node(v)
 
         if v in self:
-            if v in (tmp := self.component(u)):
-                nodes_negative_weights = sum(tmp.node_weights(n) for n in tmp.nodes if tmp.node_weights(n) < 0)
-                links_negative_weights = sum(tmp.link_weights(l) for l in tmp.links if tmp.link_weights(l) < 0)
-                total_negative = nodes_negative_weights + links_negative_weights
-                curr_path, curr_weight = [u], tmp.node_weights(u)
+            if v in (g := self.component(u)):
+                curr_path, curr_weight = [u], g.node_weights(u)
 
-                return dfs(u, [], inf)[0]
+                return dfs(u, [], inf, g)[0]
 
             return []
 
