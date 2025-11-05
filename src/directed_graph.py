@@ -457,22 +457,22 @@ class DirectedGraph(Graph):
         A topological sort has the following property: Let u and v be nodes in the graph and let u come before v. Then there's no path from v to u in the graph. (That's also the reason a graph with cycles has no topological sort)
         """
 
-        if not self.dag():
-            return []
-
         tmp = DirectedGraph.copy(self)
-        layer, res = tmp.sources, []
+        total, layer, res = set(), tmp.sources, []
 
         while layer:
-            res.append(u := layer.pop())
+            res.append(u := layer.pop()), total.add(u)
 
             for v in tmp.next(u):
+                if v in total:
+                    return []
+
                 tmp.disconnect(v, {u})
 
                 if tmp.source(v):
                     layer.add(v)
 
-        return res
+        return res if total == tmp.nodes else []
 
     def get_shortest_path(self, u: Node, v: Node) -> Path:
         u, v = Node(u), Node(v)
@@ -1418,8 +1418,8 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
             A path between u and v with the least possible sum of node and link weights
         """
 
-        def dfs(x, res_path, res_weight):
-            nonlocal tmp, total_negative, curr_path, curr_weight
+        def dfs(x, res_path, res_weight, tmp):
+            nonlocal curr_path, curr_weight
 
             def dag_path(s):
                 prev_dist = {x: [None, inf] for x in tmp.nodes}
@@ -1442,24 +1442,21 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                 return curr_path + res, curr_weight + prev_dist[v][1] - prev_dist[s][1]
 
             def dijkstra(s):
-                pq = {s}
+                pq = [(0, s)]
                 prev_weight = {s: (None, 0)}
 
                 while pq:
-                    s_ = min(pq, key=lambda _s: prev_weight[_s][1])
-                    pq.remove(s_)
+                    s_weight, s_ = heappop(pq)
 
                     if s_ == v:
                         break
 
-                    s_weight = prev_weight[s_][1]
-
                     for t_ in tmp.next(s_):
                         weight = tmp.link_weights(s_, t_) + tmp.node_weights(t_)
 
-                        if t_ not in prev_weight or s_weight + weight < prev_weight[t_][1]:
-                            prev_weight[t_] = (s_, s_weight + weight)
-                            pq.add(t_)
+                        if (new_w := s_weight + weight) < prev_weight[t_][1] or t_ not in prev_weight:
+                            prev_weight[t_] = (s_, new_w)
+                            heappush(pq, (new_w, t_))
 
                 else:
                     return [], inf
@@ -1472,7 +1469,7 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
 
                 return curr_path + result, curr_weight + prev_weight[v][1]
 
-            if x == v and tmp.source(x):
+            if x == v and tmp.source(x) or v not in tmp:
                 return [], inf
 
             if sort := tmp.toposort():
@@ -1483,25 +1480,24 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
 
                 return res_path, res_weight
 
+            nodes_negative_weights = sum(tmp.node_weights(n) for n in tmp.nodes if tmp.node_weights(n) < 0)
+            links_negative_weights = sum(tmp.link_weights(l) for l in tmp.links if tmp.link_weights(l) < 0)
+            total_negative = nodes_negative_weights + links_negative_weights
+
             if total_negative:
                 for y in tmp.next(x):
-                    if (n_w := tmp.node_weights(y)) < 0:
-                        total_negative -= n_w
+                    n_w, l_w = tmp.node_weights(y), tmp.link_weights(x, y)
 
-                    if (l_w := tmp.link_weights(x, y)) < 0:
-                        total_negative -= l_w
-
-                    if curr_weight + n_w + l_w + total_negative >= res_weight:
+                    if curr_weight + max(n_w, 0) + max(l_w, 0) + total_negative >= res_weight:
                         continue
 
-                    tmp_cpy = tmp.copy()
+                    if n_w < 0:
+                        total_negative -= n_w
 
-                    if tmp.source(x):
-                        tmp.remove(x)
+                    if l_w < 0:
+                        total_negative -= l_w
 
-                    else:
-                        tmp.disconnect(y, {x})
-
+                    tmp.disconnect(y, {x})
                     curr_weight += n_w + l_w
 
                     if y == v and curr_weight < res_weight:
@@ -1509,10 +1505,10 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                         res_weight = curr_weight
 
                     curr_path.append(y)
-                    curr = dfs(y, res_path, res_weight)
+                    curr = dfs(y, res_path, res_weight, tmp.subgraph(y))
                     curr_path.pop()
                     curr_weight -= n_w + l_w
-                    tmp = tmp_cpy
+                    tmp.connect(y, {x: l_w})
 
                     if n_w < 0:
                         total_negative += n_w
@@ -1534,13 +1530,10 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
         u, v = Node(u), Node(v)
 
         if v in self:
-            if v in (tmp := self.subgraph(u)):
-                nodes_negative_weights = sum(tmp.node_weights(n) for n in tmp.nodes if tmp.node_weights(n) < 0)
-                links_negative_weights = sum(tmp.link_weights(l) for l in tmp.links if tmp.link_weights(l) < 0)
-                total_negative = nodes_negative_weights + links_negative_weights
-                curr_path, curr_weight = [u], tmp.node_weights(u)
+            if v in (g := self.subgraph(u)):
+                curr_path, curr_weight = [u], g.node_weights(u)
 
-                return dfs(u, [], inf)[0]
+                return dfs(u, [], inf, g)[0]
 
             return []
 
