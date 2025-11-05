@@ -1426,11 +1426,9 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                 prev_dist[s][1] = 0
 
                 for x in sort:
-                    if prev_dist[x][1] != inf:
-                        x_w = tmp.node_weights(x)
-
+                    if (x_w := prev_dist[x][1]) != inf:
                         for y, w in tmp.link_weights(x).items():
-                            if (new_w := prev_dist[x][1] + w + x_w) < prev_dist[y][1]:
+                            if (new_w := tmp.node_weights(y) + w + x_w) < prev_dist[y][1]:
                                 prev_dist[y] = [x, new_w]
 
                 res, curr = [], v
@@ -1469,7 +1467,7 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
 
                 return curr_path + result, curr_weight + prev_weight[v][1]
 
-            def bellman_ford_path(s):
+            def bellman_ford(s):
                 prev_weight = {n: [None, inf] for n in tmp.nodes}
                 prev_weight[s][1] = 0
 
@@ -1518,7 +1516,7 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
 
             if total_negative:
                 try:
-                    curr = bellman_ford_path(x)
+                    curr = bellman_ford(x)
 
                     if curr[1] < res_weight:
                         res_path, res_weight = curr
@@ -1577,4 +1575,3 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
             return []
 
         raise KeyError("Unrecognized node(s)")
-
