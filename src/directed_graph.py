@@ -346,10 +346,10 @@ class DirectedGraph(Graph):
         if u not in self or v not in self:
             raise KeyError("Unrecognized node(s)")
 
-        queue, total = [u], {u}
+        queue, total = deque([u]), {u}
 
         while queue:
-            if (n := queue.pop(0)) == v:
+            if (n := queue.popleft()) == v:
                 return True
 
             queue += (new := self.next(n) - total)
@@ -368,47 +368,76 @@ class DirectedGraph(Graph):
         u = Node(u)
 
         if u not in self:
-            raise KeyError("Unrecognized node")
+            return DirectedGraph()
 
-        queue, total = [u], {u}
+        queue, total = deque([u]), {u}
 
         while queue:
-            queue += list(next_nodes := self.prev(v := queue.pop(0)).union(self.next(v)) - total)
+            queue += list(next_nodes := self.prev(v := queue.popleft()).union(self.next(v)) - total)
             total.update(next_nodes)
 
-        return self.subgraph(total)
+        return self.subgraph_nodes(total)
 
     def full(self) -> bool:
         return len(self.links) == (n := len(self.nodes)) * (n - 1)
 
-    def subgraph(self, u_or_nodes: Node | Iterable[Node]) -> DirectedGraph:
+    def subgraph_nodes(self, nodes: Iterable[Node]):
         """
         Args:
-            u_or_nodes: Given node or set of nodes
+            nodes: A set of nodes
         Returns:
-            If a set of nodes is given, return the subgraph, that only contains these nodes and all links between them. If a node is given, return the subgraph of all nodes and links, reachable by it, in a directed graph
+            The subgraph that only contains these nodes and all links between them
         """
 
-        try:
-            u_or_nodes = self.nodes.intersection(u_or_nodes)
+        nodes = self.nodes.intersection(nodes)
 
-            return DirectedGraph({u: ([], self.next(u).intersection(u_or_nodes)) for u in u_or_nodes})
+        return DirectedGraph({u: ([], self.next(u).intersection(nodes)) for u in nodes})
 
-        except TypeError:
-            if u_or_nodes not in self:
-                raise KeyError("Unrecognized node")
+    def subgraph(self, u: Node) -> DirectedGraph:
+        """
+        Args:
+            u: Given node
+        Returns:
+            The subgraph of all nodes and links, reachable by u, in a directed graph
+        """
 
-            rest, res = {u_or_nodes}, DirectedGraph({u_or_nodes: ([], [])})
+        if u not in self:
+            return DirectedGraph()
 
-            while rest:
-                for n in self.next(v := rest.pop()):
-                    if n in res:
-                        res.connect(n, {v})
+        rest, res = {u}, DirectedGraph({u: ([], [])})
 
-                    else:
-                        res.add(n, {v}), rest.add(n)
+        while rest:
+            for n in self.next(v := rest.pop()):
+                if n in res:
+                    res.connect(n, {v})
 
-            return res
+                else:
+                    res.add(n, {v}), rest.add(n)
+
+        return res
+
+    def supergraph(self, u: Node) -> DirectedGraph:
+        """
+        Args:
+            u: Given node
+        Returns:
+            The graph of nodes which can reach u
+        """
+
+        if u not in self:
+            return DirectedGraph()
+
+        rest, res = {u}, DirectedGraph({u: ([], [])})
+
+        while rest:
+            for n in self.prev(v := rest.pop()):
+                if n in res:
+                    res.connect(n, {v})
+
+                else:
+                    res.add(n, {v}), rest.add(n)
+
+        return res
 
     def dag(self) -> bool:
         """
@@ -480,10 +509,10 @@ class DirectedGraph(Graph):
         if u not in self or v not in self:
             raise KeyError("Unrecognized node(s)")
 
-        previous, queue, total = {}, [u], {u}
+        previous, queue, total = {}, deque([u]), {u}
 
         while queue:
-            if (n := queue.pop(0)) == v:
+            if (n := queue.popleft()) == v:
                 result, curr_node = [n], n
 
                 while curr_node != u:
@@ -568,10 +597,10 @@ class DirectedGraph(Graph):
 
         def helper(x):
             def bfs(s):
-                previous, queue, so_far = {}, [s], {s}
+                previous, queue, so_far = {}, deque([s]), {s}
 
                 while queue:
-                    for t in self.next(w := queue.pop(0)) - so_far:
+                    for t in self.next(w := queue.popleft()) - so_far:
                         previous[t] = w
 
                         if t in path:
@@ -958,29 +987,44 @@ class WeightedNodesDirectedGraph(DirectedGraph):
 
         return WeightedNodesUndirectedGraph(neighborhood)
 
-    def subgraph(self, u_or_nodes: Node | Iterable[Node]) -> WeightedNodesDirectedGraph:
-        try:
-            u_or_nodes = self.nodes.intersection(u_or_nodes)
-            neighborhood = {u: (self.node_weights(u), ([], self.next(u).intersection(u_or_nodes))) for u in u_or_nodes}
+    def subgraph_nodes(self, nodes: Iterable[Node]) -> WeightedNodesDirectedGraph:
+        nodes = self.nodes.intersection(nodes)
+        neighborhood = {u: (self.node_weights(u), ([], self.next(u).intersection(nodes))) for u in nodes}
 
-            return WeightedNodesDirectedGraph(neighborhood)
+        return WeightedNodesDirectedGraph(neighborhood)
 
-        except TypeError:
-            if u_or_nodes not in self:
-                raise KeyError("Unrecognized node")
+    def subgraph(self, u: Node) -> WeightedNodesDirectedGraph:
+        if u not in self:
+            return WeightedNodesDirectedGraph()
 
-            rest = {u_or_nodes}
-            res = WeightedNodesDirectedGraph({u_or_nodes: (self.node_weights(u_or_nodes), ([], []))})
+        rest = {u}
+        res = WeightedNodesDirectedGraph({u: (self.node_weights(u), ([], []))})
 
-            while rest:
-                for n in self.next(v := rest.pop()):
-                    if n in res:
-                        res.connect(n, {v})
+        while rest:
+            for n in self.next(v := rest.pop()):
+                if n in res:
+                    res.connect(n, {v})
 
-                    else:
-                        res.add((n, self.node_weights(n)), {v}), rest.add(n)
+                else:
+                    res.add((n, self.node_weights(n)), {v}), rest.add(n)
 
-            return res
+        return res
+
+    def supergraph(self, u: Node) -> WeightedNodesDirectedGraph:
+        if u not in self:
+            return WeightedNodesDirectedGraph()
+
+        rest, res = {u}, WeightedNodesDirectedGraph({u: (self.node_weights(u), ([], []))})
+
+        while rest:
+            for n in self.prev(v := rest.pop()):
+                if n in res:
+                    res.connect(n, {v})
+
+                else:
+                    res.add((n, self.node_weights(u)), {v}), rest.add(n)
+
+        return res
 
     def minimal_path_nodes(self, u: Node, v: Node) -> Path:
         """
@@ -1229,30 +1273,45 @@ class WeightedLinksDirectedGraph(DirectedGraph):
 
         return res
 
-    def subgraph(self, u_or_nodes: Node | Iterable[Node]) -> WeightedLinksDirectedGraph:
-        try:
-            u_or_nodes = self.nodes.intersection(u_or_nodes)
-            neighborhood = {u: ({}, {k: v for k, v in self.link_weights(u).items() if k in u_or_nodes}) for u in
-                            u_or_nodes}
+    def subgraph_nodes(self, nodes: Iterable[Node]) -> WeightedLinksDirectedGraph:
+        nodes = self.nodes.intersection(nodes)
+        neighborhood = {u: ({}, {k: v for k, v in self.link_weights(u).items() if k in nodes}) for u in nodes}
 
-            return WeightedLinksDirectedGraph(neighborhood)
+        return WeightedLinksDirectedGraph(neighborhood)
 
-        except TypeError:
-            if u_or_nodes not in self:
-                raise KeyError("Unrecognized node")
+    def subgraph(self, u: Node) -> WeightedLinksDirectedGraph:
+        if u not in self:
+            return WeightedLinksDirectedGraph()
 
-            rest = {u_or_nodes}
-            res = WeightedLinksDirectedGraph({u_or_nodes: ({}, {})})
+        rest = {u}
+        res = WeightedLinksDirectedGraph({u: ({}, {})})
 
-            while rest:
-                for n in self.next(v := rest.pop()):
-                    if n in res:
-                        res.connect(n, {v: self.link_weights(v, n)})
+        while rest:
+            for n in self.next(v := rest.pop()):
+                if n in res:
+                    res.connect(n, {v: self.link_weights(v, n)})
 
-                    else:
-                        res.add(n, {v: self.link_weights(v, n)}), rest.add(n)
+                else:
+                    res.add(n, {v: self.link_weights(v, n)}), rest.add(n)
 
-            return res
+        return res
+
+    def supergraph(self, u: Node) -> WeightedLinksDirectedGraph:
+        if u not in self:
+            return WeightedLinksDirectedGraph()
+
+        rest = {u}
+        res = WeightedLinksDirectedGraph({u: ({}, {})})
+
+        while rest:
+            for n in self.prev(v := rest.pop()):
+                if n in res:
+                    res.connect(n, {v: self.link_weights(v, n)})
+
+                else:
+                    res.add(n, {v: self.link_weights(v, n)}), rest.add(n)
+
+        return res
 
     def minimal_path_links(self, u: Node, v: Node) -> Path:
         """
@@ -1383,31 +1442,46 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
 
         return res
 
-    def subgraph(self, u_or_nodes: Node | Iterable[Node]) -> WeightedDirectedGraph:
-        try:
-            u_or_nodes = self.nodes.intersection(u_or_nodes)
-            neighborhood = {
-                u: (self.node_weights(u), ({}, {k: v for k, v in self.link_weights(u).items() if k in u_or_nodes})) for
-                u in u_or_nodes}
+    def subgraph_nodes(self, nodes: Iterable[Node]) -> WeightedDirectedGraph:
+        nodes = self.nodes.intersection(nodes)
+        neighborhood = {u: (self.node_weights(u), ({}, {k: v for k, v in self.link_weights(u).items() if k in nodes}))
+                        for u in nodes}
 
-            return WeightedDirectedGraph(neighborhood)
+        return WeightedDirectedGraph(neighborhood)
 
-        except TypeError:
-            if u_or_nodes not in self:
-                raise KeyError("Unrecognized node")
+    def subgraph(self, u: Node) -> WeightedDirectedGraph:
+        if u not in self:
+            return WeightedDirectedGraph()
 
-            rest = {u_or_nodes}
-            res = WeightedDirectedGraph({u_or_nodes: (self.node_weights(u_or_nodes), ({}, {}))})
+        rest = {u}
+        res = WeightedDirectedGraph({u: (self.node_weights(u), ({}, {}))})
 
-            while rest:
-                for n in self.next(v := rest.pop()):
-                    if n in res:
-                        res.connect(n, {v: self.link_weights(v, n)})
+        while rest:
+            for n in self.next(v := rest.pop()):
+                if n in res:
+                    res.connect(n, {v: self.link_weights(v, n)})
 
-                    else:
-                        res.add((n, self.node_weights(n)), {v: self.link_weights(v, n)}), rest.add(n)
+                else:
+                    res.add((n, self.node_weights(n)), {v: self.link_weights(v, n)}), rest.add(n)
 
-            return res
+        return res
+
+    def supergraph(self, u: Node) -> WeightedDirectedGraph:
+        if u not in self:
+            return WeightedDirectedGraph()
+
+        rest = {u}
+        res = WeightedDirectedGraph({u: (self.node_weights(u), ({}, {}))})
+
+        while rest:
+            for n in self.prev(v := rest.pop()):
+                if n in res:
+                    res.connect(n, {v: self.link_weights(v, n)})
+
+                else:
+                    res.add((n, self.node_weights(n)), {v: self.link_weights(v, n)}), rest.add(n)
+
+        return res
 
     def minimal_path(self, u: Node, v: Node) -> Path:
         """
@@ -1418,18 +1492,19 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
             A path between u and v with the least possible sum of node and link weights
         """
 
-        def dfs(x, res_path, res_weight, tmp):
-            nonlocal curr_path, curr_weight
+        def dfs(x, tmp):
+            nonlocal curr_path, curr_weight, res_path, res_weight
 
             def dag_path(s):
-                prev_dist = {x: [None, inf] for x in tmp.nodes}
-                prev_dist[s][1] = 0
+                nonlocal res_path, res_weight
+
+                prev_dist = {x: (None, inf) for x in tmp.nodes}
+                prev_dist[s] = (None, 0)
 
                 for x in sort:
-                    if (x_w := prev_dist[x][1]) != inf:
-                        for y, w in tmp.link_weights(x).items():
-                            if (new_w := tmp.node_weights(y) + w + x_w) < prev_dist[y][1]:
-                                prev_dist[y] = [x, new_w]
+                    for y, w in tmp.link_weights(x).items():
+                        if (new_w := tmp.node_weights(y) + w + prev_dist[x][1]) < prev_dist[y][1]:
+                            prev_dist[y] = (x, new_w)
 
                 res, curr = [], v
 
@@ -1437,11 +1512,17 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                     res.insert(0, curr)
                     curr = prev
 
-                return curr_path + res, curr_weight + prev_dist[v][1] - prev_dist[s][1]
+                result = (curr_path + res, curr_weight + prev_dist[v][1])
+
+                if result[1] < res_weight:
+                    res_path, res_weight = result
 
             def dijkstra(s):
+                nonlocal res_path, res_weight
+
                 pq = [(0, s)]
-                prev_weight = {s: (None, 0)}
+                prev_weight = {n: (None, inf) for n in tmp.nodes}
+                prev_weight[s] = (None, 0)
 
                 while pq:
                     s_weight, s_ = heappop(pq)
@@ -1450,14 +1531,12 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                         break
 
                     for t_ in tmp.next(s_):
-                        weight = tmp.link_weights(s_, t_) + tmp.node_weights(t_)
-
-                        if (new_w := s_weight + weight) < prev_weight[t_][1] or t_ not in prev_weight:
+                        if (new_w := s_weight + tmp.link_weights(s_, t_) + tmp.node_weights(t_)) < prev_weight[t_][1]:
                             prev_weight[t_] = (s_, new_w)
                             heappush(pq, (new_w, t_))
 
                 else:
-                    return [], inf
+                    return
 
                 result, curr_node = [], v
 
@@ -1465,25 +1544,28 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                     result.insert(0, curr_node)
                     curr_node = prev_weight[curr_node][0]
 
-                return curr_path + result, curr_weight + prev_weight[v][1]
+                result = (curr_path + result, curr_weight + prev_weight[v][1])
 
-            def bellman_ford(s):
-                prev_weight = {n: [None, inf] for n in tmp.nodes}
-                prev_weight[s][1] = 0
+                if result[1] < res_weight:
+                    res_path, res_weight = result
 
-                for _ in range(len(tmp.nodes) - 1):
-                    changed = False
+            def SPFA(s):
+                nonlocal res_path, res_weight
 
-                    for _u, _v in tmp.links:
-                        w = tmp.link_weights(_u, _v) + tmp.node_weights(_v)
+                prev_weight = {n: (None, inf) for n in tmp.nodes}
+                prev_weight[s] = (None, 0)
+                queue, in_queue = deque([s]), {s}
 
-                        if prev_weight[_u][1] + w < prev_weight[_v][1]:
-                            prev_weight[_v][1] = prev_weight[_u][1] + w
-                            prev_weight[_v][0] = _u
-                            changed = True
+                while queue:
+                    x = queue.popleft()
+                    in_queue.remove(x)
 
-                    if not changed:
-                        break
+                    for y, w in tmp.link_weights(x).items():
+                        if prev_weight[x][1] + w < prev_weight[y][1]:
+                            prev_weight[y] = (x, prev_weight[x][1] + w)
+
+                            if y not in in_queue:
+                                queue.append(y), in_queue.add(y)
 
                 for _u, _v in tmp.links:
                     w = tmp.link_weights(_u, _v) + tmp.node_weights(_v)
@@ -1497,18 +1579,18 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                     path.insert(0, curr_node)
                     curr_node = prev_weight[curr_node][0]
 
-                return curr_path + path, curr_weight + prev_weight[v][1]
+                result = (curr_path + path, curr_weight + prev_weight[v][1])
 
-            if x == v and tmp.source(x) or v not in tmp:
-                return [], inf
+                if result[1] < res_weight:
+                    res_path, res_weight = result
+
+            if not tmp or x == v and tmp.source(x):
+                return
 
             if sort := tmp.toposort():
-                curr = dag_path(x)
+                dag_path(x)
 
-                if curr[1] < res_weight:
-                    res_path, res_weight = curr
-
-                return res_path, res_weight
+                return
 
             nodes_negative_weights = sum(tmp.node_weights(n) for n in tmp.nodes if tmp.node_weights(n) < 0)
             links_negative_weights = sum(tmp.link_weights(l) for l in tmp.links if tmp.link_weights(l) < 0)
@@ -1516,10 +1598,7 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
 
             if total_negative:
                 try:
-                    curr = bellman_ford(x)
-
-                    if curr[1] < res_weight:
-                        res_path, res_weight = curr
+                    SPFA(x)
 
                 except ValueError:
                     for y in tmp.next(x):
@@ -1542,7 +1621,7 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                             res_weight = curr_weight
 
                         curr_path.append(y)
-                        curr = dfs(y, res_path, res_weight, tmp.subgraph(y))
+                        dfs(y, tmp.subgraph(y).supergraph(v))
                         curr_path.pop()
                         curr_weight -= n_w + l_w
                         tmp.connect(y, {x: l_w})
@@ -1553,24 +1632,18 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                         if l_w < 0:
                             total_negative += l_w
 
-                        if curr[1] < res_weight:
-                            res_path, res_weight = curr
-
             else:
-                curr = dijkstra(x)
-
-                if curr[1] < res_weight:
-                    res_path, res_weight = curr
-
-            return res_path, res_weight
+                dijkstra(x)
 
         u, v = Node(u), Node(v)
 
         if v in self:
             if v in (g := self.subgraph(u)):
+                res_path, res_weight = [], inf
                 curr_path, curr_weight = [u], g.node_weights(u)
+                dfs(u, g)
 
-                return dfs(u, [], inf, g)[0]
+                return res_path
 
             return []
 
