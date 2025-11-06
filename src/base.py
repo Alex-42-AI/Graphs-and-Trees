@@ -274,7 +274,7 @@ class Graph(ABC):
             u: First given node
             v: Second given node
         Returns:
-            One shortest path from u to v, if such path exists, otherwise empty list
+            A shortest path from u to v in number of links if such exists, otherwise empty list
         """
 
         pass
@@ -889,3 +889,4 @@ def string(graph: Graph) -> str:
             graph.links) + "}"
 
     return f"<{nodes}, {links}>"
+
