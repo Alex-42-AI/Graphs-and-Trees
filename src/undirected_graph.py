@@ -8,7 +8,7 @@ from math import inf
 
 from heapq import heappush, heappop
 
-from collections import defaultdict
+from collections import defaultdict, deque
 
 from functools import reduce
 
@@ -18,7 +18,7 @@ from base import Node, Link, Graph, Iterable, combine_undirected, isomorphic_bij
     Any, Path
 
 __all__ = ["Node", "Link", "Graph", "UndirectedGraph", "WeightedNodesUndirectedGraph", "WeightedLinksUndirectedGraph",
-           "WeightedUndirectedGraph", "reduce", "Iterable", "heappush", "heappop"]
+           "WeightedUndirectedGraph", "reduce", "Iterable", "heappush", "heappop", "deque"]
 
 
 def links_graph(graph: UndirectedGraph) -> UndirectedGraph:
@@ -293,13 +293,14 @@ class UndirectedGraph(Graph):
         res, wall, layer = -1, set(), {Node(u)}
 
         while layer:
-            new, tmp = set(), layer.copy()
+            new = set()
 
-            while layer:
-                new.update(self.neighbors(layer.pop()))
+            for n in layer:
+                new.update(self.neighbors(n))
 
-            new -= wall.union(tmp)
-            wall, layer = tmp, new.copy()
+            new -= wall.union(layer)
+            wall |= layer
+            layer = new
             res += 1
 
         return res
@@ -322,10 +323,10 @@ class UndirectedGraph(Graph):
         if self.degrees_sum > (n - 1) * (n - 2) or n < 2:
             return True
 
-        queue, total = [u := next(iter(self.nodes))], {u}
+        queue, total = deque([u := next(iter(self.nodes))]), {u}
 
         while queue:
-            queue += list(next_nodes := self.neighbors(queue.pop(0)) - total)
+            queue += list(next_nodes := self.neighbors(queue.popleft()) - total)
             total.update(next_nodes)
 
         return total == self.nodes
@@ -373,14 +374,19 @@ class UndirectedGraph(Graph):
         if u not in self or v not in self:
             raise KeyError("Unrecognized node(s)")
 
-        rest, total = {u}, {u}
+        layer, wall = {u}, set()
 
-        while rest:
-            if (n := rest.pop()) == v:
-                return True
+        while layer:
+            new, tmp = set(), layer.copy()
 
-            rest.update(new := self.neighbors(n) - total)
-            total.update(new)
+            while layer:
+                if (n := layer.pop()) == v:
+                    return True
+
+                new.update(self.neighbors(n))
+
+            layer = new - wall - layer
+            wall = tmp
 
         return False
 
@@ -409,7 +415,7 @@ class UndirectedGraph(Graph):
         """
 
         if u not in self:
-            raise KeyError("Unrecognized node")
+            return UndirectedGraph()
 
         rest, total = {u := Node(u)}, {u}
 
@@ -537,13 +543,13 @@ class UndirectedGraph(Graph):
         if u == v:
             return [u]
 
-        previous, curr, wall = {}, {u}, set()
+        previous, layer, wall = {}, {u}, set()
 
-        while curr:
+        while layer:
             new = set()
 
-            for n in curr:
-                for m in self.neighbors(n) - wall - curr:
+            for n in layer:
+                for m in self.neighbors(n) - wall - layer:
                     previous[m] = n
 
                     if m == v:
@@ -557,7 +563,8 @@ class UndirectedGraph(Graph):
 
                     new.add(m)
 
-            wall, curr = curr.copy(), new.copy()
+            wall |= layer
+            layer = new
 
         return []
 
@@ -1076,16 +1083,16 @@ class UndirectedGraph(Graph):
             return final
 
         if self.is_tree(True):
-            queue, c0, c1, total = [next(iter(self.nodes))], self.nodes, set(), set()
+            stack, c0, c1, total = [next(iter(self.nodes))], self.nodes, set(), set()
 
-            while queue:
-                flag = (u := queue.pop(0)) in c0
+            while stack:
+                flag = (u := stack.pop()) in c0
 
                 for v in self.neighbors(u) - total:
                     if flag:
                         c1.add(v), c0.remove(v)
 
-                    queue.append(v), total.add(v)
+                    stack.append(v), total.add(v)
 
             return [c0, c1]
 
@@ -1518,11 +1525,11 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
         n = Node(n)
 
         tree = WeightedTree((n, self.node_weights(n)))
-        queue, total = [n], {n}
+        rest, total = [n], {n}
 
-        while queue:
-            for v in self.neighbors(u := queue.pop(-bool(dfs))) - total:
-                tree.add(u, {v: self.node_weights(v)}), queue.append(v), total.add(v)
+        while rest:
+            for v in self.neighbors(u := rest.pop(-bool(dfs))) - total:
+                tree.add(u, {v: self.node_weights(v)}), rest.append(v), total.add(v)
 
         return tree
 
@@ -1997,25 +2004,33 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
             A path between u and v with the least possible sum of node and link weights
         """
 
-        def dfs(x, res_path: Path, res_weight, tmp):
-            nonlocal curr_path, curr_weight
+        def dfs(x, tmp):
+            nonlocal curr_path, curr_weight, res_path, res_weight
 
             def tree_path(s):
+                nonlocal res_path, res_weight
+
                 res_p = tmp.get_shortest_path(s, v)
 
                 if not res_p:
-                    return [], inf
+                    return
 
                 res_w = sum(map(tmp.node_weights, res_p[1:]))
 
                 for i, node in enumerate(res_p[:-1]):
                     res_w += tmp.link_weights(node, res_p[i + 1])
 
-                return curr_path + res_p[1:], curr_weight + res_w
+                result = (curr_path + res_p[1:], curr_weight + res_w)
+
+                if result[1] < res_weight:
+                    res_path, res_weight = result
 
             def dijkstra(s):
+                nonlocal res_path, res_weight
+
                 pq = [(0, s)]
-                prev_weight = {s: (None, 0)}
+                prev_weight = {n: (None, inf) for n in tmp.nodes}
+                prev_weight[s] = (None, 0)
 
                 while pq:
                     s_weight, s_ = heappop(pq)
@@ -2024,14 +2039,12 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
                         break
 
                     for t_ in tmp.neighbors(s_):
-                        new_w = s_weight + tmp.link_weights(s_, t_) + tmp.node_weights(t_)
-
-                        if t_ not in prev_weight or new_w < prev_weight[t_][1]:
+                        if (new_w := s_weight + tmp.link_weights(s_, t_) + tmp.node_weights(t_)) < prev_weight[t_][1]:
                             prev_weight[t_] = (s_, new_w)
                             heappush(pq, (new_w, t_))
 
                 else:
-                    return [], inf
+                    return
 
                 result, curr_node = [], v
 
@@ -2039,18 +2052,18 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
                     result.insert(0, curr_node)
                     curr_node = prev_weight[curr_node][0]
 
-                return curr_path + result, curr_weight + prev_weight[v][1]
+                result = (curr_path + result, curr_weight + prev_weight[v][1])
+
+                if result[1] < res_weight:
+                    res_path, res_weight = result
 
             if x == v and tmp.leaf(x) or v not in tmp:
-                return [], inf
+                return
 
             if tmp.is_tree(True):
-                curr = tree_path(x)
+                tree_path(x)
 
-                if curr[1] < res_weight:
-                    res_path, res_weight = curr
-
-                return res_path, res_weight
+                return
 
             nodes_negative_weights = sum(tmp.node_weights(n) for n in tmp.nodes if tmp.node_weights(n) < 0)
             links_negative_weights = sum(tmp.link_weights(l) for l in tmp.links if tmp.link_weights(l) < 0)
@@ -2077,7 +2090,7 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
                         res_weight = curr_weight
 
                     curr_path.append(y)
-                    curr = dfs(y, res_path, res_weight, tmp.component(y))
+                    dfs(y, tmp.component(y))
                     curr_path.pop()
                     curr_weight -= n_w + l_w
                     tmp.connect(x, {y: l_w})
@@ -2088,24 +2101,18 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
                     if l_w < 0:
                         total_negative += l_w
 
-                    if curr[1] < res_weight:
-                        res_path, res_weight = curr
-
             else:
-                curr = dijkstra(x)
-
-                if curr[1] < res_weight:
-                    res_path, res_weight = curr
-
-            return res_path, res_weight
+                dijkstra(x)
 
         u, v = Node(u), Node(v)
 
         if v in self:
             if v in (g := self.component(u)):
+                res_path, res_weight = [], inf
                 curr_path, curr_weight = [u], g.node_weights(u)
+                dfs(u, g)
 
-                return dfs(u, [], inf, g)[0]
+                return res_path
 
             return []
 
