@@ -6,6 +6,8 @@ from __future__ import annotations
 
 from math import inf
 
+from typing import Callable
+
 from base import combine_directed, isomorphic_bijection_directed, compare, string, Any, Path, DLink
 
 from undirected_graph import *
@@ -338,7 +340,19 @@ class DirectedGraph(Graph):
         return components
 
     def connected(self) -> bool:
-        return DirectedGraph.undirected(self).connected()
+        if (m := len(self.links)) + 1 < (n := len(self.nodes)):
+            return False
+
+        if m > (n - 1) * (n - 2) or n < 2:
+            return True
+
+        queue, total = deque([u := next(iter(self.nodes))]), {u}
+
+        while queue:
+            queue += list(next_nodes := self.next(queue.popleft()) - total)
+            total.update(next_nodes)
+
+        return total == self.nodes
 
     def reachable(self, u: Node, v: Node) -> bool:
         u, v = Node(u), Node(v)
@@ -466,9 +480,6 @@ class DirectedGraph(Graph):
 
         sources, total, stack = self.sources, set(), set()
 
-        if not sources or not self.sinks:
-            return False
-
         for n in sources:
             stack.add(n)
 
@@ -483,7 +494,7 @@ class DirectedGraph(Graph):
         """
         Returns:
             A topological sort of the nodes if the graph is a DAG, otherwise an empty list
-        A topological sort has the following property: Let u and v be nodes in the graph and let u come before v. Then there's no path from v to u in the graph. (That's also the reason a graph with cycles has no topological sort)
+        A topological sort of the graph's nodes is one where no link points back
         """
 
         tmp = DirectedGraph.copy(self)
@@ -516,8 +527,10 @@ class DirectedGraph(Graph):
                 result, curr_node = [n], n
 
                 while curr_node != u:
-                    result.insert(0, previous[curr_node])
+                    result.append(previous[curr_node])
                     curr_node = previous[curr_node]
+
+                result.reverse()
 
                 return result
 
@@ -543,9 +556,12 @@ class DirectedGraph(Graph):
         if self.euler_tour_exists():
             return u == v
 
-        for n in self.nodes:
-            if self.degree(n)[1] + (n == v) != self.degree(n)[0] + (n == u):
+        for n in self.nodes - {u, v}:
+            if self.degree(n)[1] != self.degree(n)[0]:
                 return False
+
+        if self.degree(u)[1] != self.degree(u)[0] + 1 or self.degree(v)[0] != self.degree(v)[1] + 1:
+            return False
 
         return self.connected()
 
@@ -695,15 +711,29 @@ class DirectedGraph(Graph):
         return []
 
     def path_with_length(self, u: Node, v: Node, length: int) -> Path:
-        def dfs(x, l, stack):
-            if not l:
-                return (list(map(lambda link: link[0], stack)) + [v]) if x == v else []
+        def dfs(x, l, stack, g):
+            if len(g.links) < l:
+                return []
 
-            for y in filter(lambda _x: (x, _x) not in stack, self.next(x)):
-                res = dfs(y, l - 1, stack + [(x, y)])
+            if not l:
+                return stack if x == v else []
+
+            path = g.get_shortest_path(u, v)
+
+            if not path or (k := len(path)) > l + 1:
+                return []
+
+            if l + 1 == k:
+                return stack + path
+
+            for y in g.next(x):
+                g.disconnect(y, {x}), stack.append(y)
+                res = dfs(y, l - 1, stack, g.subgraph(y).supergraph(v))
 
                 if res:
                     return res
+
+                g.connect(y, {x}), stack.pop()
 
             return []
 
@@ -715,15 +745,7 @@ class DirectedGraph(Graph):
         except ValueError:
             raise TypeError("Integer expected")
 
-        tmp = self.get_shortest_path(u, v)
-
-        if not tmp or (k := len(tmp)) > length + 1:
-            return []
-
-        if length + 1 == k:
-            return tmp
-
-        return dfs(u, length, [])
+        return dfs(u, length, [u], DirectedGraph.copy(self))
 
     def hamilton_tour_exists(self) -> bool:
         def dfs(x):
@@ -763,7 +785,7 @@ class DirectedGraph(Graph):
             raise KeyError("Unrecognized node(s)")
 
         if (v, u) in self.links:
-            return self.nodes == {u, v} or self.hamilton_tour_exists()
+            return self.hamilton_tour_exists()
 
         return DirectedGraph.copy(self).connect(u, {v}).hamilton_tour_exists()
 
@@ -823,8 +845,6 @@ class DirectedGraph(Graph):
         if u is None:
             if v is not None and v not in self:
                 raise KeyError("Unrecognized node")
-
-            del u
 
             for u in self.nodes:
                 if result := dfs(u, [u]):
@@ -1026,16 +1046,28 @@ class WeightedNodesDirectedGraph(DirectedGraph):
 
         return res
 
-    def minimal_path_nodes(self, u: Node, v: Node) -> Path:
+    def minimal_path(self, u: Node, v: Node) -> Path:
         """
         Args:
             u: First given node
             v: Second given node
         Returns:
-            A path between u and v with the least possible sum of node weights
+            A path between u and v with the least possible total sum of weights
         """
 
         return self.weighted_graph().minimal_path(u, v)
+
+    def a_star(self, u: Node, v: Node, h: Callable) -> Path:
+        """
+        Args:
+            u: First given node
+            v: Second given node
+            h: A Good heuristic function
+        Returns:
+            A path between u and v with the least possible sum of weights
+        """
+
+        return self.weighted_graph().a_star(u, v, h)
 
 
 class WeightedLinksDirectedGraph(DirectedGraph):
@@ -1313,16 +1345,28 @@ class WeightedLinksDirectedGraph(DirectedGraph):
 
         return res
 
-    def minimal_path_links(self, u: Node, v: Node) -> Path:
+    def minimal_path(self, u: Node, v: Node) -> Path:
         """
         Args:
             u: First given node
             v: Second given node
         Returns:
-            A path from u to v with the least possible sum of link weights
+            A path from u to v with the least possible sum of weights
         """
 
         return self.weighted_graph().minimal_path(u, v)
+
+    def a_star(self, u: Node, v: Node, h: Callable) -> Path:
+        """
+        Args:
+            u: First given node
+            v: Second given node
+            h: A Good heuristic function
+        Returns:
+            A path between u and v with the least possible sum of weights
+        """
+
+        return self.weighted_graph().a_star(u, v, h)
 
 
 class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGraph):
@@ -1484,14 +1528,6 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
         return res
 
     def minimal_path(self, u: Node, v: Node) -> Path:
-        """
-        Args:
-            u: First given node
-            v: Second given node
-        Returns:
-            A path between u and v with the least possible sum of node and link weights
-        """
-
         def dfs(x, tmp):
             nonlocal curr_path, curr_weight, res_path, res_weight
 
@@ -1509,15 +1545,16 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                 res, curr = [], v
 
                 while (prev := prev_dist[curr][0]) is not None:
-                    res.insert(0, curr)
+                    res.append(curr)
                     curr = prev
 
+                res.reverse()
                 result = (curr_path + res, curr_weight + prev_dist[v][1])
 
                 if result[1] < res_weight:
                     res_path, res_weight = result
 
-            def dijkstra(s):
+            def ucs(s):
                 nonlocal res_path, res_weight
 
                 pq = [(0, s)]
@@ -1541,15 +1578,16 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                 result, curr_node = [], v
 
                 while curr_node != s:
-                    result.insert(0, curr_node)
+                    result.append(curr_node)
                     curr_node = prev_weight[curr_node][0]
 
+                result.reverse()
                 result = (curr_path + result, curr_weight + prev_weight[v][1])
 
                 if result[1] < res_weight:
                     res_path, res_weight = result
 
-            def SPFA(s):
+            def MPFA(s):
                 nonlocal res_path, res_weight
 
                 prev_weight = {n: (None, inf) for n in tmp.nodes}
@@ -1576,9 +1614,10 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                 path, curr_node = [], v
 
                 while curr_node != s:
-                    path.insert(0, curr_node)
+                    path.append(curr_node)
                     curr_node = prev_weight[curr_node][0]
 
+                path.reverse()
                 result = (curr_path + path, curr_weight + prev_weight[v][1])
 
                 if result[1] < res_weight:
@@ -1598,7 +1637,7 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
 
             if total_negative:
                 try:
-                    SPFA(x)
+                    MPFA(x)
 
                 except ValueError:
                     for y in tmp.next(x):
@@ -1633,7 +1672,7 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                             total_negative += l_w
 
             else:
-                dijkstra(x)
+                ucs(x)
 
         u, v = Node(u), Node(v)
 
@@ -1648,3 +1687,39 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
             return []
 
         raise KeyError("Unrecognized node(s)")
+
+    def a_star(self, u: Node, v: Node, h: Callable) -> Path:
+        u, v = Node(u), Node(v)
+
+        if u not in self or v not in self:
+            raise KeyError("Unrecognized node(s)")
+
+        if not self.connected() or v not in self.subgraph(u) or any(w < 0 for w in self.node_weights()) or any(w < 0 for w in self.link_weights()):
+            return []
+
+        pq = [(h(v), v)]
+        g = {n: inf for n in self.nodes}
+        g[v] = self.node_weights(v)
+        parent = {n: None for n in self.nodes}
+
+        while pq:
+            _, x = heappop(pq)
+
+            if h(x) > (g_x := g[x]):
+                return []
+
+            if x == u:
+                break
+
+            for y in self.prev(x):
+                if (g_y := g_x + self.link_weights(y, x) + self.node_weights(y)) < g[y]:
+                    parent[y], g[y] = x, g_y
+                    heappush(pq, (g_y + h(y), y))
+
+        result, node = [], u
+
+        while node != v:
+            result.append(node)
+            node = parent[node]
+
+        return result
