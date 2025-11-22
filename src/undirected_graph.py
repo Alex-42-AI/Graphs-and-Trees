@@ -14,6 +14,8 @@ from functools import reduce
 
 from itertools import combinations
 
+from typing import Callable
+
 from base import Node, Link, Graph, Iterable, combine_undirected, isomorphic_bijection_undirected, compare, string, \
     Any, Path
 
@@ -44,12 +46,12 @@ def links_graph(graph: UndirectedGraph) -> UndirectedGraph:
 
     if isinstance(graph, WeightedLinksUndirectedGraph):
         neighborhood = {
-            Node(l0): (graph.link_weights(l0), [Node(l1) for l1 in links[i + 1:] if (l1.u in l0) ^ (l1.v in l0)])
+            Node(l0): (graph.link_weights(l0), {Node(l1) for l1 in links[i + 1:] if (l1.u in l0) ^ (l1.v in l0)})
             for i, l0 in enumerate(links)}
 
         return WeightedNodesUndirectedGraph(neighborhood)
 
-    neighborhood = {Node(l0): [Node(l1) for l1 in links[i + 1:] if (l1.u in l0) or (l1.v in l0)] for i, l0 in
+    neighborhood = {Node(l0): {Node(l1) for l1 in links[i + 1:] if (l1.u in l0) or (l1.v in l0)} for i, l0 in
                     enumerate(links)}
 
     return UndirectedGraph(neighborhood)
@@ -186,7 +188,7 @@ class UndirectedGraph(Graph):
             Whether u is simplicial
         """
 
-        return self.clique(*self.neighbors(u))
+        return self.clique(self.neighbors(u))
 
     def add(self, u: Node, *current_nodes: Node) -> UndirectedGraph:
         """
@@ -258,9 +260,7 @@ class UndirectedGraph(Graph):
             n = Node(n)
 
             if (l := Link(n, u)) in self.links:
-                self.__links.remove(l)
-                self.__neighbors[u].discard(n)
-                self.__neighbors[n].discard(u)
+                self.__links.remove(l), self.__neighbors[u].discard(n), self.__neighbors[n].discard(u)
 
         return self
 
@@ -299,7 +299,7 @@ class UndirectedGraph(Graph):
                 new.update(self.neighbors(n))
 
             new -= wall.union(layer)
-            wall |= layer
+            wall = layer.copy()
             layer = new
             res += 1
 
@@ -556,14 +556,16 @@ class UndirectedGraph(Graph):
                         result, curr_node = [m], m
 
                         while curr_node != u:
-                            result.insert(0, previous[curr_node])
+                            result.append(previous[curr_node])
                             curr_node = previous[curr_node]
+
+                        result.reverse()
 
                         return result
 
                     new.add(m)
 
-            wall |= layer
+            wall = layer.copy()
             layer = new
 
         return []
@@ -863,7 +865,7 @@ class UndirectedGraph(Graph):
 
         return k in {None, len(comps := self.complementary().connection_components())} and all(c.full() for c in comps)
 
-    def clique(self, *nodes: Node) -> bool:
+    def clique(self, nodes: Iterable[Node]) -> bool:
         """
         Args:
             nodes: A set of present nodes
@@ -885,6 +887,31 @@ class UndirectedGraph(Graph):
 
         if nodes == self.nodes:
             return self.full()
+
+        return helper(nodes)
+
+    def anti_clique(self, nodes: Iterable[Node]) -> bool:
+        """
+        Args:
+            nodes: A set of present nodes
+        Returns:
+            Whether these given nodes form an independent set
+        """
+
+        def helper(rest):
+            if not rest:
+                return True
+
+            if not rest.isdisjoint(self.neighbors(rest.pop())):
+                return False
+
+            return helper(rest)
+
+        nodes = {Node(x) for x in nodes}
+        nodes.intersection_update(self.nodes)
+
+        if nodes == self.nodes:
+            return not self.links
 
         return helper(nodes)
 
@@ -911,7 +938,7 @@ class UndirectedGraph(Graph):
 
             return reduce(lambda x, y: x + y, map(lambda g: g.cliques(k), self.connection_components()))
 
-        return [set(p) for p in combinations(self.nodes, abs(k)) if self.clique(*p)]
+        return [set(p) for p in combinations(self.nodes, k) if self.clique(p)]
 
     def maximal_cliques(self) -> list[set[Node]]:
         """
@@ -981,9 +1008,9 @@ class UndirectedGraph(Graph):
         """
 
         def generator(result=set(), total=set(), i=0):
-            for j, n in enumerate(nodes[i:]):
+            for j, n in enumerate(nodes[i:], start=i + 1):
                 if result.isdisjoint(self.neighbors(n)):
-                    for res in generator({n, *result}, {n, *self.neighbors(n), *total}, i + j + 1):
+                    for res in generator({n, *result}, {n, *self.neighbors(n), *total}, j):
                         yield res
 
             if total == self.nodes:
@@ -1071,61 +1098,106 @@ class UndirectedGraph(Graph):
             A list of independent sets in the graph that covers all nodes without any of its elements intersecting. This list has as few elements as possible
         """
 
-        if not self.connected():
-            r = [comp.chromatic_nodes_partition() for comp in self.connection_components()]
-            final = max(r, key=len)
-            r.remove(final)
+        def helper(union, i=0):
+            nonlocal partition, res, n
 
-            for part in r:
-                for i, i_s in enumerate(part):
-                    final[i].update(i_s)
+            if not (remaining := self.nodes - union):
+                memoization[frozenset(union)] = [set(i) for i in partition]
 
-            return final
+                return partition
 
-        if self.is_tree(True):
-            stack, c0, c1, total = [next(iter(self.nodes))], self.nodes, set(), set()
+            if not (tmp := self.subgraph(remaining)).connected():
+                r = [comp.chromatic_nodes_partition() for comp in tmp.connection_components()]
+                final = max(r, key=len)
+                r.remove(final)
 
-            while stack:
-                flag = (u := stack.pop()) in c0
+                for part in r:
+                    for i, i_s in enumerate(part):
+                        final[i].update(i_s)
 
-                for v in self.neighbors(u) - total:
-                    if flag:
-                        c1.add(v), c0.remove(v)
+                memoization[u := frozenset(union)] = partition + final
 
-                    stack.append(v), total.add(v)
+                return memoization[u]
 
-            return [c0, c1]
+            if tmp.is_tree(True):
+                stack, c0, c1, total = [next(iter(tmp.nodes))], tmp.nodes, set(), set()
 
-        if self.is_full_k_partite():
-            return [comp.nodes for comp in self.complementary().connection_components()]
+                while stack:
+                    flag = (u := stack.pop()) in c0
 
-        if sort := self.interval_sort():
-            result = []
+                    for v in tmp.neighbors(u) - total:
+                        if flag:
+                            c1.add(v), c0.remove(v)
 
-            for u in sort:
-                for i, partition in enumerate(result):
-                    if self.neighbors(u).isdisjoint(partition):
-                        result[i].add(u)
+                        stack.append(v), total.add(v)
 
-                        break
+                tree_part = []
 
-                else:
-                    result.append({u})
+                if c0:
+                    tree_part.append(c0)
 
-            return result
+                if c1:
+                    tree_part.append(c1)
 
-        result = list(map(lambda x: {x}, self.nodes))
+                memoization[u := frozenset(union)] = partition + tree_part
 
-        for i_s in self.maximal_independent_sets():
-            curr = [i_s] + self.subgraph(self.nodes - i_s).chromatic_nodes_partition()
+                return memoization[u]
 
-            if len(curr) == 2:
-                return curr
+            if tmp.is_full_k_partite():
+                memoization[u := frozenset(union)] = partition + [comp.nodes for comp in
+                                                                  tmp.complementary().connection_components()]
 
-            if len(curr) < len(result):
-                result = curr.copy()
+                return memoization[u]
 
-        return result
+            if sort := tmp.interval_sort():
+                result = []
+
+                for u in sort:
+                    for i, part in enumerate(result):
+                        if tmp.neighbors(u).isdisjoint(part):
+                            result[i].add(u)
+
+                            break
+
+                    else:
+                        result.append({u})
+
+                memoization[u := frozenset(union)] = partition + result
+
+                return memoization[u]
+
+            entered = False
+
+            for j, s in enumerate(independent_sets[i:], start=i + 1):
+                if s.isdisjoint(union):
+                    entered = True
+                    partition.append(s)
+
+                    if (u := frozenset(new := s | union)) in memoization:
+                        curr = memoization[u]
+
+                    else:
+                        curr = helper(new, j)
+
+                    if (l := len(curr)) == 2:
+                        return curr
+
+                    partition.pop()
+
+                    if l < n:
+                        res, n = curr, l
+
+            if not entered:
+                res = partition + tmp.chromatic_nodes_partition()
+
+            memoization[frozenset(union)] = res
+
+            return res
+
+        memoization, partition, independent_sets = {}, [], self.maximal_independent_sets()
+        res, n = list(map(lambda x: {x}, self.nodes)), len(self.nodes)
+
+        return helper(set())
 
     def chromatic_links_partition(self) -> list[set[Link]]:
         """
@@ -1155,8 +1227,8 @@ class UndirectedGraph(Graph):
 
             result = self.nodes
 
-            for j, u in enumerate(nodes[i:]):
-                if len(res := helper({u, *curr}, {u, *self.neighbors(u), *total}, i + j + 1)) < len(result):
+            for j, u in enumerate(nodes[i:], start=i + 1):
+                if len(res := helper({u, *curr}, {u, *self.neighbors(u), *total}, j)) < len(result):
                     result = res
 
             return result
@@ -1241,13 +1313,29 @@ class UndirectedGraph(Graph):
         return []
 
     def path_with_length(self, u: Node, v: Node, length: int) -> Path:
-        def dfs(x: Node, l: int, stack: list[Link]):
-            if not l:
-                return [link.u for link in stack] + [v] if x == v else []
+        def dfs(x, l, stack, g):
+            if v not in g or len(g.links) < l:
+                return []
 
-            for y in {y for y in self.neighbors(x) if Link(x, y) not in stack}:
-                if res := dfs(y, l - 1, stack + [Link(x, y)]):
+            if not l:
+                return stack if x == v else []
+
+            path = g.get_shortest_path(x, v)
+
+            if not path or (k := len(path)) > l + 1:
+                return []
+
+            if l + 1 == k:
+                return stack + path
+
+            for y in g.neighbors(x):
+                g.disconnect(y, x), stack.append(y)
+                res = dfs(y, l - 1, stack, g.component(y))
+
+                if res:
                     return res
+
+                g.connect(y, x), stack.pop()
 
             return []
 
@@ -1259,13 +1347,7 @@ class UndirectedGraph(Graph):
         except ValueError:
             raise TypeError("Integer expected")
 
-        if not (tmp := self.get_shortest_path(u, v)) or (k := len(tmp)) > length + 1:
-            return []
-
-        if length + 1 == k:
-            return tmp
-
-        return dfs(u, length, [])
+        return dfs(u, length, [u], UndirectedGraph.copy(self))
 
     def hamilton_tour_exists(self) -> bool:
         def dfs(x):
@@ -1554,16 +1636,28 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
 
         return super().weighted_graph(self.node_weights(), res_weights)
 
-    def minimal_path_nodes(self, u: Node, v: Node) -> Path:
+    def minimal_path(self, u: Node, v: Node) -> Path:
         """
         Args:
             u: First given node
             v: Second given node
         Returns:
-            A path between u and v with the least possible sum of node weights
+            A path between u and v with the least possible sum of weights
         """
 
         return self.weighted_graph().minimal_path(u, v)
+
+    def a_star(self, u: Node, v: Node, h: Callable) -> Path:
+        """
+        Args:
+            u: First given node
+            v: Second given node
+            h: A Good heuristic function
+        Returns:
+            A path between u and v with the least possible sum of weights
+        """
+
+        return self.weighted_graph().a_star(u, v, h)
 
     def weighted_vertex_cover(self) -> set[Node]:
         """
@@ -1585,9 +1679,9 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
 
             result, result_weight = self.nodes, self.total_nodes_weight
 
-            for j, u in enumerate(nodes[i:]):
+            for j, u in enumerate(nodes[i:], start=i + 1):
                 cover, weight = helper({u, *curr}, {u, *self.neighbors(u), *total},
-                                       res_weight + self.node_weights(u), i + j + 1)
+                                       res_weight + self.node_weights(u), j)
 
                 if weight < result_weight:
                     result, result_weight = cover, weight
@@ -1631,10 +1725,10 @@ class WeightedNodesUndirectedGraph(UndirectedGraph):
 
             result, result_weight = set(), 0
 
-            for j, u in enumerate(nodes[i:]):
+            for j, u in enumerate(nodes[i:], start=i + 1):
                 if u not in total and self.node_weights(u) > 0:
                     cover, weight = helper({u, *curr}, {u, *total, *self.neighbors(u)},
-                                           res_weight + self.node_weights(u), i + j + 1)
+                                           res_weight + self.node_weights(u), j)
 
                     if weight > result_weight:
                         result, result_weight = cover, weight
@@ -1875,16 +1969,28 @@ class WeightedLinksUndirectedGraph(UndirectedGraph):
 
         return WeightedUndirectedGraph({n: (res_weights[n], self.link_weights(n)) for n in self.nodes})
 
-    def minimal_path_links(self, u: Node, v: Node) -> Path:
+    def minimal_path(self, u: Node, v: Node) -> Path:
         """
         Args:
             u: First given node
             v: Second given node
         Returns:
-            A path between u and v with the least possible sum of link weights
+            A path between u and v with the least possible sum of weights
         """
 
         return self.weighted_graph().minimal_path(u, v)
+
+    def a_star(self, u: Node, v: Node, h: Callable) -> Path:
+        """
+        Args:
+            u: First given node
+            v: Second given node
+            h: A Good heuristic function
+        Returns:
+            A path between u and v with the least possible sum of weights
+        """
+
+        return self.weighted_graph().a_star(u, v, h)
 
 
 class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirectedGraph):
@@ -1996,14 +2102,6 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
             raise TypeError("Iterable of nodes expected")
 
     def minimal_path(self, u: Node, v: Node) -> Path:
-        """
-        Args:
-            u: First given node
-            v: Second given node
-        Returns:
-            A path between u and v with the least possible sum of node and link weights
-        """
-
         def dfs(x, tmp):
             nonlocal curr_path, curr_weight, res_path, res_weight
 
@@ -2025,7 +2123,7 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
                 if result[1] < res_weight:
                     res_path, res_weight = result
 
-            def dijkstra(s):
+            def ucs(s):
                 nonlocal res_path, res_weight
 
                 pq = [(0, s)]
@@ -2049,9 +2147,10 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
                 result, curr_node = [], v
 
                 while curr_node != s:
-                    result.insert(0, curr_node)
+                    result.append(curr_node)
                     curr_node = prev_weight[curr_node][0]
 
+                result.reverse()
                 result = (curr_path + result, curr_weight + prev_weight[v][1])
 
                 if result[1] < res_weight:
@@ -2102,18 +2201,54 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
                         total_negative += l_w
 
             else:
-                dijkstra(x)
+                ucs(x)
 
         u, v = Node(u), Node(v)
 
-        if v in self:
-            if v in (g := self.component(u)):
-                res_path, res_weight = [], inf
-                curr_path, curr_weight = [u], g.node_weights(u)
-                dfs(u, g)
+        if u not in self or v not in self:
+            raise KeyError("Unrecognized node(s)")
 
-                return res_path
+        if v in (g := self.component(u)):
+            res_path, res_weight = [], inf
+            curr_path, curr_weight = [u], g.node_weights(u)
+            dfs(u, g)
 
+            return res_path
+
+        return []
+
+    def a_star(self, u: Node, v: Node, h: Callable) -> Path:
+        u, v = Node(u), Node(v)
+
+        if u not in self or v not in self:
+            raise KeyError("Unrecognized node(s)")
+
+        if not self.connected() or any(w < 0 for w in self.node_weights()) or any(w < 0 for w in self.link_weights()):
             return []
 
-        raise KeyError("Unrecognized node(s)")
+        pq = [(h(v), v)]
+        g = {n: inf for n in self.nodes}
+        g[v] = self.node_weights(v)
+        parent = {n: None for n in self.nodes}
+
+        while pq:
+            _, x = heappop(pq)
+
+            if h(x) > (g_x := g[x]):
+                return []
+
+            if x == u:
+                break
+
+            for y in self.neighbors(x):
+                if (g_y := g_x + self.link_weights(x, y) + self.node_weights(y)) < g[y]:
+                    parent[y], g[y] = x, g_y
+                    heappush(pq, (g_y + h(y), y))
+
+        result, node = [], u
+
+        while node != v:
+            result.append(node)
+            node = parent[node]
+
+        return result
