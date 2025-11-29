@@ -1777,10 +1777,10 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
         if any(w < 0 for w in self.node_weights()) or any(w < 0 for w in self.link_weights()):
             return []
 
-        FOUND, path, bound, so_far = -1, [u], h(u), {u}
+        FOUND, path, bound, so_far = -1, [u], h(u) + self.node_weights(u), {u}
 
         while True:
-            t = dfs(u, 0)
+            t = dfs(u, self.node_weights(u))
 
             if t == FOUND:
                 return path
@@ -1789,3 +1789,4 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                 return []
 
             bound = t
+
