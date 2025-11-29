@@ -530,9 +530,7 @@ class DirectedGraph(Graph):
                     result.append(previous[curr_node])
                     curr_node = previous[curr_node]
 
-                result.reverse()
-
-                return result
+                return result[::-1]
 
             for m in self.next(n) - total:
                 queue.append(m), total.add(m)
@@ -1065,9 +1063,23 @@ class WeightedNodesDirectedGraph(DirectedGraph):
             h: A Good heuristic function
         Returns:
             A path between u and v with the least possible sum of weights
+        A heuristic function is one which gives information for how close a given node is to the goal. If h*(n) is the cost of the true path fom n to v, an admissible heuristic is one, for which 0 <= h(n) <= h*(n). Now let n->m be a link in the graph. h(n) <= w(n, m) + h(m) means the heuristic is consistent
         """
 
         return self.weighted_graph().a_star(u, v, h)
+
+    def ida_star(self, u: Node, v: Node, h: Callable) -> Path:
+        """
+        Args:
+            u: First given node
+            v: Second given node
+            h: A Good heuristic function
+        Returns:
+            A path between u and v with the least possible sum of weights
+        A heuristic function is one which gives information for how close a given node is to the goal. If h*(n) is the cost of the true path fom n to v, an admissible heuristic is one, for which 0 <= h(n) <= h*(n). Now let n->m be a link in the graph. h(n) <= w(n, m) + h(m) means the heuristic is consistent
+        """
+
+        return self.weighted_graph().ida_star(u, v, h)
 
 
 class WeightedLinksDirectedGraph(DirectedGraph):
@@ -1364,9 +1376,23 @@ class WeightedLinksDirectedGraph(DirectedGraph):
             h: A Good heuristic function
         Returns:
             A path between u and v with the least possible sum of weights
+        A heuristic function is one which gives information for how close a given node is to the goal. If h*(n) is the cost of the true path fom n to v, an admissible heuristic is one, for which 0 <= h(n) <= h*(n). Now let n->m be a link in the graph. h(n) <= w(n, m) + h(m) means the heuristic is consistent
         """
 
         return self.weighted_graph().a_star(u, v, h)
+
+    def ida_star(self, u: Node, v: Node, h: Callable) -> Path:
+        """
+        Args:
+            u: First given node
+            v: Second given node
+            h: A Good heuristic function
+        Returns:
+            A path between u and v with the least possible sum of weights
+        A heuristic function is one which gives information for how close a given node is to the goal. If h*(n) is the cost of the true path fom n to v, an admissible heuristic is one, for which 0 <= h(n) <= h*(n). Now let n->m be a link in the graph. h(n) <= w(n, m) + h(m) means the heuristic is consistent
+        """
+
+        return self.weighted_graph().ida_star(u, v, h)
 
 
 class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGraph):
@@ -1548,8 +1574,7 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                     res.append(curr)
                     curr = prev
 
-                res.reverse()
-                result = (curr_path + res, curr_weight + prev_dist[v][1])
+                result = (curr_path + res[::-1], curr_weight + prev_dist[v][1])
 
                 if result[1] < res_weight:
                     res_path, res_weight = result
@@ -1581,8 +1606,7 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                     result.append(curr_node)
                     curr_node = prev_weight[curr_node][0]
 
-                result.reverse()
-                result = (curr_path + result, curr_weight + prev_weight[v][1])
+                result = (curr_path + result[::-1], curr_weight + prev_weight[v][1])
 
                 if result[1] < res_weight:
                     res_path, res_weight = result
@@ -1617,13 +1641,12 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
                     path.append(curr_node)
                     curr_node = prev_weight[curr_node][0]
 
-                path.reverse()
-                result = (curr_path + path, curr_weight + prev_weight[v][1])
+                result = (curr_path + path[::-1], curr_weight + prev_weight[v][1])
 
                 if result[1] < res_weight:
                     res_path, res_weight = result
 
-            if not tmp or x == v and tmp.source(x):
+            if not tmp or tmp.source(v):
                 return
 
             if sort := tmp.toposort():
@@ -1694,32 +1717,75 @@ class WeightedDirectedGraph(WeightedLinksDirectedGraph, WeightedNodesDirectedGra
         if u not in self or v not in self:
             raise KeyError("Unrecognized node(s)")
 
-        if not self.connected() or v not in self.subgraph(u) or any(w < 0 for w in self.node_weights()) or any(w < 0 for w in self.link_weights()):
+        if v not in self.subgraph(u) or any(w < 0 for w in self.node_weights()) or any(w < 0 for w in self.link_weights()):
             return []
 
-        pq = [(h(v), v)]
+        pq = [(h(u), u)]
         g = {n: inf for n in self.nodes}
-        g[v] = self.node_weights(v)
+        g[u] = self.node_weights(u)
         parent = {n: None for n in self.nodes}
 
         while pq:
             _, x = heappop(pq)
 
-            if h(x) > (g_x := g[x]):
-                return []
-
             if x == u:
                 break
 
-            for y in self.prev(x):
-                if (g_y := g_x + self.link_weights(y, x) + self.node_weights(y)) < g[y]:
+            for y in self.next(x):
+                if (g_y := g[x] + self.link_weights(x, y) + self.node_weights(y)) < g[y]:
                     parent[y], g[y] = x, g_y
                     heappush(pq, (g_y + h(y), y))
 
-        result, node = [], u
+        result, node = [], v
 
-        while node != v:
+        while node != u:
             result.append(node)
             node = parent[node]
 
-        return result
+        return [u] + result[::-1]
+
+    def ida_star(self, u: Node, v: Node, h: Callable) -> Path:
+        def dfs(x, g):
+            if x == v:
+                return FOUND
+
+            if (t := g + h(x)) > bound:
+                return t
+
+            next_nodes = sorted(self.next(x) - so_far, key=lambda n: h(n) + self.link_weights(x, n) + self.node_weights(n))
+            f = inf
+
+            for y in next_nodes:
+                path.append(y), so_far.add(y)
+                t = dfs(y, g + self.link_weights(x, y) + self.node_weights(y))
+
+                if t == FOUND:
+                    return FOUND
+
+                path.pop(), so_far.remove(y)
+
+                if t < f:
+                    f = t
+
+            return f
+
+        u, v = Node(u), Node(v)
+
+        if u not in self or v not in self:
+            raise KeyError("Unrecognized node(s)")
+
+        if any(w < 0 for w in self.node_weights()) or any(w < 0 for w in self.link_weights()):
+            return []
+
+        FOUND, path, bound, so_far = -1, [u], h(u), {u}
+
+        while True:
+            t = dfs(u, 0)
+
+            if t == FOUND:
+                return path
+
+            if t == inf:
+                return []
+
+            bound = t
