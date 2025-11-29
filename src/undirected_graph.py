@@ -2314,10 +2314,10 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
         if subgraph.is_tree(True):
             return subgraph.get_shortest_path(u, v)
 
-        FOUND, path, bound, so_far = -1, [u], h(u), {u}
+        FOUND, path, bound, so_far = -1, [u], h(u) + self.node_weights(u), {u}
 
         while True:
-            t = dfs(u, 0)
+            t = dfs(u, self.node_weights(u))
 
             if t == FOUND:
                 return path
@@ -2326,3 +2326,4 @@ class WeightedUndirectedGraph(WeightedLinksUndirectedGraph, WeightedNodesUndirec
                 return []
 
             bound = t
+
